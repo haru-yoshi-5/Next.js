@@ -144,3 +144,14 @@ export function getAvailableLessons(): AvailableLesson[] {
       .map((lesson) => ({ ...lesson, chapter })),
   )
 }
+
+/** 公開済み教材の中での前後の教材を返す */
+export function getLessonNeighbors(slug: string) {
+  const lessons = getAvailableLessons()
+  const index = lessons.findIndex((lesson) => lesson.slug === slug)
+  return {
+    current: lessons[index],
+    previous: index > 0 ? lessons[index - 1] : undefined,
+    next: index >= 0 ? lessons[index + 1] : undefined,
+  }
+}

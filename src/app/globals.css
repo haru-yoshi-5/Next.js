@@ -158,6 +158,11 @@
   }
 }
 
+/* shiki のデュアルテーマ: ライトは inline の color、ダークは --shiki-dark を使う */
+.dark .code-token {
+  color: var(--shiki-dark) !important;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
