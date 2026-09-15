@@ -1,69 +1,110 @@
-import Image from "next/image";
+import {
+  BookOpenIcon,
+  CodeIcon,
+  EyeIcon,
+  MousePointerClickIcon,
+} from "lucide-react"
+import Link from "next/link"
 
-export default function Home() {
+import { HeroFlow } from "@/components/home/hero-flow"
+import { LessonCardList } from "@/components/learning/lesson-card-list"
+import { buttonVariants } from "@/components/ui/button"
+import { getAvailableLessons, lessonHref } from "@/content/curriculum"
+
+const learningSteps = [
+  {
+    Icon: BookOpenIcon,
+    title: "読む",
+    text: "機能の目的と、どこで実行されるのかを短く解説します。",
+  },
+  {
+    Icon: MousePointerClickIcon,
+    title: "触る",
+    text: "本物の Server Action や Suspense で動くデモを操作します。",
+  },
+  {
+    Icon: EyeIcon,
+    title: "見る",
+    text: "操作の裏で Browser と Server の間に何が起きたかを可視化します。",
+  },
+  {
+    Icon: CodeIcon,
+    title: "確かめる",
+    text: "表示中のデモを実際に動かしているソースコードをそのまま読みます。",
+  },
+]
+
+// トップページは完全に静的な Server Component。ビルド時にプリレンダーされる。
+export default function HomePage() {
+  const lessons = getAvailableLessons()
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main id="main-content" className="flex-1">
+      <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:px-6 lg:py-24">
+        <div className="flex flex-col gap-6">
+          <p className="font-mono text-xs tracking-wider text-muted-foreground">
+            INTERACTIVE NEXT.JS LEARNING
           </p>
+          <h1 className="text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
+            Next.jsの中で何が起きているか、見えていますか？
+          </h1>
+          <p className="max-w-xl leading-relaxed text-muted-foreground">
+            NextScopeは、実際に動作するNext.jsと処理フローの可視化を通して、Server
+            ComponentsやServer
+            ActionsなどNext.js特有の仕組みを理解するためのインタラクティブ教材です。
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/learn" className={buttonVariants({ size: "lg" })}>
+              学習を始める
+            </Link>
+            <Link
+              href={lessonHref("server-components")}
+              className={buttonVariants({ size: "lg", variant: "outline" })}
+            >
+              Server Components から見る
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <HeroFlow />
+      </section>
+
+      <section aria-labelledby="how-to-learn" className="border-t bg-muted/30">
+        <div className="mx-auto max-w-6xl px-4 py-14 lg:px-6">
+          <h2 id="how-to-learn" className="text-lg font-semibold">
+            1つの教材で「読む・触る・見る・確かめる」
+          </h2>
+          <ol className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {learningSteps.map(({ Icon, title, text }, index) => (
+              <li key={title} className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs text-muted-foreground">
+                    0{index + 1}
+                  </span>
+                  <Icon aria-hidden className="size-4" />
+                  <h3 className="font-medium">{title}</h3>
+                </div>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {text}
+                </p>
+              </li>
+            ))}
+          </ol>
         </div>
-      </main>
-    </div>
-  );
+      </section>
+
+      <section aria-labelledby="lessons" className="border-t">
+        <div className="mx-auto max-w-6xl px-4 py-14 lg:px-6">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-2">
+            <h2 id="lessons" className="text-lg font-semibold">
+              公開中の教材
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              このサイト自体が、各教材で解説している機能で作られています。
+            </p>
+          </div>
+          <LessonCardList lessons={lessons} />
+        </div>
+      </section>
+    </main>
+  )
 }
