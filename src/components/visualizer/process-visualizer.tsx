@@ -106,7 +106,8 @@ export function ProcessVisualizer({
   const measuredTotal = steps
     .slice(0, shown)
     .reduce((total, step) => total + (step.durationMs ?? 0), 0)
-  const hasMeasured = steps.some((step) => step.durationMs !== undefined)
+  const showTotal =
+    !trace?.hideTotal && steps.some((step) => step.durationMs !== undefined)
 
   return (
     <section
@@ -202,7 +203,7 @@ export function ProcessVisualizer({
             ? `${shown} / ${stepCount}: ${activeStep.label}`
             : "待機中"}
         </p>
-        {hasMeasured ? (
+        {showTotal ? (
           <p className="font-mono tabular-nums">
             計測合計 {formatDuration(measuredTotal)}
           </p>

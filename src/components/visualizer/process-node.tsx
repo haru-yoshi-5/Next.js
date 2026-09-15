@@ -34,12 +34,13 @@ export function ProcessNode({ id, state }: ProcessNodeProps) {
       />
       <span className="truncate text-sm font-medium">{label}</span>
       {state === "active" ? (
-        <span className="ml-auto flex items-center gap-1.5 text-[0.65rem] font-medium text-flow">
+        // 狭い幅でもノード名を優先して表示するため、視覚的には点だけにする
+        <span className="ml-auto flex shrink-0 items-center">
           <span
             aria-hidden
-            className="size-1.5 rounded-full bg-flow motion-safe:animate-pulse"
+            className="size-2 rounded-full bg-flow motion-safe:animate-pulse"
           />
-          処理中
+          <span className="sr-only">処理中</span>
         </span>
       ) : null}
     </li>

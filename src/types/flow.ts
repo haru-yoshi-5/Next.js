@@ -38,4 +38,9 @@ export interface FlowTrace {
   steps: FlowStep[]
   /** ステップが後から追加される（Streaming など）場合は true */
   live?: boolean
+  /**
+   * durationMs を合計すると意味を持たない場合（並行処理の経過時間など）は true。
+   * Process Visualizer のフッターに合計時間を表示しない。
+   */
+  hideTotal?: boolean
 }
