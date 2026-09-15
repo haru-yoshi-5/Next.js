@@ -136,11 +136,11 @@ export function ProcessVisualizer({
               )}
               title={
                 trace.source === "measured"
-                  ? "実際の処理から取得した値で組み立てています"
+                  ? "実際に発生した操作と、サーバー / ブラウザで取得した値から組み立てています"
                   : "ブラウザからは観測できない内部処理を、公式ドキュメントに沿って図示しています"
               }
             >
-              {trace.source === "measured" ? "実測データ" : "モデル図"}
+              {trace.source === "measured" ? "実データ" : "モデル図"}
             </span>
           ) : null}
           <Button

@@ -25,7 +25,7 @@ export interface HighlightedSource {
   directive: Directive
 }
 
-const SOURCE_ROOT = path.join(process.cwd(), "src")
+const SOURCE_PREFIX = "src/"
 
 const languageByExtension: Record<string, BundledLanguage> = {
   ".ts": "typescript",
@@ -33,13 +33,22 @@ const languageByExtension: Record<string, BundledLanguage> = {
   ".css": "css",
 }
 
-/** src/ 配下以外のファイルは読み込まない */
+/**
+ * src/ 配下以外のファイルは読み込まない。
+ * パスの起点を静的に "src" へ固定することで、バンドラーのファイルトレース範囲も src/ に限定される。
+ */
 function resolveSourcePath(relativePath: string) {
-  const absolutePath = path.resolve(process.cwd(), relativePath)
-  if (!absolutePath.startsWith(SOURCE_ROOT + path.sep)) {
+  const withinSrc = path.posix.normalize(
+    relativePath.replace(/\\/g, "/").slice(SOURCE_PREFIX.length),
+  )
+  if (
+    !relativePath.startsWith(SOURCE_PREFIX) ||
+    withinSrc.startsWith("..") ||
+    path.posix.isAbsolute(withinSrc)
+  ) {
     throw new Error(`src/ 以外のファイルは表示できません: ${relativePath}`)
   }
-  return absolutePath
+  return path.join(process.cwd(), "src", withinSrc)
 }
 
 /**
