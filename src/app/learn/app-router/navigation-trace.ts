@@ -69,7 +69,10 @@ export function buildNavigationTrace(
 
   return {
     id: record.id,
-    title: "<Link> によるページ遷移",
+    title:
+      record.trigger === "link"
+        ? "<Link> によるページ遷移"
+        : "ブラウザの戻る / 進むによるページ遷移",
     source: "model",
     live: !arrived,
     steps,
