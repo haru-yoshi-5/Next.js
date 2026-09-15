@@ -28,6 +28,13 @@ const links = [
   },
 ]
 
+function fileForPath(path: string) {
+  return (
+    links.find((link) => link.href === path)?.file ??
+    "app/learn/app-router/[slug]/not-found.tsx"
+  )
+}
+
 // layout.tsx から描画される Client Component。
 // layout はページ遷移で再マウントされないため、ここで持つ state（メモ・遷移回数）は保たれる。
 export function RouteDemoPanel({ children }: { children: ReactNode }) {
@@ -38,6 +45,23 @@ export function RouteDemoPanel({ children }: { children: ReactNode }) {
   const [lastNavigation, setLastNavigation] = useState<NavigationRecord | null>(
     null,
   )
+  const [previousPathname, setPreviousPathname] = useState(pathname)
+
+  // URL の変化をレンダー中に検知する。クリックした遷移先と一致しない変化は、
+  // ブラウザの戻る / 進むによる遷移として記録し直す（古い遷移が未完了のまま残らないようにする）。
+  if (pathname !== previousPathname) {
+    setPreviousPathname(pathname)
+    if (lastNavigation?.to !== pathname) {
+      setNavigationCount(navigationCount + 1)
+      setLastNavigation({
+        id: `history-${navigationCount + 1}`,
+        from: previousPathname,
+        to: pathname,
+        targetFile: fileForPath(pathname),
+        trigger: "history",
+      })
+    }
+  }
 
   function handleNavigate(href: string, file: string) {
     if (href === pathname) return
@@ -47,6 +71,7 @@ export function RouteDemoPanel({ children }: { children: ReactNode }) {
       from: pathname,
       to: href,
       targetFile: file,
+      trigger: "link",
     })
   }
 

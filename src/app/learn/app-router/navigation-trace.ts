@@ -6,6 +6,8 @@ export interface NavigationRecord {
   to: string
   /** 遷移先でマッチすると想定されるファイル */
   targetFile: string
+  /** link: <Link> のクリック / history: ブラウザの戻る・進む */
+  trigger: "link" | "history"
 }
 
 /**
@@ -18,13 +20,21 @@ export function buildNavigationTrace(
   arrived: boolean,
 ): FlowTrace {
   const steps: FlowStep[] = [
-    {
-      id: "click",
-      from: "browser",
-      to: "client-component",
-      label: `<Link href="${record.to}"> をクリック`,
-      detail: "ブラウザはページ全体の再読み込みを行わない",
-    },
+    record.trigger === "link"
+      ? {
+          id: "click",
+          from: "browser",
+          to: "client-component",
+          label: `<Link href="${record.to}"> をクリック`,
+          detail: "ブラウザはページ全体の再読み込みを行わない",
+        }
+      : {
+          id: "history",
+          from: "browser",
+          to: "client-component",
+          label: "ブラウザの戻る / 進む",
+          detail: `履歴から ${record.to} へ移動。ページ全体の再読み込みは行わない`,
+        },
     {
       id: "request",
       from: "client-component",
