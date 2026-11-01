@@ -2,7 +2,7 @@
 
 import { CircleAlertIcon, CircleCheckIcon, LoaderIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useActionState, useTransition } from "react"
+import { useActionState, useState, useTransition } from "react"
 
 import { DemoLayout } from "@/components/learning/demo-layout"
 import { Button } from "@/components/ui/button"
@@ -10,9 +10,17 @@ import { ProcessVisualizer } from "@/components/visualizer/process-visualizer"
 import { cn } from "@/lib/utils"
 import type { FlowTrace } from "@/types/flow"
 
-import { initialInvalidateState, invalidateMethods } from "./action-state"
+import {
+  initialInvalidateState,
+  type InvalidateMethod,
+  invalidateMethods,
+} from "./action-state"
 import { invalidate } from "./actions"
-import { buildRevalidationTrace, staleWhileRevalidateModel } from "./trace"
+import {
+  buildRereadTrace,
+  buildRevalidationTrace,
+  staleWhileRevalidateModel,
+} from "./trace"
 
 const timeFormatter = new Intl.DateTimeFormat("ja-JP", {
   timeZone: "Asia/Tokyo",
@@ -20,6 +28,22 @@ const timeFormatter = new Intl.DateTimeFormat("ja-JP", {
   minute: "2-digit",
   second: "2-digit",
 })
+
+/** 失効の操作の結果。後から値が変わっても書き換えない */
+interface InvalidateResult {
+  operationId: string
+  method: InvalidateMethod
+  displayedId: string
+  actionReadId: string
+  afterId: string
+}
+
+/** 再読み取りの結果。応答を受け取るまで afterId は null */
+interface RereadResult {
+  rereadId: string
+  beforeId: string
+  afterId: string | null
+}
 
 interface RevalidationPanelProps {
   /** サーバーで読み取ったキャッシュの値 */
@@ -35,8 +59,29 @@ export function RevalidationPanel({ value }: RevalidationPanelProps) {
     invalidate,
     initialInvalidateState,
   )
+  const [displayedId, setDisplayedId] = useState(value.id)
+  const [invalidateResult, setInvalidateResult] =
+    useState<InvalidateResult | null>(null)
+  const [reread, setReread] = useState<RereadResult | null>(null)
   const isBusy = isPending || isRefreshing
   const hasError = state.status === "error"
+
+  // 応答を受け取った時点の値で結果を固定する（他の人の操作が過去の結果に混ざらないように）
+  if (
+    state.status === "success" &&
+    state.operationId !== invalidateResult?.operationId
+  ) {
+    setInvalidateResult({
+      operationId: state.operationId,
+      method: state.method,
+      displayedId,
+      actionReadId: state.actionReadId,
+      afterId: value.id,
+    })
+  }
+  if (reread?.afterId === null && !isRefreshing) {
+    setReread({ ...reread, afterId: value.id })
+  }
 
   const pendingTrace: FlowTrace = {
     id: "invalidate-pending",
@@ -54,15 +99,12 @@ export function RevalidationPanel({ value }: RevalidationPanelProps) {
     ],
   }
 
-  const resultTrace =
-    state.status === "success"
-      ? buildRevalidationTrace({
-          operationId: state.operationId,
-          method: state.method,
-          beforeId: state.beforeId,
-          afterId: value.id,
-        })
-      : staleWhileRevalidateModel
+  let resultTrace = staleWhileRevalidateModel
+  if (reread?.afterId) {
+    resultTrace = buildRereadTrace({ ...reread, afterId: reread.afterId })
+  } else if (state.status === "success" && invalidateResult) {
+    resultTrace = buildRevalidationTrace(invalidateResult)
+  }
 
   return (
     <DemoLayout
@@ -83,7 +125,14 @@ export function RevalidationPanel({ value }: RevalidationPanelProps) {
             </div>
           </dl>
 
-          <form action={formAction} className="flex flex-col gap-2">
+          <form
+            action={formAction}
+            onSubmit={() => {
+              setDisplayedId(value.id)
+              setReread(null)
+            }}
+            className="flex flex-col gap-2"
+          >
             <p className="text-sm font-medium">キャッシュを失効させる</p>
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               {invalidateMethods.map((method) => (
@@ -126,7 +175,14 @@ export function RevalidationPanel({ value }: RevalidationPanelProps) {
               <Button
                 variant="secondary"
                 disabled={isBusy}
-                onClick={() => startTransition(() => router.refresh())}
+                onClick={() => {
+                  setReread({
+                    rereadId: crypto.randomUUID(),
+                    beforeId: value.id,
+                    afterId: null,
+                  })
+                  startTransition(() => router.refresh())
+                }}
               >
                 {isRefreshing ? (
                   <LoaderIcon
@@ -137,8 +193,15 @@ export function RevalidationPanel({ value }: RevalidationPanelProps) {
                 もう一度読み取る
               </Button>
             </div>
+            <p role="status" className="min-h-5 text-sm">
+              {reread?.afterId
+                ? reread.beforeId === reread.afterId
+                  ? "再読み取りの結果: 生成IDは変わっていません。"
+                  : `再読み取りの結果: 生成IDが ${reread.afterId} に変わりました。`
+                : null}
+            </p>
             <p className="text-xs leading-relaxed text-muted-foreground">
-              この値は閲覧者全員で共有しているため、他の人の操作で変わることもあります。
+              この値は閲覧者全員で共有しているため、他の人の操作で変わることもあります。値が作られてから5秒間は失効を受け付けません。
             </p>
           </div>
         </div>

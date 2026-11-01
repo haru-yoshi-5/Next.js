@@ -23,8 +23,8 @@ export type InvalidateState =
       /** 操作ごとに一意 */
       operationId: string
       method: InvalidateMethod
-      /** 失効させる前に読み取った生成ID */
-      beforeId: string
+      /** Server Action が失効させる前に読み取った生成ID */
+      actionReadId: string
     }
 
 export const initialInvalidateState: InvalidateState = {

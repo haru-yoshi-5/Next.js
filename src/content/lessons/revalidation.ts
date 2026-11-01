@@ -103,10 +103,10 @@ export const revalidationLesson: LessonContent = {
   ],
   demo: {
     description:
-      "ボタンは本物の Server Action を呼び出し、タグ付きのキャッシュを失効させます。操作の前後で生成IDが変わったかを、その場の値で表示します。",
+      "ボタンは本物の Server Action を呼び出し、タグ付きのキャッシュを失効させます。押した時点の画面の生成IDと応答後の生成IDを比べて表示します。値は閲覧者全員で共有しているので、変化の原因が自分の操作とは限りません。",
     steps: [
       "現在の生成IDを確認する",
-      "3つのボタンをそれぞれ押し、生成IDの変わり方を比べる",
+      "3つのボタンをそれぞれ押し、生成IDの変わり方を比べる（値の生成から5秒間は失効を受け付けない）",
       "`revalidateTag` の後は「もう一度読み取る」を押し、値が変わるタイミングも確認する",
     ],
   },
@@ -204,7 +204,7 @@ export const revalidationLesson: LessonContent = {
       {
         name: '"use cache: remote"',
         description:
-          "値をインスタンスの外へ保存し、失効の結果を全インスタンスで共有します。",
+          "値を remote 用のキャッシュハンドラーへ保存します。全インスタンスでの共有には、ホスティング先の保存先か `cacheHandlers` の設定が必要です。",
       },
       {
         name: "useActionState",

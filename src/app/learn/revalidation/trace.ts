@@ -21,23 +21,26 @@ const methodSteps: Record<InvalidateMethod, { label: string; detail: string }> =
 interface RevalidationTraceInput {
   operationId: string
   method: InvalidateMethod
-  beforeId: string
-  /** 応答後に画面へ表示されている生成ID */
+  /** ボタンを押した時点で画面に表示していた生成ID */
+  displayedId: string
+  /** Server Action が失効させる前に読み取った生成ID */
+  actionReadId: string
+  /** 応答を受け取った時点で画面に表示した生成ID */
   afterId: string
 }
 
-/** 失効の操作と、その前後の生成IDを Process Visualizer 用のデータにする */
+/** 失効の操作と、応答時点の生成IDを Process Visualizer 用のデータにする */
 export function buildRevalidationTrace({
   operationId,
   method,
-  beforeId,
+  displayedId,
+  actionReadId,
   afterId,
 }: RevalidationTraceInput): FlowTrace {
-  const changed = beforeId !== afterId
+  const changed = displayedId !== afterId
 
   return {
-    // 再読み取りで表示中の値が変わったときも再生し直す
-    id: `${operationId}-${afterId}`,
+    id: operationId,
     title: `${method} の実行結果`,
     source: "measured",
     steps: [
@@ -46,6 +49,7 @@ export function buildRevalidationTrace({
         from: "client-component",
         to: "next-server",
         label: "ボタンから Server Action を呼び出す（POST）",
+        detail: `画面の id: ${displayedId}`,
       },
       {
         id: "invoke",
@@ -58,7 +62,10 @@ export function buildRevalidationTrace({
         from: "server-action",
         to: "cache",
         label: "失効前の値を読み取る",
-        detail: `id: ${beforeId}`,
+        detail:
+          actionReadId === displayedId
+            ? `id: ${actionReadId}`
+            : `id: ${actionReadId}（押す前に、画面の値から変わっていた）`,
       },
       {
         id: "invalidate",
@@ -72,8 +79,52 @@ export function buildRevalidationTrace({
         to: "client-component",
         label: changed ? "画面の値が新しくなった" : "画面の値は変わっていない",
         detail: changed
-          ? `id: ${beforeId} → ${afterId}`
-          : `id: ${beforeId} のまま。「もう一度読み取る」で確認できる`,
+          ? `id: ${displayedId} → ${afterId}`
+          : `id: ${afterId} のまま。「もう一度読み取る」で確認できる`,
+      },
+    ],
+  }
+}
+
+interface RereadTraceInput {
+  rereadId: string
+  beforeId: string
+  afterId: string
+}
+
+/** 再読み取りの結果を、失効の操作とは別の記録として Process Visualizer 用のデータにする */
+export function buildRereadTrace({
+  rereadId,
+  beforeId,
+  afterId,
+}: RereadTraceInput): FlowTrace {
+  const changed = beforeId !== afterId
+
+  return {
+    id: rereadId,
+    title: "再読み取りの結果",
+    source: "measured",
+    steps: [
+      {
+        id: "refresh",
+        from: "client-component",
+        to: "next-server",
+        label: "router.refresh() でサーバーへ再リクエストする",
+      },
+      {
+        id: "read",
+        from: "cache",
+        to: "server-component",
+        label: "現在のキャッシュの値を読み取る",
+      },
+      {
+        id: "result",
+        from: "server-component",
+        to: "client-component",
+        label: changed ? "画面の値が変わった" : "画面の値は変わっていない",
+        detail: changed
+          ? `id: ${beforeId} → ${afterId}（他の人の操作の場合もある）`
+          : `id: ${afterId} のまま`,
       },
     ],
   }

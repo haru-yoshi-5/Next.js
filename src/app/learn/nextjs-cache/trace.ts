@@ -14,39 +14,27 @@ export function buildCacheTrace({
   fresh,
   cached,
 }: CacheTraceInput): FlowTrace {
-  const cacheResult: FlowStep[] = cached.reused
-    ? [
-        {
-          id: "cache-hit",
-          from: "cache",
-          to: "server-component",
-          label: "保存済みの結果を返す",
-          detail: `id: ${cached.report.id} / 生成時刻がこのリクエストより前なので、本体は実行されていない`,
-        },
-      ]
-    : [
-        {
-          id: "cache-run",
-          from: "cache",
-          to: "data-source",
-          label: "保存済みの結果がなく、関数本体を実行",
-          detail:
-            "生成時刻がこのリクエストの中にあるため、本体の実行を確認できる",
-        },
-        {
-          id: "cache-result",
-          from: "data-source",
-          to: "server-component",
-          label: "新しい結果を返す",
-          detail: `id: ${cached.report.id}`,
-        },
-      ]
+  const cacheResult: FlowStep = cached.generatedBeforeRead
+    ? {
+        id: "cache-earlier",
+        from: "cache",
+        to: "server-component",
+        label: "読み取り前に生成された結果を受け取る",
+        detail: `id: ${cached.report.id} / 裏側で再生成が動いているかは、この値からは分からない`,
+      }
+    : {
+        id: "cache-during",
+        from: "cache",
+        to: "server-component",
+        label: "読み取り中に生成された結果を受け取る",
+        detail: `id: ${cached.report.id} / 同時に届いた別のリクエストが生成した可能性もある`,
+      }
 
   return {
     id: requestId,
-    title: cached.reused
-      ? "キャッシュを再利用したリクエスト"
-      : "関数本体を実行したリクエスト",
+    title: cached.generatedBeforeRead
+      ? "読み取り前の結果を受け取ったリクエスト"
+      : "読み取り中に生成された結果を受け取ったリクエスト",
     source: "measured",
     // 2つの読み取りは並行して実行するので、時間を足し合わせても意味を持たない
     hideTotal: true,
@@ -76,10 +64,10 @@ export function buildCacheTrace({
         id: "cache-read",
         from: "server-component",
         to: "cache",
-        label: "getCachedReport() はキャッシュを確認",
+        label: "getCachedReport() を読み取る",
         durationMs: cached.durationMs,
       },
-      ...cacheResult,
+      cacheResult,
       {
         id: "response",
         from: "next-server",

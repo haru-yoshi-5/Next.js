@@ -64,15 +64,15 @@ function ReportCard({ title, read }: { title: string; read: ReportRead }) {
         ))}
       </dl>
       <p className="mt-auto flex items-center gap-1.5 border-t px-3 py-2 text-xs font-medium">
-        {read.reused ? (
+        {read.generatedBeforeRead ? (
           <>
             <ArchiveIcon aria-hidden className="size-3.5 text-server" />
-            保存済みの結果を再利用
+            読み取り前に生成された結果
           </>
         ) : (
           <>
             <RefreshCwIcon aria-hidden className="size-3.5" />
-            関数本体を実行
+            読み取り中に生成された結果
           </>
         )}
       </p>

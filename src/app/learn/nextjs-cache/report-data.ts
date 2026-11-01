@@ -14,8 +14,8 @@ export interface CacheReport {
 export interface ReportRead {
   report: CacheReport
   durationMs: number
-  /** 関数本体を実行せず、保存済みの結果を受け取ったか */
-  reused: boolean
+  /** 受け取った結果が、読み取りを始める前に生成されていたか */
+  generatedBeforeRead: boolean
 }
 
 /** データベースや外部 API の代わりとなる、時間のかかる処理 */
@@ -42,13 +42,18 @@ export async function getCachedReport() {
 }
 
 /**
- * レポートを読み取り、キャッシュが使われたかを判定する。
- * 速さは判定に使わない。生成時刻が読み取り開始より前なら、本体は今回実行されていない。
+ * レポートを読み取り、結果が読み取り開始より前に生成されていたかを判定する。
+ * 速さは判定に使わない。裏側の再生成が同時に動いている場合もあるので、
+ * 分かるのは「受け取った結果がいつ作られたか」までで、本体の実行の有無は断定しない。
  */
 export async function readReport(
   read: () => Promise<CacheReport>,
 ): Promise<ReportRead> {
   const startedAt = Date.now()
   const { result: report, durationMs } = await measure(read)
-  return { report, durationMs, reused: report.generatedAt < startedAt }
+  return {
+    report,
+    durationMs,
+    generatedBeforeRead: report.generatedAt < startedAt,
+  }
 }

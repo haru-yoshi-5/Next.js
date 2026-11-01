@@ -59,7 +59,7 @@ export const nextjsCacheLesson: LessonContent = {
         },
         {
           type: "paragraph",
-          text: "デモの `getCachedReport` は `revalidate: 60` / `expire: 120` にしているので、1分ほど待つと結果が作り直されます。",
+          text: "デモの `getCachedReport` は `revalidate: 60` / `expire: 120` にしています。作り直しは時間の経過だけでは始まらず、60秒を過ぎた後のリクエストがきっかけになります。公式ドキュメントでは古い結果を返しながら裏側で作り直すと説明されていますが、ローカルの `next start` で測定したときは、そのリクエストが約400ms待って新しい結果を受け取りました。",
         },
       ],
     },
@@ -106,7 +106,13 @@ export const nextjsCacheLesson: LessonContent = {
         },
         {
           type: "paragraph",
-          text: '`"use cache: remote"` は、結果をインスタンスの外にあるキャッシュへ保存し、すべてのインスタンスで共有します。その代わりネットワーク越しの確認が必要になり、ホスティング先の料金が発生する場合があります。',
+          text: '`"use cache: remote"` は、結果を `remote` 用のキャッシュハンドラーへ保存します。ホスティング先が共有の保存先を用意していれば、すべてのインスタンスで結果を共有できます。その代わりネットワーク越しの確認が必要になり、料金が発生する場合があります。',
+        },
+        {
+          type: "callout",
+          tone: "caution",
+          title: "セルフホストでは保存先の設定が必要",
+          text: "`cacheHandlers` を設定しないと、`remote` もメモリ上のキャッシュになり、インスタンスをまたいで共有されません。NextScope はこの設定を持たないので、Vercel 以外で複数台動かすと全員での共有にはなりません。",
         },
         {
           type: "callout",
@@ -129,11 +135,11 @@ export const nextjsCacheLesson: LessonContent = {
   ],
   demo: {
     description:
-      "同じ処理をキャッシュなしと `use cache: remote` で実行し、結果を並べています。判定には速さではなく、生成時刻がリクエストの開始より前かどうかを使っています。",
+      "同じ処理をキャッシュなしと `use cache: remote` で実行し、結果を並べています。判定には速さではなく、生成時刻が読み取りの開始より前かどうかを使っています。分かるのは受け取った結果がいつ作られたかまでで、裏側の再生成が動いているかは判定できません。",
     steps: [
       "2つの生成IDと読み取り時間を確認する",
       "「もう一度リクエスト」を押し、右側の生成IDだけが変わらないことを確認する",
-      "1分ほど待って押し、右側の結果も作り直されることを確認する",
+      "1分以上待って押し、右側の生成IDが変わることを確認する（変わらないときは、数秒待ってもう一度押す）",
     ],
   },
   sourceFiles: [
@@ -205,12 +211,12 @@ export const nextjsCacheLesson: LessonContent = {
       {
         name: '"use cache: remote"',
         description:
-          "getCachedReport の結果をインスタンスの外へ保存し、全員で共有します。",
+          "getCachedReport の結果を remote 用のキャッシュハンドラーへ保存します。Vercel では全インスタンスで共有されました。",
       },
       {
         name: "cacheLife",
         description:
-          "1分で作り直される短い有効期間を指定し、変化を確認できるようにしています。",
+          "60秒を過ぎたリクエストで再生成が始まる短い有効期間を指定し、変化を確認できるようにしています。",
       },
       {
         name: "io() + <Suspense>",

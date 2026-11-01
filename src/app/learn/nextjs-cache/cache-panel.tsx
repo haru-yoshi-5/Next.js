@@ -49,7 +49,7 @@ export function CachePanel({ trace, children }: CachePanelProps) {
               <RuntimeBadge runtime="client" detail="このボタンだけ" />
             </div>
             <p className="text-xs leading-relaxed text-muted-foreground">
-              このキャッシュは閲覧者全員で共有しています。最初のリクエストは本体を実行し、他の人が直前に開いていれば初回から再利用になります。
+              このキャッシュは閲覧者全員で共有しています。他の人が直前に開いていれば、初回から読み取り前に生成された結果を受け取ります。
             </p>
           </div>
         </div>

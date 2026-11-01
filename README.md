@@ -31,7 +31,7 @@ App Router の Server Components・Server Actions・Streaming・Cache などは�
 | Client Components | ページは Server Component のまま、`"use client"` のカウンターだけを境界として切り出す                                        |
 | Server Actions    | 本物の `"use server"` 関数でサーバー側バリデーション → データ更新 → `updateTag`                                              |
 | Streaming         | 1秒 / 2秒かかる Server Component を別々の `<Suspense>` 境界で配信                                                            |
-| Next.js Cache     | 同じ処理をキャッシュなしと `"use cache: remote"` で実行し、生成時刻から再利用を判定                                          |
+| Next.js Cache     | 同じ処理をキャッシュなしと `"use cache: remote"` で実行し、生成時刻から読み取り前の結果かを判定                              |
 | Revalidation      | 本物の Server Action で `updateTag` / `revalidateTag` / `revalidatePath` を実行し、生成IDの変化を表示                        |
 
 ### クイズや課題は作らない
@@ -236,7 +236,7 @@ http://localhost:3000 を開きます。
 ## 設計上の制約と注意点
 
 - **Server Actions のデモデータ**はサーバープロセスのメモリに保存しています。再起動で消え、複数インスタンスでは共有されません（最大8件）。また、ページのキャッシュは再起動後も `.next` に残るため、データが消えた後も古い表示が残ることがあります。
-- **Cache 教材のデモ**は `"use cache: remote"` を使っています。Vercel の実測では通常の `"use cache"` が実行時に再利用されなかったためで、デプロイ先によっては料金が発生します。キャッシュは閲覧者全員で共有します。
+- **Cache 教材のデモ**は `"use cache: remote"` を使っています。Vercel の実測では通常の `"use cache"` が実行時に再利用されなかったためで、デプロイ先によっては料金が発生します。キャッシュは閲覧者全員で共有しますが、`cacheHandlers` を設定していないため、セルフホストで複数台動かすとインスタンスごとのメモリに分かれます。
 - Process Visualizer のステップ間隔（約0.65秒）は目で追うための演出です。実際の処理時間は各ステップの計測値で示しています。
 - App Router 教材の遷移フローは、RSC Payload のやり取りをブラウザから直接観測できないため「モデル図」として表示しています（URL と `useSelectedLayoutSegment()` の値は実データ）。
 
