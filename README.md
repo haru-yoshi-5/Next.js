@@ -31,6 +31,8 @@ App Router の Server Components・Server Actions・Streaming・Cache などは�
 | Client Components | ページは Server Component のまま、`"use client"` のカウンターだけを境界として切り出す                                        |
 | Server Actions    | 本物の `"use server"` 関数でサーバー側バリデーション → データ更新 → `updateTag`                                              |
 | Streaming         | 1秒 / 2秒かかる Server Component を別々の `<Suspense>` 境界で配信                                                            |
+| Next.js Cache     | 同じ処理をキャッシュなしと `"use cache: remote"` で実行し、生成時刻から再利用を判定                                          |
+| Revalidation      | 本物の Server Action で `updateTag` / `revalidateTag` / `revalidatePath` を実行し、生成IDの変化を表示                        |
 
 ### クイズや課題は作らない
 
@@ -68,6 +70,8 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 3. Client Components（03 Server & Client）
 4. Server Actions（04 Data）
 5. Streaming（05 Rendering）
+6. Next.js Cache（06 Cache）
+7. Revalidation（06 Cache）
 
 ---
 
@@ -126,6 +130,8 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 │ ├ ○ /learn/app-router/layout-file
 │ └ ○ /learn/app-router/link-component
 ├ ○ /learn/client-components
+├ ◐ /learn/nextjs-cache                 ← デモだけがリクエスト時に実行
+├ ◐ /learn/revalidation                 ← デモだけがリクエスト時に実行
 ├ ○ /learn/server-actions
 ├ ◐ /learn/server-components            ← デモだけがリクエスト時に実行
 └ ◐ /learn/streaming                    ← デモだけがストリーミング
@@ -176,7 +182,9 @@ src/
 │     ├ server-components/   # page.tsx + デモ用 Server / Client Components
 │     ├ client-components/
 │     ├ server-actions/      # actions.ts ("use server") / ストア / キャッシュされる一覧
-│     └ streaming/           # Suspense 境界ごとの Server Components
+│     ├ streaming/           # Suspense 境界ごとの Server Components
+│     ├ nextjs-cache/        # キャッシュあり / なしの比較と再利用の判定
+│     └ revalidation/        # 失効の Server Action とタグ付きキャッシュ
 ├ components/
 │  ├ layout/       # ヘッダー・サイドバー・テーマ・エラー表示
 │  ├ learning/     # LessonPage / SourceCode / InsideThisPage / DemoLayout など
@@ -227,7 +235,8 @@ http://localhost:3000 を開きます。
 
 ## 設計上の制約と注意点
 
-- **Server Actions のデモデータ**はサーバープロセスのメモリに保存しています。再起動で消え、複数インスタンスでは共有されません（最大8件）。
+- **Server Actions のデモデータ**はサーバープロセスのメモリに保存しています。再起動で消え、複数インスタンスでは共有されません（最大8件）。また、ページのキャッシュは再起動後も `.next` に残るため、データが消えた後も古い表示が残ることがあります。
+- **Cache 教材のデモ**は `"use cache: remote"` を使っています。Vercel の実測では通常の `"use cache"` が実行時に再利用されなかったためで、デプロイ先によっては料金が発生します。キャッシュは閲覧者全員で共有します。
 - Process Visualizer のステップ間隔（約0.65秒）は目で追うための演出です。実際の処理時間は各ステップの計測値で示しています。
 - App Router 教材の遷移フローは、RSC Payload のやり取りをブラウザから直接観測できないため「モデル図」として表示しています（URL と `useSelectedLayoutSegment()` の値は実データ）。
 
@@ -238,7 +247,6 @@ http://localhost:3000 を開きます。
 - 03 Server & Client: Server / Client Boundary
 - 04 Data: Data Fetching / Route Handlers
 - 05 Rendering: Static / Dynamic
-- 06 Cache: Next.js Cache / Revalidation（revalidatePath / revalidateTag）
 - 07 Error Handling: error.tsx / not-found.tsx / loading.tsx
 - 08 Authentication: 認証の考え方 / サーバー側での認証 / 保護されたページ
 
