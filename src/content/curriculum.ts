@@ -55,7 +55,10 @@ export const curriculum: Chapter[] = [
       {
         slug: "server-client-boundary",
         title: "Server / Client Boundary",
-        status: "planned",
+        status: "available",
+        summary:
+          "コードは import で、データは props で境界を越えることを、届いた内容の検査で確認します。",
+        runtimes: ["server", "client"],
       },
     ],
   },
