@@ -19,7 +19,7 @@ export function LiveDemo({ description, steps, children }: LiveDemoProps) {
         title="動かして、裏側を見る"
         description={description}
       />
-      <ol className="mb-5 flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:gap-x-6">
+      <ol className="mb-5 flex flex-col gap-1 text-sm text-muted-foreground">
         {steps.map((step, index) => (
           <li key={step} className="flex gap-2">
             <span className="font-mono text-foreground">{index + 1}.</span>
