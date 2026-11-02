@@ -123,7 +123,7 @@ export function buildRereadTrace({
         to: "client-component",
         label: changed ? "画面の値が変わった" : "画面の値は変わっていない",
         detail: changed
-          ? `id: ${beforeId} → ${afterId}（他の人の操作の場合もある）`
+          ? `id: ${beforeId} → ${afterId}（他の人の操作や、再生成のタイミングの場合もある）`
           : `id: ${afterId} のまま`,
       },
     ],
