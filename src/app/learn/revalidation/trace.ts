@@ -65,7 +65,7 @@ export function buildRevalidationTrace({
         detail:
           actionReadId === displayedId
             ? `id: ${actionReadId}`
-            : `id: ${actionReadId}（押す前に、画面の値から変わっていた）`,
+            : `id: ${actionReadId}（Server Action が読み取った時点で、画面の値と異なっていた）`,
       },
       {
         id: "invalidate",

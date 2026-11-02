@@ -65,6 +65,8 @@ export function RevalidationPanel({ value }: RevalidationPanelProps) {
   const [reread, setReread] = useState<RereadResult | null>(null)
   const isBusy = isPending || isRefreshing
   const hasError = state.status === "error"
+  // 再読み取りの後は、前の操作のメッセージを今の結果と取り違えないように隠す
+  const actionMessage = reread ? null : state.message
 
   // 応答を受け取った時点の値で結果を固定する（他の人の操作が過去の結果に混ざらないように）
   if (
@@ -158,14 +160,14 @@ export function RevalidationPanel({ value }: RevalidationPanelProps) {
               hasError ? "text-destructive" : "text-server",
             )}
           >
-            {state.message ? (
+            {actionMessage ? (
               <>
                 {hasError ? (
                   <CircleAlertIcon aria-hidden className="size-4" />
                 ) : (
                   <CircleCheckIcon aria-hidden className="size-4" />
                 )}
-                {state.message}
+                {actionMessage}
               </>
             ) : null}
           </p>
