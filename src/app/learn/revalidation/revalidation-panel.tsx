@@ -65,8 +65,8 @@ export function RevalidationPanel({ value }: RevalidationPanelProps) {
   const [reread, setReread] = useState<RereadResult | null>(null)
   const isBusy = isPending || isRefreshing
   const hasError = state.status === "error"
-  // 再読み取りの後は、前の操作のメッセージを今の結果と取り違えないように隠す
-  const actionMessage = reread ? null : state.message
+  // 再読み取りの後や次の送信中は、前の操作のメッセージを今の結果と取り違えないように隠す
+  const actionMessage = reread || isPending ? null : state.message
 
   // 応答を受け取った時点の値で結果を固定する（他の人の操作が過去の結果に混ざらないように）
   if (
@@ -203,7 +203,7 @@ export function RevalidationPanel({ value }: RevalidationPanelProps) {
                 : null}
             </p>
             <p className="text-xs leading-relaxed text-muted-foreground">
-              この値は閲覧者全員で共有しているため、他の人の操作で変わることもあります。値が作られてから5秒間は失効を受け付けません。
+              この値は閲覧者全員で共有しているため、他の人の操作で変わることもあります。値の生成や直前の操作から5秒間は失効を受け付けません。
             </p>
           </div>
         </div>
