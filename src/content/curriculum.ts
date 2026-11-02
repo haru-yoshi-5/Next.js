@@ -101,8 +101,22 @@ export const curriculum: Chapter[] = [
     number: "06",
     title: "Cache",
     lessons: [
-      { slug: "nextjs-cache", title: "Next.js Cache", status: "planned" },
-      { slug: "revalidation", title: "Revalidation", status: "planned" },
+      {
+        slug: "nextjs-cache",
+        title: "Next.js Cache",
+        status: "available",
+        summary:
+          "同じ処理をキャッシュあり / なしで並べ、関数の結果が再利用される様子を実測で確認します。",
+        runtimes: ["server"],
+      },
+      {
+        slug: "revalidation",
+        title: "Revalidation",
+        status: "available",
+        summary:
+          "updateTag / revalidateTag / revalidatePath でキャッシュを失効させ、値の変わり方を比べます。",
+        runtimes: ["client", "server"],
+      },
     ],
   },
   {

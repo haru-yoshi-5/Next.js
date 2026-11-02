@@ -59,9 +59,7 @@ export function HeroFlow() {
             >
               <div className="min-w-0">
                 <p className="text-sm font-medium">{node.label}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {node.note}
-                </p>
+                <p className="text-xs text-muted-foreground">{node.note}</p>
               </div>
               <RuntimeBadge runtime={node.runtime} />
             </div>
