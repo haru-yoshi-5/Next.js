@@ -82,7 +82,7 @@ export const revalidationLesson: LessonContent = {
           type: "callout",
           tone: "note",
           title: "図はモデルとして表示しています",
-          text: "Process Visualizer の最初の図は、公式ドキュメントに沿ったモデル図です。ローカルの `next start` では失効後もしばらく古い値が返りましたが、Vercel の検証用アプリで測定したときは失効直後から新しい値が返りました。ボタンを押した後の結果は、その場で観測した値です。",
+          text: "Process Visualizer の最初の図は、公式ドキュメントに沿ったモデル図です。`revalidateTag` を実際に測定すると、どちらの環境でも押した直後の画面は変わりませんでした。その後、ローカルの `next start` では2回目の再読み取りで、Vercel では最初の再読み取りで新しい値になりました。ボタンを押した後の結果は、その場で観測した値です。",
         },
       ],
     },
@@ -97,6 +97,12 @@ export const revalidationLesson: LessonContent = {
         {
           type: "paragraph",
           text: "Vercel でビルド時に生成されたページに `updateTag` を使った測定では、操作した本人への応答はすぐ最新になりましたが、別のリクエストには数秒から15秒ほど古いページが返りました。「自分には反映された」ことと「全員に反映された」ことは別だと考えておきます。",
+        },
+        {
+          type: "callout",
+          tone: "note",
+          title: "失効後に生成IDが2回変わることがある",
+          text: "Vercel の本番で `updateTag` と `revalidatePath` を合わせて8回測定したところ、6回は失効の応答で返った値が次の読み取りでもう一度作り直されました。ローカルの `next start` では起きず、原因は特定できていません。古い値が返るわけではありませんが、値を作る処理が1回増えます。",
         },
       ],
     },

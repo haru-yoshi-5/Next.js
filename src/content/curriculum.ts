@@ -55,7 +55,10 @@ export const curriculum: Chapter[] = [
       {
         slug: "server-client-boundary",
         title: "Server / Client Boundary",
-        status: "planned",
+        status: "available",
+        summary:
+          "コードは import で、データは props で境界を越えることを、届いた内容の検査で確認します。",
+        runtimes: ["server", "client"],
       },
     ],
   },
@@ -92,7 +95,10 @@ export const curriculum: Chapter[] = [
       {
         slug: "static-and-dynamic",
         title: "Static / Dynamic",
-        status: "planned",
+        status: "available",
+        summary:
+          "1つのページの中で、静的シェルとリクエスト時の部分が別々に届く様子を実測で確認します。",
+        runtimes: ["server", "client"],
       },
     ],
   },

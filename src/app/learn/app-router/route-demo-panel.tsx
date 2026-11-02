@@ -118,7 +118,7 @@ export function RouteDemoPanel({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="rounded-lg border border-dashed border-server/40 p-4">
-            <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <p className="font-mono text-[0.7rem] text-muted-foreground">
                 {"{children}"}
               </p>

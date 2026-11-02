@@ -24,15 +24,17 @@ App Router の Server Components・Server Actions・Streaming・Cache などは�
 
 サンプルコードを表示するだけの教材にはしていません。各教材は、解説している機能を教材ページそのものに使っています。
 
-| 教材              | このページ自体の作り                                                                                                         |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| App Router        | 教材本体を `layout.tsx` に置き、Live Demo の `children` だけが `page.tsx` / `[slug]/page.tsx` / `not-found.tsx` に切り替わる |
-| Server Components | `io()` + `<Suspense>` でリクエストごとにサーバーで実行される async Server Component                                          |
-| Client Components | ページは Server Component のまま、`"use client"` のカウンターだけを境界として切り出す                                        |
-| Server Actions    | 本物の `"use server"` 関数でサーバー側バリデーション → データ更新 → `updateTag`                                              |
-| Streaming         | 1秒 / 2秒かかる Server Component を別々の `<Suspense>` 境界で配信                                                            |
-| Next.js Cache     | 同じ処理をキャッシュなしと `"use cache: remote"` で実行し、生成時刻から読み取り前の結果かを判定                              |
-| Revalidation      | 本物の Server Action で `updateTag` / `revalidateTag` / `revalidatePath` を実行し、生成IDの変化を表示                        |
+| 教材                     | このページ自体の作り                                                                                                         |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| App Router               | 教材本体を `layout.tsx` に置き、Live Demo の `children` だけが `page.tsx` / `[slug]/page.tsx` / `not-found.tsx` に切り替わる |
+| Server Components        | `io()` + `<Suspense>` でリクエストごとにサーバーで実行される async Server Component                                          |
+| Client Components        | ページは Server Component のまま、`"use client"` のカウンターだけを境界として切り出す                                        |
+| Server / Client Boundary | `children` で Server Component の出力を Client Component に置き、届いた応答と JavaScript を検索して確かめる                  |
+| Server Actions           | 本物の `"use server"` 関数でサーバー側バリデーション → データ更新 → `updateTag`                                              |
+| Streaming                | 1秒 / 2秒かかる Server Component を別々の `<Suspense>` 境界で配信                                                            |
+| Static / Dynamic         | `"use cache"` の値を静的シェルに、`io()` 後の値を `<Suspense>` に置き、ページの応答から到着時間を計測                        |
+| Next.js Cache            | 同じ処理をキャッシュなしと `"use cache: remote"` で実行し、生成時刻から読み取り前の結果かを判定                              |
+| Revalidation             | 本物の Server Action で `updateTag` / `revalidateTag` / `revalidatePath` を実行し、生成IDの変化を表示                        |
 
 ### クイズや課題は作らない
 
@@ -68,10 +70,12 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 1. App Router（02 Routing）
 2. Server Components（03 Server & Client）
 3. Client Components（03 Server & Client）
-4. Server Actions（04 Data）
-5. Streaming（05 Rendering）
-6. Next.js Cache（06 Cache）
-7. Revalidation（06 Cache）
+4. Server / Client Boundary（03 Server & Client）
+5. Server Actions（04 Data）
+6. Streaming（05 Rendering）
+7. Static / Dynamic（05 Rendering）
+8. Next.js Cache（06 Cache）
+9. Revalidation（06 Cache）
 
 ---
 
@@ -132,8 +136,10 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 ├ ○ /learn/client-components
 ├ ◐ /learn/nextjs-cache                 ← デモだけがリクエスト時に実行
 ├ ◐ /learn/revalidation                 ← デモだけがリクエスト時に実行
+├ ◐ /learn/server-client-boundary       ← デモだけがリクエスト時に実行
 ├ ○ /learn/server-actions
 ├ ◐ /learn/server-components            ← デモだけがリクエスト時に実行
+├ ◐ /learn/static-and-dynamic           ← デモの一部だけがリクエスト時に実行
 └ ◐ /learn/streaming                    ← デモだけがストリーミング
 ```
 
@@ -183,8 +189,10 @@ src/
 │     ├ client-components/
 │     ├ server-actions/      # actions.ts ("use server") / ストア / キャッシュされる一覧
 │     ├ streaming/           # Suspense 境界ごとの Server Components
+│     ├ static-and-dynamic/  # 静的シェルとリクエスト時の部分、到着時間の計測
 │     ├ nextjs-cache/        # キャッシュあり / なしの比較と再利用の判定
-│     └ revalidation/        # 失効の Server Action とタグ付きキャッシュ
+│     ├ revalidation/        # 失効の Server Action とタグ付きキャッシュ
+│     └ server-client-boundary/ # children の組み合わせと境界の検査
 ├ components/
 │  ├ layout/       # ヘッダー・サイドバー・テーマ・エラー表示
 │  ├ learning/     # LessonPage / SourceCode / InsideThisPage / DemoLayout など
@@ -244,9 +252,7 @@ http://localhost:3000 を開きます。
 
 - 01 Introduction: Next.jsとは / Reactとの関係 / Next.jsを使う理由
 - 02 Routing: Dynamic Routes
-- 03 Server & Client: Server / Client Boundary
 - 04 Data: Data Fetching / Route Handlers
-- 05 Rendering: Static / Dynamic
 - 07 Error Handling: error.tsx / not-found.tsx / loading.tsx
 - 08 Authentication: 認証の考え方 / サーバー側での認証 / 保護されたページ
 
