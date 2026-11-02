@@ -40,7 +40,7 @@ export default function HomePage() {
 
   return (
     <main id="main-content" className="flex-1">
-      <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:px-6 lg:py-24">
+      <section className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:px-6 lg:py-24">
         <div className="flex flex-col gap-6">
           <p className="font-mono text-xs tracking-wider text-muted-foreground">
             INTERACTIVE NEXT.JS LEARNING
