@@ -136,11 +136,17 @@ export const serverClientBoundaryLesson: LessonContent = {
       path: `${dir}/inspect-boundary.ts`,
       role: "ブラウザの処理",
       description: "応答と JavaScript ファイルを取得して検索する",
+      runtime: "client",
+      runtimeReason:
+        '"use client" の boundary-panel.tsx から import されるため Client',
     },
     {
       path: `${dir}/trace.ts`,
       role: "Visualizer データ",
       description: "操作の結果とモデル図をフローとして定義する",
+      runtime: "client",
+      runtimeReason:
+        '"use client" の boundary-panel.tsx から import されるため Client',
     },
   ],
   inside: {
