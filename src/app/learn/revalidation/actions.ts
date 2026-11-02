@@ -8,7 +8,7 @@ import { getSharedValue, REVALIDATION_TAG } from "./shared-data"
 /** 値を生成してから次の失効を受け付けるまでの時間 */
 const COOLDOWN_MS = 5_000
 const COOLDOWN_MESSAGE =
-  "値が作られた直後のため実行しませんでした。5秒ほど待って再度お試しください。"
+  "値の生成または直前の操作から5秒以内のため、実行しませんでした。少し待って再度お試しください。"
 
 /**
  * このインスタンスで最後に失効を受け付けた時刻。
