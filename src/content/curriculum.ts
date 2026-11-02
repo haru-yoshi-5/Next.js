@@ -95,7 +95,10 @@ export const curriculum: Chapter[] = [
       {
         slug: "static-and-dynamic",
         title: "Static / Dynamic",
-        status: "planned",
+        status: "available",
+        summary:
+          "1つのページの中で、静的シェルとリクエスト時の部分が別々に届く様子を実測で確認します。",
+        runtimes: ["server", "client"],
       },
     ],
   },
