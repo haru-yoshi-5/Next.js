@@ -30,6 +30,7 @@ App Router の Server Components・Server Actions・Streaming・Cache などは�
 | Server Components        | `io()` + `<Suspense>` でリクエストごとにサーバーで実行される async Server Component                                          |
 | Client Components        | ページは Server Component のまま、`"use client"` のカウンターだけを境界として切り出す                                        |
 | Server / Client Boundary | `children` で Server Component の出力を Client Component に置き、届いた応答と JavaScript を検索して確かめる                  |
+| Data Fetching            | async Server Component で同じ取得を直列と `Promise.all` で実行し、実測した開始時間と所要時間を表示                           |
 | Server Actions           | 本物の `"use server"` 関数でサーバー側バリデーション → データ更新 → `updateTag`                                              |
 | Streaming                | 1秒 / 2秒かかる Server Component を別々の `<Suspense>` 境界で配信                                                            |
 | Static / Dynamic         | `"use cache"` の値を静的シェルに、`io()` 後の値を `<Suspense>` に置き、ページの応答から到着時間を計測                        |
@@ -71,11 +72,12 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 2. Server Components（03 Server & Client）
 3. Client Components（03 Server & Client）
 4. Server / Client Boundary（03 Server & Client）
-5. Server Actions（04 Data）
-6. Streaming（05 Rendering）
-7. Static / Dynamic（05 Rendering）
-8. Next.js Cache（06 Cache）
-9. Revalidation（06 Cache）
+5. Data Fetching（04 Data）
+6. Server Actions（04 Data）
+7. Streaming（05 Rendering）
+8. Static / Dynamic（05 Rendering）
+9. Next.js Cache（06 Cache）
+10. Revalidation（06 Cache）
 
 ---
 
@@ -134,6 +136,7 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 │ ├ ○ /learn/app-router/layout-file
 │ └ ○ /learn/app-router/link-component
 ├ ○ /learn/client-components
+├ ◐ /learn/data-fetching                ← デモだけがリクエスト時に実行
 ├ ◐ /learn/nextjs-cache                 ← デモだけがリクエスト時に実行
 ├ ◐ /learn/revalidation                 ← デモだけがリクエスト時に実行
 ├ ◐ /learn/server-client-boundary       ← デモだけがリクエスト時に実行
@@ -187,6 +190,7 @@ src/
 │     ├ app-router/          # layout.tsx が教材本体、[slug] が Dynamic Route
 │     ├ server-components/   # page.tsx + デモ用 Server / Client Components
 │     ├ client-components/
+│     ├ data-fetching/       # 直列 / 並列の取得と、実測のタイムライン
 │     ├ server-actions/      # actions.ts ("use server") / ストア / キャッシュされる一覧
 │     ├ streaming/           # Suspense 境界ごとの Server Components
 │     ├ static-and-dynamic/  # 静的シェルとリクエスト時の部分、到着時間の計測
@@ -252,7 +256,7 @@ http://localhost:3000 を開きます。
 
 - 01 Introduction: Next.jsとは / Reactとの関係 / Next.jsを使う理由
 - 02 Routing: Dynamic Routes
-- 04 Data: Data Fetching / Route Handlers
+- 04 Data: Route Handlers
 - 07 Error Handling: error.tsx / not-found.tsx / loading.tsx
 - 08 Authentication: 認証の考え方 / サーバー側での認証 / 保護されたページ
 
