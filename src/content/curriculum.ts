@@ -83,7 +83,14 @@ export const curriculum: Chapter[] = [
           "フォーム送信から本物の Server Action が実行され、キャッシュ更新を経て画面に戻るまでを追います。",
         runtimes: ["client", "server"],
       },
-      { slug: "route-handlers", title: "Route Handlers", status: "planned" },
+      {
+        slug: "route-handlers",
+        title: "Route Handlers",
+        status: "available",
+        summary:
+          "教材ページから本物の route.ts へ GET / POST / PUT を送り、ステータスコードとレスポンスを確認します。",
+        runtimes: ["client", "server"],
+      },
     ],
   },
   {
