@@ -67,7 +67,14 @@ export const curriculum: Chapter[] = [
     number: "04",
     title: "Data",
     lessons: [
-      { slug: "data-fetching", title: "Data Fetching", status: "planned" },
+      {
+        slug: "data-fetching",
+        title: "Data Fetching",
+        status: "available",
+        summary:
+          "同じデータ取得を直列と並列で実行し、await の書き方で待ち時間が変わる様子を実測で確認します。",
+        runtimes: ["server"],
+      },
       {
         slug: "server-actions",
         title: "Server Actions",
