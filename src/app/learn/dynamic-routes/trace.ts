@@ -80,9 +80,10 @@ export function buildArticleTrace(
           id: "complete",
           from: "next-server",
           to: "browser",
-          label: `${measurement.status}: 完成した HTML が届く`,
-          detail: "記事が最初の応答に含まれていた",
-          durationMs: measurement.firstChunkMs,
+          label: `${measurement.status}: 完成した HTML の中で記事が届く`,
+          detail: `App Shell を経由せず、記事が HTML に最初から含まれていた（最初のデータは ${formatMs(measurement.firstChunkMs)}）`,
+          // 静的な HTML も分割して届くため、最初のデータではなく記事の目印が届いた時間を使う
+          durationMs: measurement.resultAtMs ?? measurement.totalMs,
           status: "success",
         },
       ],

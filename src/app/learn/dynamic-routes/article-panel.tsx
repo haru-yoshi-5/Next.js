@@ -76,6 +76,13 @@ export function ArticlePanel() {
       setInputError("値を入力してください。")
       return
     }
+    // 「.」「..」は URL の中で「今の階層」「1つ上の階層」として扱われ、記事ページを指さない
+    if (value === "." || value === "..") {
+      setInputError(
+        "「.」と「..」は URL の階層を表す記号として扱われ、記事ページを指さないため使えません。",
+      )
+      return
+    }
     setInputError(null)
     void measure(value)
   }
@@ -122,7 +129,11 @@ export function ArticlePanel() {
               <input
                 id="article-value"
                 value={text}
-                onChange={(event) => setText(event.target.value)}
+                onChange={(event) => {
+                  setText(event.target.value)
+                  // 空欄のエラーは、値が入力された時点で解除する
+                  if (event.target.value.trim().length > 0) setInputError(null)
+                }}
                 maxLength={VALUE_MAX_LENGTH}
                 autoComplete="off"
                 aria-invalid={inputError ? true : undefined}
