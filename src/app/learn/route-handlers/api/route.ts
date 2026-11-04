@@ -47,7 +47,8 @@ async function readBody(request: Request, maxBytes: number) {
     if (done) break
     totalBytes += value.byteLength
     if (totalBytes > maxBytes) {
-      await reader.cancel()
+      // 中止に失敗しても上限を超えたことに変わりはないため、413 を返せるように失敗は無視する
+      await reader.cancel().catch(() => undefined)
       return null
     }
     chunks.push(value)
@@ -126,7 +127,21 @@ export async function POST(request: NextRequest) {
   }
 
   // Content-Length がない・偽っている場合に備えて、読みながらバイト数でも確かめる
-  const raw = await readBody(request, BODY_MAX_BYTES)
+  let raw: string | null
+  try {
+    raw = await readBody(request, BODY_MAX_BYTES)
+  } catch (error) {
+    // 送信の途中で接続が切れた場合など。詳細はサーバーのログにだけ残す
+    console.error(
+      "[route-handlers] リクエストの本文を読み取れませんでした",
+      error,
+    )
+    return errorResponse(
+      400,
+      "リクエストの本文を読み取れませんでした。",
+      startedAt,
+    )
+  }
   if (raw === null) {
     return errorResponse(413, "リクエストの本文が大きすぎます。", startedAt)
   }
