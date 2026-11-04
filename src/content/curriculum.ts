@@ -151,7 +151,14 @@ export const curriculum: Chapter[] = [
     number: "07",
     title: "Error Handling",
     lessons: [
-      { slug: "error-file", title: "error.tsx", status: "planned" },
+      {
+        slug: "error-file",
+        title: "error.tsx",
+        status: "available",
+        summary:
+          "デモの中で障害を起こし、error.tsx が page の部分だけを差し替えて、retry() で回復する様子を確かめます。",
+        runtimes: ["server", "client"],
+      },
       { slug: "not-found-file", title: "not-found.tsx", status: "planned" },
       {
         slug: "loading-file",
