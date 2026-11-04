@@ -21,6 +21,7 @@ export const notFoundModel: FlowTrace = {
       from: "next-server",
       to: "server-component",
       label: "ルートが一致すれば、ステータス 200 で送信を始め page.tsx を実行",
+      detail: "ビルド時にプリレンダーしたページは、その結果を返す",
     },
     {
       id: "not-found",
@@ -86,30 +87,31 @@ export function buildNotFoundTrace(
       from: "next-server",
       to: "browser",
       label: `${status}: ${ROOT_NOT_FOUND} が返る`,
-      detail: `一致するルートがなく、page.tsx は実行されなかった（${noindexText}）`,
+      detail: `一致するルートがない URL の表示（${noindexText}）`,
       durationMs: totalMs,
       status: "error",
     })
   } else {
+    // 計測で分かるのは、応答の内容と、ブラウザで表示されたファイルだけ。
+    // サーバー内部で page.tsx をいつ実行したかは観測していないため、ここには書かない
     const isNotFound = renderedFile.endsWith("not-found.tsx")
     steps.push(
       {
-        id: "render",
+        id: "response",
         from: "next-server",
-        to: "server-component",
-        label: `${status} で送信を始め、page.tsx を実行`,
+        to: "browser",
+        label: `${status}: 応答を受信`,
+        detail: noindexText,
+        durationMs: totalMs,
       },
       {
         id: "result",
-        from: "server-component",
+        from: "browser",
         to: "browser",
         label: isNotFound
-          ? `notFound() → ${renderedFile} が表示される`
-          : `${renderedFile} が表示される`,
-        detail: isNotFound
-          ? `ステータスは ${status} のまま（${noindexText}）`
-          : undefined,
-        durationMs: totalMs,
+          ? `${renderedFile} が表示された（notFound() が呼ばれた）`
+          : `${renderedFile} が表示された`,
+        detail: isNotFound ? `ステータスは ${status} のまま` : undefined,
         status: isNotFound ? "error" : "success",
       },
     )

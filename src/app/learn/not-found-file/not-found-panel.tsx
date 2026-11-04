@@ -1,7 +1,7 @@
 "use client"
 
 import { CircleAlertIcon, ExternalLinkIcon, LoaderIcon } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { DemoLayout } from "@/components/learning/demo-layout"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,11 @@ import { ProcessVisualizer } from "@/components/visualizer/process-visualizer"
 import type { FlowTrace } from "@/types/flow"
 
 import { BASE_PATH, type ProxyDecision } from "./demo-data"
-import { measureNotFound, type NotFoundMeasurement } from "./measure-not-found"
+import {
+  isTimeoutError,
+  measureNotFound,
+  type NotFoundMeasurement,
+} from "./measure-not-found"
 import { buildNotFoundTrace, notFoundModel } from "./trace"
 
 /** 表に残す計測の回数 */
@@ -64,7 +68,7 @@ interface NotFoundRun extends NotFoundMeasurement {
   number: number
 }
 
-type MeasureStatus = "idle" | "loading" | "error"
+type MeasureStatus = "idle" | "loading" | "error" | "timeout"
 
 const formatMs = (ms: number) => `${Math.round(ms).toLocaleString("ja-JP")} ms`
 
@@ -74,11 +78,22 @@ export function NotFoundPanel() {
   const [status, setStatus] = useState<MeasureStatus>("idle")
   const [runs, setRuns] = useState<NotFoundRun[]>([])
   const [trace, setTrace] = useState<FlowTrace>(notFoundModel)
+  // 進行中の計測。画面を離れたときに、取得・iframe での確認を止めるために持つ
+  const controllerRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    return () => controllerRef.current?.abort()
+  }, [])
 
   async function measure(demoCase: DemoCase) {
+    const controller = new AbortController()
+    controllerRef.current = controller
     setStatus("loading")
     try {
-      const measurement = await measureNotFound(`${BASE_PATH}/${demoCase.path}`)
+      const measurement = await measureNotFound(
+        `${BASE_PATH}/${demoCase.path}`,
+        controller.signal,
+      )
       setRuns((current) => {
         const number = (current.at(-1)?.number ?? 0) + 1
         return [...current, { ...measurement, number }].slice(-MAX_RUNS)
@@ -86,8 +101,16 @@ export function NotFoundPanel() {
       setTrace(buildNotFoundTrace(crypto.randomUUID(), measurement))
       setStatus("idle")
     } catch (error) {
+      // 画面を離れて中止した場合は、表示を更新しない
+      if (controller.signal.aborted) return
+      if (isTimeoutError(error)) {
+        setStatus("timeout")
+        return
+      }
       console.error("[not-found-file] ページの取得に失敗しました", error)
       setStatus("error")
+    } finally {
+      if (controllerRef.current === controller) controllerRef.current = null
     }
   }
 
@@ -153,14 +176,16 @@ function MeasureStatusMessage({
   status: MeasureStatus
   hasRuns: boolean
 }) {
-  if (status === "error") {
+  if (status === "error" || status === "timeout") {
     return (
       <p
         role="alert"
         className="flex items-center gap-1.5 text-sm text-destructive"
       >
         <CircleAlertIcon aria-hidden className="size-4 shrink-0" />
-        ページを取得できませんでした。通信状況を確認して、もう一度お試しください。
+        {status === "timeout"
+          ? "10秒待っても応答が届かなかったため、取得を止めました。もう一度お試しください。"
+          : "ページを取得できませんでした。通信状況を確認して、もう一度お試しください。"}
       </p>
     )
   }
