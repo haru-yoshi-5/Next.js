@@ -3,7 +3,13 @@
 import { CircleAlertIcon, LoaderIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { type ReactNode, useEffect, useRef, useState } from "react"
+import {
+  type MouseEvent,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react"
 
 import { DemoLayout } from "@/components/learning/demo-layout"
 import { ProcessVisualizer } from "@/components/visualizer/process-visualizer"
@@ -51,6 +57,21 @@ interface NavigationRun extends NavigationMeasurement {
 }
 
 type MeasureStatus = "idle" | "navigating" | "error"
+
+/**
+ * このタブの中で遷移するクリックかどうか。
+ * 修飾キー付き（新しいタブで開くなど）や左ボタン以外のクリックでは、このタブは遷移しない。
+ */
+function isSameTabClick(event: MouseEvent<HTMLAnchorElement>) {
+  return (
+    !event.defaultPrevented &&
+    event.button === 0 &&
+    !event.metaKey &&
+    !event.ctrlKey &&
+    !event.shiftKey &&
+    !event.altKey
+  )
+}
 
 const formatMs = (ms: number | null) =>
   ms === null ? "—" : `${Math.round(ms).toLocaleString("ja-JP")} ms`
@@ -106,6 +127,24 @@ export function LoadingDemoPanel({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // ブラウザの戻る / 進むで移動したら、計測中の遷移は中断されたものとして取り消す
+  useEffect(() => {
+    function handlePopState() {
+      pendingRef.current = null
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      setStatus("idle")
+    }
+    window.addEventListener("popstate", handlePopState)
+    return () => window.removeEventListener("popstate", handlePopState)
+  }, [])
+
+  /** 計測中の遷移と、前回の計測エラーの表示を取り消す */
+  function cancelMeasure() {
+    pendingRef.current = null
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    setStatus("idle")
+  }
+
   /** clickedAt はクリックイベントの timeStamp（performance.now() と同じ基準の時刻） */
   function startMeasure(page: DemoPage, clickedAt: number) {
     if (page.href === pathname) return
@@ -143,7 +182,11 @@ export function LoadingDemoPanel({ children }: { children: ReactNode }) {
                     <Link
                       href={page.href}
                       scroll={false}
-                      onClick={(event) => startMeasure(page, event.timeStamp)}
+                      onClick={(event) => {
+                        if (isSameTabClick(event)) {
+                          startMeasure(page, event.timeStamp)
+                        }
+                      }}
                       aria-current={isActive ? "page" : undefined}
                       className={cn(
                         "flex w-full flex-col gap-0.5 rounded-lg border px-3 py-2 transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -164,6 +207,9 @@ export function LoadingDemoPanel({ children }: { children: ReactNode }) {
             <Link
               href={BASE_PATH}
               scroll={false}
+              onClick={(event) => {
+                if (isSameTabClick(event)) cancelMeasure()
+              }}
               aria-current={pathname === BASE_PATH ? "page" : undefined}
               className="self-start text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
             >
