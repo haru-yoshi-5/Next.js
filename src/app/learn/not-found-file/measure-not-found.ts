@@ -36,19 +36,39 @@ export function isTimeoutError(error: unknown): boolean {
 /** ページを取得し、ステータス・noindex・proxy の判断を調べる */
 async function inspectResponse(path: string, signal: AbortSignal) {
   // 中止（画面からの離脱）と時間制限のどちらでも止まるようにする。
+  // AbortSignal.any / AbortSignal.timeout は Next.js の対応ブラウザーの一部で使えないため、自前で組み合わせる。
   // fetch に渡したシグナルは本文の受信（response.text()）にも効く
-  const fetchSignal = AbortSignal.any([
-    signal,
-    AbortSignal.timeout(FETCH_TIMEOUT_MS),
-  ])
-  const startedAt = performance.now()
-  const response = await fetch(path, { cache: "no-store", signal: fetchSignal })
-  const html = await response.text()
-  return {
-    status: response.status,
-    noindex: NOINDEX.test(html),
-    proxy: toProxyDecision(response.headers.get(PROXY_HEADER)),
-    totalMs: performance.now() - startedAt,
+  const controller = new AbortController()
+  const onAbort = () => controller.abort(signal.reason)
+  if (signal.aborted) onAbort()
+  else signal.addEventListener("abort", onAbort)
+  const timer = window.setTimeout(
+    () =>
+      controller.abort(
+        new DOMException("応答が時間内に届きませんでした", "TimeoutError"),
+      ),
+    FETCH_TIMEOUT_MS,
+  )
+
+  try {
+    const startedAt = performance.now()
+    const response = await fetch(path, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+    const html = await response.text()
+    return {
+      status: response.status,
+      noindex: NOINDEX.test(html),
+      proxy: toProxyDecision(response.headers.get(PROXY_HEADER)),
+      totalMs: performance.now() - startedAt,
+    }
+  } catch (error) {
+    // 中止された場合は、ブラウザーによらず中止の理由（TimeoutError など）で失敗させる
+    throw controller.signal.aborted ? controller.signal.reason : error
+  } finally {
+    window.clearTimeout(timer)
+    signal.removeEventListener("abort", onAbort)
   }
 }
 
