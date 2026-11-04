@@ -24,21 +24,22 @@ App Router の Server Components・Server Actions・Streaming・Cache などは�
 
 サンプルコードを表示するだけの教材にはしていません。各教材は、解説している機能を教材ページそのものに使っています。
 
-| 教材                     | このページ自体の作り                                                                                                                     |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| App Router               | 教材本体を `layout.tsx` に置き、Live Demo の `children` だけが `page.tsx` / `[slug]/page.tsx` / `not-found.tsx` に切り替わる             |
-| Dynamic Routes           | `articles/[id]` を `generateStaticParams` で一部だけプリレンダーし、3種類の値でページの届き方を HTML から判定                            |
-| Server Components        | `io()` + `<Suspense>` でリクエストごとにサーバーで実行される async Server Component                                                      |
-| Client Components        | ページは Server Component のまま、`"use client"` のカウンターだけを境界として切り出す                                                    |
-| Server / Client Boundary | `children` で Server Component の出力を Client Component に置き、届いた応答と JavaScript を検索して確かめる                              |
-| Data Fetching            | async Server Component で同じ取得を直列と `Promise.all` で実行し、実測した開始時間と所要時間を表示                                       |
-| Server Actions           | 本物の `"use server"` 関数でサーバー側バリデーション → データ更新 → `updateTag`                                                          |
-| Route Handlers           | 同じフォルダの `api/route.ts` へ `fetch()` し、GET / POST の応答と、未定義の PUT に返る 405 を表示                                       |
-| Streaming                | 1秒 / 2秒かかる Server Component を別々の `<Suspense>` 境界で配信                                                                        |
-| Static / Dynamic         | `"use cache"` の値を静的シェルに、`io()` 後の値を `<Suspense>` に置き、ページの応答から到着時間を計測                                    |
-| loading.tsx              | 教材本体を `layout.tsx` に置き、`loading.tsx` あり / なし / page 内の `<Suspense>` の3ページへ遷移して、待ちの表示と内容が出るまでを計測 |
-| Next.js Cache            | 同じ処理をキャッシュなしと `"use cache: remote"` で実行し、生成時刻から読み取り前の結果かを判定                                          |
-| Revalidation             | 本物の Server Action で `updateTag` / `revalidateTag` / `revalidatePath` を実行し、生成IDの変化を表示                                    |
+| 教材                     | このページ自体の作り                                                                                                                        |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| App Router               | 教材本体を `layout.tsx` に置き、Live Demo の `children` だけが `page.tsx` / `[slug]/page.tsx` / `not-found.tsx` に切り替わる                |
+| Dynamic Routes           | `articles/[id]` を `generateStaticParams` で一部だけプリレンダーし、3種類の値でページの届き方を HTML から判定                               |
+| Server Components        | `io()` + `<Suspense>` でリクエストごとにサーバーで実行される async Server Component                                                         |
+| Client Components        | ページは Server Component のまま、`"use client"` のカウンターだけを境界として切り出す                                                       |
+| Server / Client Boundary | `children` で Server Component の出力を Client Component に置き、届いた応答と JavaScript を検索して確かめる                                 |
+| Data Fetching            | async Server Component で同じ取得を直列と `Promise.all` で実行し、実測した開始時間と所要時間を表示                                          |
+| Server Actions           | 本物の `"use server"` 関数でサーバー側バリデーション → データ更新 → `updateTag`                                                             |
+| Route Handlers           | 同じフォルダの `api/route.ts` へ `fetch()` し、GET / POST の応答と、未定義の PUT に返る 405 を表示                                          |
+| Streaming                | 1秒 / 2秒かかる Server Component を別々の `<Suspense>` 境界で配信                                                                           |
+| Static / Dynamic         | `"use cache"` の値を静的シェルに、`io()` 後の値を `<Suspense>` に置き、ページの応答から到着時間を計測                                       |
+| error.tsx                | 教材本体を `layout.tsx` に置き、Server Action で起こした一時的な障害を `error.tsx` が受け止め、`retry()` / `reset()` で回復できるかを比べる |
+| loading.tsx              | 教材本体を `layout.tsx` に置き、`loading.tsx` あり / なし / page 内の `<Suspense>` の3ページへ遷移して、待ちの表示と内容が出るまでを計測    |
+| Next.js Cache            | 同じ処理をキャッシュなしと `"use cache: remote"` で実行し、生成時刻から読み取り前の結果かを判定                                             |
+| Revalidation             | 本物の Server Action で `updateTag` / `revalidateTag` / `revalidatePath` を実行し、生成IDの変化を表示                                       |
 
 ### クイズや課題は作らない
 
@@ -83,7 +84,8 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 10. Static / Dynamic（05 Rendering）
 11. Next.js Cache（06 Cache）
 12. Revalidation（06 Cache）
-13. loading.tsx（07 Error Handling）
+13. error.tsx（07 Error Handling）
+14. loading.tsx（07 Error Handling）
 
 ---
 
@@ -148,6 +150,7 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 │ ├ ○ /learn/dynamic-routes/articles/1
 │ ├ ○ /learn/dynamic-routes/articles/2
 │ └ ○ /learn/dynamic-routes/articles/3
+├ ◐ /learn/error-file                   ← layout.tsx が教材本体、レポートだけがリクエスト時に実行
 ├ ○ /learn/loading-file                 ← layout.tsx が教材本体
 │ ├ ◐ /learn/loading-file/with-loading    ← 遅い部分だけがリクエスト時に実行
 │ ├ ◐ /learn/loading-file/without-loading
@@ -213,6 +216,7 @@ src/
 │     ├ route-handlers/      # api/route.ts（Route Handler）と、fetch() で呼び出すデモ
 │     ├ streaming/           # Suspense 境界ごとの Server Components
 │     ├ static-and-dynamic/  # 静的シェルとリクエスト時の部分、到着時間の計測
+│     ├ error-file/          # layout.tsx が教材本体、error.tsx と障害を起こす Server Action
 │     ├ loading-file/        # layout.tsx が教材本体、loading.tsx あり / なし / Suspense の3ページ
 │     ├ nextjs-cache/        # キャッシュあり / なしの比較と再利用の判定
 │     ├ revalidation/        # 失効の Server Action とタグ付きキャッシュ
@@ -277,7 +281,7 @@ http://localhost:3000 を開きます。
 ## 今後追加する予定の教材
 
 - 01 Introduction: Next.jsとは / Reactとの関係 / Next.jsを使う理由
-- 07 Error Handling: error.tsx / not-found.tsx
+- 07 Error Handling: not-found.tsx
 - 08 Authentication: 認証の考え方 / サーバー側での認証 / 保護されたページ
 
 将来的な学習履歴・お気に入り機能に備え、教材データ（`content/`）と表示（`components/learning/`）を分離し、認証を後から追加できる構成にしています。
