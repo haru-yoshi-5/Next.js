@@ -27,6 +27,7 @@ App Router の Server Components・Server Actions・Streaming・Cache などは�
 | 教材                     | このページ自体の作り                                                                                                         |
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
 | App Router               | 教材本体を `layout.tsx` に置き、Live Demo の `children` だけが `page.tsx` / `[slug]/page.tsx` / `not-found.tsx` に切り替わる |
+| Dynamic Routes           | `articles/[id]` を `generateStaticParams` で一部だけプリレンダーし、3種類の値でページの届き方を HTML から判定                |
 | Server Components        | `io()` + `<Suspense>` でリクエストごとにサーバーで実行される async Server Component                                          |
 | Client Components        | ページは Server Component のまま、`"use client"` のカウンターだけを境界として切り出す                                        |
 | Server / Client Boundary | `children` で Server Component の出力を Client Component に置き、届いた応答と JavaScript を検索して確かめる                  |
@@ -70,16 +71,17 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 ## 公開中の教材（MVP）
 
 1. App Router（02 Routing）
-2. Server Components（03 Server & Client）
-3. Client Components（03 Server & Client）
-4. Server / Client Boundary（03 Server & Client）
-5. Data Fetching（04 Data）
-6. Server Actions（04 Data）
-7. Route Handlers（04 Data）
-8. Streaming（05 Rendering）
-9. Static / Dynamic（05 Rendering）
-10. Next.js Cache（06 Cache）
-11. Revalidation（06 Cache）
+2. Dynamic Routes（02 Routing）
+3. Server Components（03 Server & Client）
+4. Client Components（03 Server & Client）
+5. Server / Client Boundary（03 Server & Client）
+6. Data Fetching（04 Data）
+7. Server Actions（04 Data）
+8. Route Handlers（04 Data）
+9. Streaming（05 Rendering）
+10. Static / Dynamic（05 Rendering）
+11. Next.js Cache（06 Cache）
+12. Revalidation（06 Cache）
 
 ---
 
@@ -139,6 +141,11 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 │ └ ○ /learn/app-router/link-component
 ├ ○ /learn/client-components
 ├ ◐ /learn/data-fetching                ← デモだけがリクエスト時に実行
+├ ○ /learn/dynamic-routes               ← デモはブラウザから記事ページを取得
+│ ├ ◐ /learn/dynamic-routes/articles/[id] ← App Shell（generateStaticParams にない値）
+│ ├ ○ /learn/dynamic-routes/articles/1
+│ ├ ○ /learn/dynamic-routes/articles/2
+│ └ ○ /learn/dynamic-routes/articles/3
 ├ ◐ /learn/nextjs-cache                 ← デモだけがリクエスト時に実行
 ├ ◐ /learn/revalidation                 ← デモだけがリクエスト時に実行
 ├ ○ /learn/route-handlers               ← デモはブラウザから Route Handler を呼ぶ
@@ -192,6 +199,7 @@ src/
 │  └ learn/
 │     ├ layout.tsx / page.tsx / loading.tsx / error.tsx
 │     ├ app-router/          # layout.tsx が教材本体、[slug] が Dynamic Route
+│     ├ dynamic-routes/      # articles/[id]（page / loading / not-found）と届き方の計測
 │     ├ server-components/   # page.tsx + デモ用 Server / Client Components
 │     ├ client-components/
 │     ├ data-fetching/       # 直列 / 並列の取得と、実測のタイムライン
@@ -256,12 +264,12 @@ http://localhost:3000 を開きます。
 - **Server Actions のデモデータ**はサーバープロセスのメモリに保存しています。再起動で消え、複数インスタンスでは共有されません（最大8件）。また、ページのキャッシュは再起動後も `.next` に残るため、データが消えた後も古い表示が残ることがあります。
 - **Cache 教材のデモ**は `"use cache: remote"` を使っています。Vercel の実測では通常の `"use cache"` が実行時に再利用されなかったためで、デプロイ先によっては料金が発生します。キャッシュは閲覧者全員で共有しますが、`cacheHandlers` を設定していないため、セルフホストで複数台動かすとインスタンスごとのメモリに分かれます。
 - Process Visualizer のステップ間隔（約0.65秒）は目で追うための演出です。実際の処理時間は各ステップの計測値で示しています。
+- **Dynamic Routes 教材**の存在しない値は、App Shell を送った後に `notFound()` を呼ぶため、ステータスが 200 になります（`noindex` 付き）。404 を返すには proxy での確認が必要ですが、教材ではこの挙動を見せるためにそのままにしています。
 - App Router 教材の遷移フローは、RSC Payload のやり取りをブラウザから直接観測できないため「モデル図」として表示しています（URL と `useSelectedLayoutSegment()` の値は実データ）。
 
 ## 今後追加する予定の教材
 
 - 01 Introduction: Next.jsとは / Reactとの関係 / Next.jsを使う理由
-- 02 Routing: Dynamic Routes
 - 07 Error Handling: error.tsx / not-found.tsx / loading.tsx
 - 08 Authentication: 認証の考え方 / サーバー側での認証 / 保護されたページ
 

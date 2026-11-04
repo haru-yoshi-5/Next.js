@@ -28,7 +28,14 @@ export const curriculum: Chapter[] = [
           "フォルダ構成がURLになる仕組みと、layout を保ったまま page だけが切り替わる様子を確認します。",
         runtimes: ["server", "client"],
       },
-      { slug: "dynamic-routes", title: "Dynamic Routes", status: "planned" },
+      {
+        slug: "dynamic-routes",
+        title: "Dynamic Routes",
+        status: "available",
+        summary:
+          "generateStaticParams に含まれる値・含まれない値・存在しない値で、ページの届き方が変わる様子を実測で比べます。",
+        runtimes: ["server", "client"],
+      },
     ],
   },
   {

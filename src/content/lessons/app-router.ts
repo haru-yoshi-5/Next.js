@@ -63,6 +63,10 @@ export const appRouterLesson: LessonContent = {
           type: "paragraph",
           text: "`generateStaticParams` で返した値はビルド時にプリレンダーされます。それ以外の値はリクエスト時に処理され、対応するデータがなければ `notFound()` を呼んで `not-found.tsx` を表示します。待ち時間がある場合は `loading.tsx` が自動で表示されます。",
         },
+        {
+          type: "paragraph",
+          text: "値が `generateStaticParams` に含まれるかどうかで届き方がどう変わるか、`notFound()` のときのステータスコード、`[...slug]` などの書き方は、Dynamic Routes 教材で実測しながら扱います。",
+        },
       ],
     },
     {
@@ -234,5 +238,5 @@ export const appRouterLesson: LessonContent = {
       },
     ],
   },
-  related: ["server-components", "client-components", "streaming"],
+  related: ["dynamic-routes", "server-components", "client-components"],
 }
