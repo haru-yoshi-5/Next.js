@@ -1,7 +1,7 @@
 import { CheckCircle2Icon } from "lucide-react"
 import { cookies } from "next/headers"
 
-import { OUTAGE_COOKIE } from "./demo-config"
+import { OUTAGE_COOKIE, OUTAGE_MS } from "./demo-config"
 import { RecoveredReporter } from "./recovered-reporter"
 
 const timeFormatter = new Intl.DateTimeFormat("ja-JP", {
@@ -9,9 +9,17 @@ const timeFormatter = new Intl.DateTimeFormat("ja-JP", {
   timeStyle: "medium",
 })
 
-/** 障害の終了時刻より前かどうか。リクエストのたびに現在時刻と比べる */
-function isInOutage(outageUntil: number) {
-  return Date.now() < outageUntil
+/**
+ * cookie の値から、いまが障害中かどうかを判定する。リクエストのたびに現在時刻と比べる。
+ * cookie はブラウザから送られる値なので信頼しない。整数でない値や、
+ * Server Action が設定しうる範囲（現在から OUTAGE_MS 以内）を超える終了時刻は無視する。
+ */
+function isInOutage(rawValue: string | undefined) {
+  if (!rawValue || !/^\d+$/.test(rawValue)) return false
+  const outageUntil = Number(rawValue)
+  if (!Number.isSafeInteger(outageUntil)) return false
+  const remainingMs = outageUntil - Date.now()
+  return remainingMs > 0 && remainingMs <= OUTAGE_MS
 }
 
 /**
@@ -20,9 +28,7 @@ function isInOutage(outageUntil: number) {
  */
 export async function InventoryReport() {
   const cookieStore = await cookies()
-  const outageUntil = Number(cookieStore.get(OUTAGE_COOKIE)?.value ?? 0)
-
-  if (isInOutage(outageUntil)) {
+  if (isInOutage(cookieStore.get(OUTAGE_COOKIE)?.value)) {
     // わざと内部のホスト名を含めている。本番ではこの message はブラウザへ送られない
     throw new Error(
       "在庫 API（inventory.internal:8443）への接続がタイムアウトしました",

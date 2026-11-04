@@ -13,7 +13,7 @@ export const errorModel: FlowTrace = {
       from: "server-component",
       to: "browser",
       label: "page の描画中に throw する",
-      detail: "本番では message を伏せ、digest だけをブラウザへ送る",
+      detail: "本番では元の message を伏せ、一般的な message と digest をブラウザへ送る",
       status: "error",
     },
     {

@@ -24,8 +24,12 @@ import {
 } from "./demo-events"
 import { buildErrorTrace, errorModel } from "./trace"
 
-/** 記録に残す出来事の最大数 */
-const MAX_EVENTS = 10
+/**
+ * 記録に残す出来事の最大数。
+ * 記録は追加するだけで古いものを消さない（先頭の「障害を起こした」が経過時間の基準と
+ * Visualizer の id になるため）。上限に達したら、次に障害を起こすまで記録を止める。
+ */
+const MAX_EVENTS = 20
 
 const EVENT_LABEL: Record<DemoEventKind, string> = {
   outage: "一時的な障害を起こした",
@@ -42,15 +46,16 @@ const formatSec = (ms: number) =>
 // layout はエラーの影響を受けないため、ここで持つ記録や操作ボタンは error.tsx に切り替わっても残る。
 export function ErrorDemoPanel({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<DemoEvent[]>([])
-  const [outageCount, setOutageCount] = useState(0)
+  /** 障害の終了時刻の目安（performance.now() 基準）。Action の応答が届くまでは null */
+  const [outageDeadline, setOutageDeadline] = useState<number | null>(null)
   const [remainingMs, setRemainingMs] = useState(0)
   const [actionError, setActionError] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   const report = useCallback((event: DemoEvent) => {
     setEvents((current) => {
-      // 障害を起こす前の表示（ページを開いたときの描画など）は記録しない
-      if (current.length === 0) return current
+      // 障害を起こす前の表示（ページを開いたときの描画など）と、上限を超えた分は記録しない
+      if (current.length === 0 || current.length >= MAX_EVENTS) return current
       const last = current.at(-1)
       // 同じ表示が続けて報告された場合（同じエラーの再表示など）は1回として扱う
       if (
@@ -60,33 +65,39 @@ export function ErrorDemoPanel({ children }: { children: ReactNode }) {
       ) {
         return current
       }
-      return [...current, event].slice(-MAX_EVENTS)
+      return [...current, event]
     })
   }, [])
 
   const trace: FlowTrace =
     events.length > 0 ? buildErrorTrace(events) : errorModel
+  const isLogFull = events.length >= MAX_EVENTS
 
-  // 障害を起こしたら、終わるまでの目安を数える（サーバーとの時計のずれを避けるため、ブラウザの時計で数える）
+  // 障害が終わるまでの目安を数える。サーバーとの時計のずれを避けるため、
+  // ブラウザの performance.now() を基準にした終了時刻（outageDeadline）で数える
   useEffect(() => {
-    if (outageCount === 0) return
-    const deadline = Date.now() + OUTAGE_MS
+    if (outageDeadline === null) return
     const timer = setInterval(() => {
-      const ms = Math.max(0, deadline - Date.now())
+      const ms = Math.max(0, outageDeadline - performance.now())
       setRemainingMs(ms)
       if (ms === 0) clearInterval(timer)
     }, 100)
     return () => clearInterval(timer)
-  }, [outageCount])
+  }, [outageDeadline])
 
+  // clickedAt は event.timeStamp（performance.now() と同じ基準）
   function handleOutage(clickedAt: number) {
     setEvents([{ kind: "outage", atMs: clickedAt }])
     setActionError(false)
+    setOutageDeadline(null)
     setRemainingMs(OUTAGE_MS)
     startTransition(async () => {
       try {
         await startOutage()
-        setOutageCount((count) => count + 1)
+        // サーバーが終了時刻を決めたのは、要求を送ってから応答が届くまでのどこか。
+        // その中間を基準にして、ずれを通信時間の半分以内に抑える
+        const respondedAt = performance.now()
+        setOutageDeadline((clickedAt + respondedAt) / 2 + OUTAGE_MS)
       } catch (error) {
         console.error("[error-file] 障害を起こせませんでした", error)
         setEvents([])
@@ -177,6 +188,11 @@ export function ErrorDemoPanel({ children }: { children: ReactNode }) {
                   ))}
                 </ol>
               )}
+              {isLogFull ? (
+                <p className="text-xs text-muted-foreground">
+                  記録は{MAX_EVENTS}件までです。もう一度障害を起こすと、記録をやり直します。
+                </p>
+              ) : null}
             </section>
           </div>
         }

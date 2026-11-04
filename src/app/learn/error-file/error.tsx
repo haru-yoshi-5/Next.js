@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button"
 import { useReportDemoEvent } from "./demo-events"
 import { DemoView } from "./demo-view"
 
+const wrapButtonClass =
+  "h-auto min-h-8 max-w-full justify-start py-1.5 text-left whitespace-normal"
+
 // error.tsx は React のエラー境界になるため、Client Component でなければならない。
 // 同じフォルダの page.tsx を包むが、同じフォルダの layout.tsx（教材本体）は包まない。
 export default function ErrorFileError({
@@ -60,8 +63,10 @@ export default function ErrorFileError({
           </div>
         </dl>
       </div>
+      {/* 狭い画面でも枠からはみ出さないよう、ボタンのラベルを折り返せるようにする */}
       <div className="flex flex-wrap gap-2">
         <Button
+          className={wrapButtonClass}
           onClick={(event) => {
             report({ kind: "retry", atMs: event.timeStamp })
             retry()
@@ -72,6 +77,7 @@ export default function ErrorFileError({
         </Button>
         <Button
           variant="outline"
+          className={wrapButtonClass}
           onClick={(event) => {
             report({ kind: "reset", atMs: event.timeStamp })
             reset()

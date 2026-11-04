@@ -11,7 +11,7 @@ export const errorFileLesson: LessonContent = {
   lead: "フォルダに `error.tsx` を置くと、そのフォルダの page が React のエラー境界で包まれます。描画中にエラーが起きても画面全体は壊れず、page の部分だけが `error.tsx` の表示に差し替わり、そこから再試行できます。",
   keyPoints: [
     "`error.tsx` が包む範囲と、Client Component でなければならない理由",
-    "本番で `error.message` が伏せられ、`digest` だけが届く仕組み",
+    "本番では元の `error.message` が伏せられ、一般的な message と `digest` が届く仕組み",
     "`retry()` と `reset()` の違いと、使い分け",
   ],
   sections: [
