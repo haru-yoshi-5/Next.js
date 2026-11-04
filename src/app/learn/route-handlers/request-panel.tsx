@@ -24,11 +24,15 @@ export function RequestPanel() {
 
   async function send(method: DemoMethod) {
     setStatus("loading")
+    const sentText = text
     try {
-      const result = await callRoute(method, text)
+      const result = await callRoute(method, sentText)
       setCall(result)
       setTrace(buildRouteTrace(crypto.randomUUID(), result))
-      if (method === "POST" && result.status === 201) setText("")
+      // 応答を待つ間に書き始めた次のメッセージは消さない
+      if (method === "POST" && result.status === 201) {
+        setText((current) => (current === sentText ? "" : current))
+      }
       setStatus("idle")
     } catch (error) {
       console.error("[route-handlers] リクエストに失敗しました", error)

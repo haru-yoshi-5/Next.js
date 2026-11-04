@@ -25,13 +25,13 @@ export const routeHandlersLesson: LessonContent = {
         },
         {
           type: "paragraph",
-          text: "同じルートセグメントに `page.tsx` と `route.ts` は置けません。このデモでは、教材ページの `learn/route-handlers/page.tsx` とは別のフォルダに `api/route.ts` を置き、`/learn/route-handlers/api` という URL で受け付けています。Route Handler は layout にも含まれず、HTML ではなく JSON などのデータを返します。",
+          text: "同じルートセグメントに `page.tsx` と `route.ts` は置けません。このデモでは、教材ページの `learn/route-handlers/page.tsx` とは別のフォルダに `api/route.ts` を置き、`/learn/route-handlers/api` という URL で受け付けています。Route Handler は layout には含まれず、返す内容は Response で自由に決められます。このデモでは JSON を返しています。",
         },
         {
           type: "callout",
           tone: "note",
           title: "定義していないメソッドには 405 が返る",
-          text: "`route.ts` に関数がないメソッドでリクエストすると、Next.js が `405 Method Not Allowed` を返します。`OPTIONS` は定義しなくても自動で用意され、使えるメソッドが `Allow` ヘッダーで返されます。",
+          text: "`route.ts` に関数がないメソッドでリクエストすると、Next.js が `405 Method Not Allowed` を返します。ただし、`HEAD` と `OPTIONS` は例外です。`GET` を定義していれば `HEAD` は `GET` を使って自動で応答し、`OPTIONS` は定義しなくても自動で用意されて、使えるメソッドが `Allow` ヘッダーで返されます。",
         },
       ],
     },

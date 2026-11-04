@@ -31,6 +31,37 @@ function errorResponse(status: number, error: string, startedAt: number) {
   )
 }
 
+/**
+ * 本文をストリームで読み、バイト数が上限を超えた時点で読むのをやめる。
+ * 上限を超えた場合は null を返す。上限内の本文だけを文字列に戻す。
+ */
+async function readBody(request: Request, maxBytes: number) {
+  if (!request.body) return ""
+
+  const reader = request.body.getReader()
+  const chunks: Uint8Array[] = []
+  let totalBytes = 0
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    totalBytes += value.byteLength
+    if (totalBytes > maxBytes) {
+      await reader.cancel()
+      return null
+    }
+    chunks.push(value)
+  }
+
+  const bytes = new Uint8Array(totalBytes)
+  let offset = 0
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return new TextDecoder().decode(bytes)
+}
+
 function parseLimit(value: string | null) {
   const limit = Number.parseInt(value ?? "", 10)
   if (Number.isNaN(limit)) return LIMIT_DEFAULT
@@ -88,17 +119,20 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const startedAt = performance.now()
 
+  // Content-Length が分かる場合は、本文を読む前に断る
   const contentLength = Number(request.headers.get("content-length") ?? 0)
   if (contentLength > BODY_MAX_BYTES) {
     return errorResponse(413, "リクエストの本文が大きすぎます。", startedAt)
   }
 
+  // Content-Length がない・偽っている場合に備えて、読みながらバイト数でも確かめる
+  const raw = await readBody(request, BODY_MAX_BYTES)
+  if (raw === null) {
+    return errorResponse(413, "リクエストの本文が大きすぎます。", startedAt)
+  }
+
   let payload: unknown
   try {
-    const raw = await request.text()
-    if (raw.length > BODY_MAX_BYTES) {
-      return errorResponse(413, "リクエストの本文が大きすぎます。", startedAt)
-    }
     payload = JSON.parse(raw)
   } catch {
     return errorResponse(

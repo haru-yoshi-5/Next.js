@@ -21,7 +21,8 @@ export const routeModel: FlowTrace = {
       from: "next-server",
       to: "route-handler",
       label: "URL とメソッドに対応する関数を呼び出す",
-      detail: "定義していないメソッドなら、関数は呼ばれず 405 が返る",
+      detail:
+        "定義していないメソッドなら関数は呼ばれず 405 が返る（HEAD と OPTIONS は自動で用意される）",
     },
     {
       id: "store",
