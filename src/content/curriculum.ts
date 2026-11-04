@@ -185,7 +185,10 @@ export const curriculum: Chapter[] = [
       {
         slug: "authentication-basics",
         title: "Authenticationの考え方",
-        status: "planned",
+        status: "available",
+        summary:
+          "デモのログインと Server Action で、認証（誰か）と認可（何をしてよいか）の違いと、確認をサーバーで行う理由を確かめます。",
+        runtimes: ["server", "client"],
       },
       { slug: "protected-pages", title: "保護されたページ", status: "planned" },
     ],

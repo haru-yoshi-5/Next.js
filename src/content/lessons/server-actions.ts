@@ -222,5 +222,5 @@ export const serverActionsLesson: LessonContent = {
       },
     ],
   },
-  related: ["server-components", "client-components", "streaming"],
+  related: ["server-components", "client-components", "authentication-basics"],
 }
