@@ -223,5 +223,5 @@ export const errorFileLesson: LessonContent = {
       },
     ],
   },
-  related: ["loading-file", "server-actions", "app-router"],
+  related: ["not-found-file", "loading-file", "server-actions"],
 }

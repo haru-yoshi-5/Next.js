@@ -243,5 +243,5 @@ export const dynamicRoutesLesson: LessonContent = {
       },
     ],
   },
-  related: ["app-router", "static-and-dynamic", "streaming"],
+  related: ["app-router", "not-found-file", "static-and-dynamic"],
 }

@@ -159,7 +159,14 @@ export const curriculum: Chapter[] = [
           "デモの中で障害を起こし、error.tsx が page の部分だけを差し替えて、retry() で回復する様子を確かめます。",
         runtimes: ["server", "client"],
       },
-      { slug: "not-found-file", title: "not-found.tsx", status: "planned" },
+      {
+        slug: "not-found-file",
+        title: "not-found.tsx",
+        status: "available",
+        summary:
+          "notFound() からどの not-found.tsx が選ばれるか、ステータスが 200 と 404 のどちらになるかを、実際に URL を取得して確かめます。",
+        runtimes: ["server", "client"],
+      },
       {
         slug: "loading-file",
         title: "loading.tsx",
