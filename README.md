@@ -32,6 +32,7 @@ App Router の Server Components・Server Actions・Streaming・Cache などは�
 | Server / Client Boundary | `children` で Server Component の出力を Client Component に置き、届いた応答と JavaScript を検索して確かめる                  |
 | Data Fetching            | async Server Component で同じ取得を直列と `Promise.all` で実行し、実測した開始時間と所要時間を表示                           |
 | Server Actions           | 本物の `"use server"` 関数でサーバー側バリデーション → データ更新 → `updateTag`                                              |
+| Route Handlers           | 同じフォルダの `api/route.ts` へ `fetch()` し、GET / POST の応答と、未定義の PUT に返る 405 を表示                           |
 | Streaming                | 1秒 / 2秒かかる Server Component を別々の `<Suspense>` 境界で配信                                                            |
 | Static / Dynamic         | `"use cache"` の値を静的シェルに、`io()` 後の値を `<Suspense>` に置き、ページの応答から到着時間を計測                        |
 | Next.js Cache            | 同じ処理をキャッシュなしと `"use cache: remote"` で実行し、生成時刻から読み取り前の結果かを判定                              |
@@ -74,10 +75,11 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 4. Server / Client Boundary（03 Server & Client）
 5. Data Fetching（04 Data）
 6. Server Actions（04 Data）
-7. Streaming（05 Rendering）
-8. Static / Dynamic（05 Rendering）
-9. Next.js Cache（06 Cache）
-10. Revalidation（06 Cache）
+7. Route Handlers（04 Data）
+8. Streaming（05 Rendering）
+9. Static / Dynamic（05 Rendering）
+10. Next.js Cache（06 Cache）
+11. Revalidation（06 Cache）
 
 ---
 
@@ -139,6 +141,8 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 ├ ◐ /learn/data-fetching                ← デモだけがリクエスト時に実行
 ├ ◐ /learn/nextjs-cache                 ← デモだけがリクエスト時に実行
 ├ ◐ /learn/revalidation                 ← デモだけがリクエスト時に実行
+├ ○ /learn/route-handlers               ← デモはブラウザから Route Handler を呼ぶ
+├ ƒ /learn/route-handlers/api           ← Route Handler（request を読むため毎回実行）
 ├ ◐ /learn/server-client-boundary       ← デモだけがリクエスト時に実行
 ├ ○ /learn/server-actions
 ├ ◐ /learn/server-components            ← デモだけがリクエスト時に実行
@@ -192,6 +196,7 @@ src/
 │     ├ client-components/
 │     ├ data-fetching/       # 直列 / 並列の取得と、実測のタイムライン
 │     ├ server-actions/      # actions.ts ("use server") / ストア / キャッシュされる一覧
+│     ├ route-handlers/      # api/route.ts（Route Handler）と、fetch() で呼び出すデモ
 │     ├ streaming/           # Suspense 境界ごとの Server Components
 │     ├ static-and-dynamic/  # 静的シェルとリクエスト時の部分、到着時間の計測
 │     ├ nextjs-cache/        # キャッシュあり / なしの比較と再利用の判定
@@ -247,6 +252,7 @@ http://localhost:3000 を開きます。
 
 ## 設計上の制約と注意点
 
+- **Route Handlers のデモデータ**も同じくサーバープロセスのメモリに保存しています（最大20件）。再起動で最初の2件に戻り、複数インスタンスでは共有されません。
 - **Server Actions のデモデータ**はサーバープロセスのメモリに保存しています。再起動で消え、複数インスタンスでは共有されません（最大8件）。また、ページのキャッシュは再起動後も `.next` に残るため、データが消えた後も古い表示が残ることがあります。
 - **Cache 教材のデモ**は `"use cache: remote"` を使っています。Vercel の実測では通常の `"use cache"` が実行時に再利用されなかったためで、デプロイ先によっては料金が発生します。キャッシュは閲覧者全員で共有しますが、`cacheHandlers` を設定していないため、セルフホストで複数台動かすとインスタンスごとのメモリに分かれます。
 - Process Visualizer のステップ間隔（約0.65秒）は目で追うための演出です。実際の処理時間は各ステップの計測値で示しています。
@@ -256,7 +262,6 @@ http://localhost:3000 を開きます。
 
 - 01 Introduction: Next.jsとは / Reactとの関係 / Next.jsを使う理由
 - 02 Routing: Dynamic Routes
-- 04 Data: Route Handlers
 - 07 Error Handling: error.tsx / not-found.tsx / loading.tsx
 - 08 Authentication: 認証の考え方 / サーバー側での認証 / 保護されたページ
 
