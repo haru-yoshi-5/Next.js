@@ -21,7 +21,8 @@ const COOKIE_LABEL: Record<"login" | "logout" | "tamper" | "expire", string> = {
 
 const ANONYMOUS_DETAIL: Record<AnonymousReason, string> = {
   missing: "cookie がない → 未ログイン",
-  invalid: "署名が一致しない → 未ログイン",
+  "bad-signature": "署名が一致しない → 未ログイン",
+  invalid: "形式や発行者の検証に失敗 → 未ログイン",
   expired: "期限が切れている → 未ログイン",
   "unknown-user": "存在しないユーザー → 未ログイン",
 }
@@ -134,9 +135,10 @@ export function buildAuthDemoTrace({
         id: "rerender",
         from: "next-server",
         to: "server-component",
-        label: "ページを描画し直し、cookie を検証し直す",
+        label: "（仕様）ページを描画し直し、cookie を検証し直す",
+        // この記録は Server Action が値を返す前に作るため、後に続く描画は計測していない
         detail:
-          "cookie を変更した Server Action は、更新後の画面を同じ応答で返す",
+          "Next.js の仕様に基づく説明で、計測はしていない。cookie を変更した Server Action は、更新後の画面を同じ応答で返す",
       },
     )
   }

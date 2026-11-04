@@ -41,7 +41,9 @@ export function isAuthDemoConfigured(): boolean {
 export type SessionCheck =
   | { status: "unconfigured" }
   | { status: "missing" }
-  /** 署名が一致しない、または形式が正しくない */
+  /** 署名が一致しない（中身が書き換えられた可能性がある） */
+  | { status: "bad-signature" }
+  /** 形式・発行者・必須の項目の検証に失敗した、または長すぎる */
   | { status: "invalid" }
   | { status: "expired" }
   | { status: "valid"; userId: string; expiresAt: number }
@@ -88,6 +90,9 @@ export async function verifySessionToken(token: string): Promise<SessionCheck> {
     return { status: "valid", userId: payload.sub, expiresAt: payload.exp }
   } catch (error) {
     if (error instanceof errors.JWTExpired) return { status: "expired" }
+    if (error instanceof errors.JWSSignatureVerificationFailed) {
+      return { status: "bad-signature" }
+    }
     if (error instanceof errors.JOSEError) return { status: "invalid" }
     throw error
   }

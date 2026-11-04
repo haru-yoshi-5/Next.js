@@ -31,7 +31,8 @@ function parseIntent(value: FormDataEntryValue | null): DemoIntent | null {
 /**
  * デモのボタンから呼ばれる Server Action。
  * Server Action は公開された API と同じで、画面にボタンがなくても直接呼び出せる。
- * そのため、ボタンの表示とは関係なく、操作のたびにサーバーで認証と認可を確かめる。
+ * そのため、ボタンの表示とは関係なく、守る対象の操作（プロフィールを見る・お知らせを公開する）では、
+ * 実行するたびにサーバーで認証と認可を確かめる。
  */
 export async function runAuthDemo(
   _previousState: AuthDemoState,

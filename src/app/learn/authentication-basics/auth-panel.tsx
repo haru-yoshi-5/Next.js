@@ -37,8 +37,10 @@ interface AuthPanelProps {
 
 const ANONYMOUS_REASON: Record<AnonymousReason, string> = {
   missing: "セッションの cookie がありません。",
+  "bad-signature":
+    "cookie はありますが、署名が一致しないため無効として扱いました。中身が書き換えられた可能性があります。",
   invalid:
-    "cookie はありますが、署名が一致しないため無効として扱いました（中身が書き換えられています）。",
+    "cookie はありますが、形式や発行者の検証に失敗したため無効として扱いました。",
   expired: "cookie はありますが、期限が切れているため無効として扱いました。",
   "unknown-user":
     "署名は正しいものの、そのユーザーが存在しないため無効として扱いました。",

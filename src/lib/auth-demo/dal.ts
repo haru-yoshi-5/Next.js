@@ -16,6 +16,7 @@ export interface ViewerDTO {
 /** 未ログインになった理由 */
 export type AnonymousReason =
   | "missing"
+  | "bad-signature"
   | "invalid"
   | "expired"
   /** 署名は正しいが、そのユーザーが存在しない */

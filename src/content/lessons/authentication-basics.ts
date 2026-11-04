@@ -60,7 +60,7 @@ export const authenticationBasicsLesson: LessonContent = {
         },
         {
           type: "paragraph",
-          text: "Server Action と Route Handler は、公開された API と同じように扱います。画面にボタンがなくても、リクエストを組み立てれば直接呼び出せるためです。そのためデモの `actions.ts` は、操作のたびに `getAuthState()` でセッションを検証し、`can()` で権限を確かめています。",
+          text: "Server Action と Route Handler は、公開された API と同じように扱います。画面にボタンがなくても、リクエストを組み立てれば直接呼び出せるためです。そのためデモの `actions.ts` は、守る対象の操作（プロフィールを見る・お知らせを公開する）を実行するたびに、`getAuthState()` でセッションを検証し、`can()` で権限を確かめています。",
         },
         {
           type: "callout",
@@ -141,7 +141,7 @@ export const authenticationBasicsLesson: LessonContent = {
     {
       path: `${dir}/actions.ts`,
       role: "Server Action",
-      description: "操作のたびに認証と認可を確かめる",
+      description: "守る対象の操作のたびに、認証と認可を確かめる",
     },
     {
       path: `${lib}/dal.ts`,
