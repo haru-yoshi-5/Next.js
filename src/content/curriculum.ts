@@ -153,7 +153,14 @@ export const curriculum: Chapter[] = [
     lessons: [
       { slug: "error-file", title: "error.tsx", status: "planned" },
       { slug: "not-found-file", title: "not-found.tsx", status: "planned" },
-      { slug: "loading-file", title: "loading.tsx", status: "planned" },
+      {
+        slug: "loading-file",
+        title: "loading.tsx",
+        status: "available",
+        summary:
+          "loading.tsx がページを Suspense で包み、遷移した直後に待ちの表示を出す様子を、実際の遷移で計測します。",
+        runtimes: ["server", "client"],
+      },
     ],
   },
   {
