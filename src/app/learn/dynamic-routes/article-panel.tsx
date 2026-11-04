@@ -41,6 +41,19 @@ interface ArticleRun extends ArticleMeasurement {
 
 type MeasureStatus = "idle" | "loading" | "error"
 
+/**
+ * 取得する前に、URL として記事ページを指せる値かを確かめる。
+ * 記事が存在するかどうかの検証は、サーバーの page.tsx（findArticle）で行う。
+ */
+function validateInput(value: string): string | null {
+  if (value.length === 0) return "値を入力してください。"
+  // 「.」「..」は URL の中で「今の階層」「1つ上の階層」として扱われ、記事ページを指さない
+  if (value === "." || value === "..") {
+    return "「.」と「..」は URL の階層を表す記号として扱われ、記事ページを指さないため使えません。"
+  }
+  return null
+}
+
 const formatMs = (ms: number | null) =>
   ms === null ? "—" : `${Math.round(ms).toLocaleString("ja-JP")} ms`
 
@@ -72,18 +85,9 @@ export function ArticlePanel() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const value = text.trim()
-    if (value.length === 0) {
-      setInputError("値を入力してください。")
-      return
-    }
-    // 「.」「..」は URL の中で「今の階層」「1つ上の階層」として扱われ、記事ページを指さない
-    if (value === "." || value === "..") {
-      setInputError(
-        "「.」と「..」は URL の階層を表す記号として扱われ、記事ページを指さないため使えません。",
-      )
-      return
-    }
-    setInputError(null)
+    const error = validateInput(value)
+    setInputError(error)
+    if (error) return
     void measure(value)
   }
 
@@ -131,8 +135,10 @@ export function ArticlePanel() {
                 value={text}
                 onChange={(event) => {
                   setText(event.target.value)
-                  // 空欄のエラーは、値が入力された時点で解除する
-                  if (event.target.value.trim().length > 0) setInputError(null)
+                  // エラーの表示中は入力のたびに検証し直し、使える値になった時点で解除する
+                  if (inputError) {
+                    setInputError(validateInput(event.target.value.trim()))
+                  }
                 }}
                 maxLength={VALUE_MAX_LENGTH}
                 autoComplete="off"
