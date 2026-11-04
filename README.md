@@ -37,6 +37,7 @@ App Router の Server Components・Server Actions・Streaming・Cache などは�
 | Streaming                | 1秒 / 2秒かかる Server Component を別々の `<Suspense>` 境界で配信                                                                           |
 | Static / Dynamic         | `"use cache"` の値を静的シェルに、`io()` 後の値を `<Suspense>` に置き、ページの応答から到着時間を計測                                       |
 | error.tsx                | 教材本体を `layout.tsx` に置き、Server Action で起こした一時的な障害を `error.tsx` が受け止め、`retry()` / `reset()` で回復できるかを比べる |
+| not-found.tsx            | `items/[id]` / `orders/[id]` / `proxy.ts` / 一致しない URL を取得し、ステータスと、見えないフレームで実際に表示されたファイルを調べる       |
 | loading.tsx              | 教材本体を `layout.tsx` に置き、`loading.tsx` あり / なし / page 内の `<Suspense>` の3ページへ遷移して、待ちの表示と内容が出るまでを計測    |
 | Next.js Cache            | 同じ処理をキャッシュなしと `"use cache: remote"` で実行し、生成時刻から読み取り前の結果かを判定                                             |
 | Revalidation             | 本物の Server Action で `updateTag` / `revalidateTag` / `revalidatePath` を実行し、生成IDの変化を表示                                       |
@@ -85,7 +86,8 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 11. Next.js Cache（06 Cache）
 12. Revalidation（06 Cache）
 13. error.tsx（07 Error Handling）
-14. loading.tsx（07 Error Handling）
+14. not-found.tsx（07 Error Handling）
+15. loading.tsx（07 Error Handling）
 
 ---
 
@@ -156,6 +158,11 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 │ ├ ◐ /learn/loading-file/without-loading
 │ └ ◐ /learn/loading-file/with-suspense
 ├ ◐ /learn/nextjs-cache                 ← デモだけがリクエスト時に実行
+├ ○ /learn/not-found-file               ← デモはブラウザからデモのページを取得
+│ ├ ◐ /learn/not-found-file/items/[id]  ← 存在しない商品（notFound() で 200 + noindex）
+│ ├ ○ /learn/not-found-file/items/1
+│ ├ ◐ /learn/not-found-file/orders/[id] ← 存在しない注文（親フォルダの not-found.tsx）
+│ └ ○ /learn/not-found-file/orders/101
 ├ ◐ /learn/revalidation                 ← デモだけがリクエスト時に実行
 ├ ○ /learn/route-handlers               ← デモはブラウザから Route Handler を呼ぶ
 ├ ƒ /learn/route-handlers/api           ← Route Handler（request を読むため毎回実行）
@@ -163,7 +170,8 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 ├ ○ /learn/server-actions
 ├ ◐ /learn/server-components            ← デモだけがリクエスト時に実行
 ├ ◐ /learn/static-and-dynamic           ← デモの一部だけがリクエスト時に実行
-└ ◐ /learn/streaming                    ← デモだけがストリーミング
+├ ◐ /learn/streaming                    ← デモだけがストリーミング
+└ ƒ Proxy (Middleware)                  ← /learn/not-found-file/checked/:id だけで動く
 ```
 
 ### データの流れ（Process Visualizer）
@@ -217,6 +225,7 @@ src/
 │     ├ streaming/           # Suspense 境界ごとの Server Components
 │     ├ static-and-dynamic/  # 静的シェルとリクエスト時の部分、到着時間の計測
 │     ├ error-file/          # layout.tsx が教材本体、error.tsx と障害を起こす Server Action
+│     ├ not-found-file/      # items/[id]（not-found あり）/ orders/[id]（なし）と、表示されたファイルの判定
 │     ├ loading-file/        # layout.tsx が教材本体、loading.tsx あり / なし / Suspense の3ページ
 │     ├ nextjs-cache/        # キャッシュあり / なしの比較と再利用の判定
 │     ├ revalidation/        # 失効の Server Action とタグ付きキャッシュ
@@ -230,6 +239,7 @@ src/
 ├ content/
 │  ├ curriculum.ts # 章と教材の一覧
 │  └ lessons/      # 教材ごとの本文・表示するファイル・Inside This Page の定義
+├ proxy.ts         # not-found.tsx 教材のデモ用（matcher で checked/:id だけに限定）
 ├ hooks/
 ├ lib/             # source-code.ts（読み込み + ハイライト）/ measure.ts / metadata
 └ types/           # lesson / lesson-content / flow
@@ -275,13 +285,14 @@ http://localhost:3000 を開きます。
 - **Server Actions のデモデータ**はサーバープロセスのメモリに保存しています。再起動で消え、複数インスタンスでは共有されません（最大8件）。また、ページのキャッシュは再起動後も `.next` に残るため、データが消えた後も古い表示が残ることがあります。
 - **Cache 教材のデモ**は `"use cache: remote"` を使っています。Vercel の実測では通常の `"use cache"` が実行時に再利用されなかったためで、デプロイ先によっては料金が発生します。キャッシュは閲覧者全員で共有しますが、`cacheHandlers` を設定していないため、セルフホストで複数台動かすとインスタンスごとのメモリに分かれます。
 - Process Visualizer のステップ間隔（約0.65秒）は目で追うための演出です。実際の処理時間は各ステップの計測値で示しています。
-- **Dynamic Routes 教材**の存在しない値は、App Shell を送った後に `notFound()` を呼ぶため、ステータスが 200 になります（`noindex` 付き）。404 を返すには proxy での確認が必要ですが、教材ではこの挙動を見せるためにそのままにしています。
+- **Dynamic Routes 教材**の存在しない値は、App Shell を送った後に `notFound()` を呼ぶため、ステータスが 200 になります（`noindex` 付き）。404 を返すには proxy での確認が必要ですが、教材ではこの挙動を見せるためにそのままにしています。proxy で確かめて 404 を返す例は not-found.tsx 教材にあります。
+- **`src/proxy.ts`** は not-found.tsx 教材のデモ専用です。`matcher` で `/learn/not-found-file/checked/:id` だけに限定しているため、ほかのページのリクエストには影響しません。
+- **not-found.tsx 教材**は、表示されたファイルを調べるため、デモのページを見えない `iframe` で開きます。同じオリジンのページなので `contentDocument` を読めます。
 - App Router 教材の遷移フローは、RSC Payload のやり取りをブラウザから直接観測できないため「モデル図」として表示しています（URL と `useSelectedLayoutSegment()` の値は実データ）。
 
 ## 今後追加する予定の教材
 
 - 01 Introduction: Next.jsとは / Reactとの関係 / Next.jsを使う理由
-- 07 Error Handling: not-found.tsx
 - 08 Authentication: 認証の考え方 / サーバー側での認証 / 保護されたページ
 
 将来的な学習履歴・お気に入り機能に備え、教材データ（`content/`）と表示（`components/learning/`）を分離し、認証を後から追加できる構成にしています。

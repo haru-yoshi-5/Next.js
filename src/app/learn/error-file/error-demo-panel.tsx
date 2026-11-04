@@ -190,7 +190,8 @@ export function ErrorDemoPanel({ children }: { children: ReactNode }) {
               )}
               {isLogFull ? (
                 <p className="text-xs text-muted-foreground">
-                  記録は{MAX_EVENTS}件までです。もう一度障害を起こすと、記録をやり直します。
+                  記録は{MAX_EVENTS}
+                  件までです。もう一度障害を起こすと、記録をやり直します。
                 </p>
               ) : null}
             </section>
