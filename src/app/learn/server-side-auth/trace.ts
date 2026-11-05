@@ -23,8 +23,9 @@ const ENTRY: Record<
   "server-component": {
     title: "Server Component での確認",
     caller: "browser",
-    request: "ページをリクエスト（GET）",
-    invoke: "ReportCard を描画",
+    // ページを開いたとき（GET）と、ユーザーを切り替えた Server Action の応答（POST）の両方で描画される
+    request: "ページの描画を要求",
+    invoke: "ReportDemo を描画",
     respond: {
       ok: "レポートを描画して返す",
       unauthenticated: "代わりに「ログインが必要」と描画して返す",

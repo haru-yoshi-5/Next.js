@@ -31,7 +31,7 @@ import { buildRouteTrace, pendingRouteTrace } from "./route-trace"
 type EntryId = "server-component" | "server-action" | RouteKind
 
 /** 結果の種類。色だけに頼らず、アイコンと文字でも表す */
-export type Outcome = "ok" | "denied" | "leaked"
+export type Outcome = "ok" | "denied" | "leaked" | "error"
 
 export interface LoginOption {
   /** 空文字はログアウト */
@@ -88,11 +88,13 @@ function readReportOutcome(state: ReadReportState) {
 }
 
 function routeOutcome(call: RouteCall) {
+  const status = `${call.status} ${call.statusText}`
+  // 認証（401）・認可（403）による拒否と、処理の障害（500 / 503 など）は分けて表示する
+  if (call.status === 401 || call.status === 403) {
+    return { outcome: "denied", label: `拒否された（${status}）` } as const
+  }
   if (call.status !== 200) {
-    return {
-      outcome: "denied",
-      label: `拒否された（${call.status} ${call.statusText}）`,
-    } as const
+    return { outcome: "error", label: `処理エラー（${status}）` } as const
   }
   if (call.kind === "unguarded") {
     return { outcome: "leaked", label: "確認なしで返された（200 OK）" } as const
@@ -482,6 +484,7 @@ const OUTCOME_STYLE = {
   ok: { Icon: CircleCheckIcon, className: "text-server" },
   denied: { Icon: BanIcon, className: "text-muted-foreground" },
   leaked: { Icon: TriangleAlertIcon, className: "text-destructive" },
+  error: { Icon: CircleAlertIcon, className: "text-destructive" },
 } as const satisfies Record<Outcome, unknown>
 
 function OutcomeLabel({ outcome, label }: { outcome: Outcome; label: string }) {

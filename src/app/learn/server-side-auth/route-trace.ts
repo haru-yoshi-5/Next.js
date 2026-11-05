@@ -56,9 +56,13 @@ export function buildRouteTrace(id: string, call: RouteCall): FlowTrace {
       to: "route-handler",
       label: "認証: readSalesReport() がセッションを検証",
       detail:
-        call.status === 401 ? "誰か分からない → 未ログイン" : "ユーザーを確認",
+        call.status === 401
+          ? "誰か分からない → 未ログイン"
+          : call.status === 503
+            ? "秘密鍵が設定されていないため、確認できない"
+            : "ユーザーを確認",
       durationMs: call.authMs,
-      status: call.status === 401 ? "error" : undefined,
+      status: call.status === 401 || call.status === 503 ? "error" : undefined,
     })
     if (call.status === 200 || call.status === 403) {
       steps.push({
