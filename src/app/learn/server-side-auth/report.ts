@@ -3,7 +3,6 @@ import "server-only"
 import { cookies } from "next/headers"
 
 import { type AuthState, getAuthState } from "@/lib/auth-demo/dal"
-import { SESSION_COOKIE } from "@/lib/auth-demo/session"
 import { can } from "@/lib/auth-demo/users"
 import { measure } from "@/lib/measure"
 import type { FlowTrace } from "@/types/flow"
@@ -78,7 +77,7 @@ export async function readSalesReportWithTrace(
   entry: ServerEntry,
 ): Promise<{ access: ReportAccess; trace: FlowTrace }> {
   // cookie を先に読み、リクエストのたびに実行される処理であることを確定させてから時刻を取る
-  const hadCookie = (await cookies()).has(SESSION_COOKIE)
+  await cookies()
   const startedAt = performance.now()
   const access = await readSalesReport()
 
@@ -88,7 +87,6 @@ export async function readSalesReportWithTrace(
       id: crypto.randomUUID(),
       entry,
       access,
-      hadCookie,
       totalMs: performance.now() - startedAt,
     }),
   }

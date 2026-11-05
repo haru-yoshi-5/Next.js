@@ -15,6 +15,7 @@ const ENTRY: Record<
     /** ブラウザ側で、リクエストを送り結果を受け取るノード */
     caller: FlowNodeId
     request: string
+    requestDetail: string
     invoke: string
     respond: Record<ReportAccess["status"], string>
     respondDetail: string
@@ -23,8 +24,9 @@ const ENTRY: Record<
   "server-component": {
     title: "Server Component での確認",
     caller: "browser",
-    // ページを開いたとき（GET）と、ユーザーを切り替えた Server Action の応答（POST）の両方で描画される
     request: "ページの描画を要求",
+    requestDetail:
+      "ページを開いたとき（GET）と、ユーザーを切り替えた Server Action の応答（POST）の両方で描画される",
     invoke: "ReportDemo を描画",
     respond: {
       ok: "レポートを描画して返す",
@@ -39,6 +41,7 @@ const ENTRY: Record<
     title: "Server Action での確認",
     caller: "client-component",
     request: "Server Action を呼ぶ（POST）",
+    requestDetail: "セッションの cookie は、ブラウザが自動で付ける",
     invoke: "readReport() を実行",
     respond: {
       ok: "レポートを戻り値で返す",
@@ -54,8 +57,6 @@ interface ServerEntryTraceInput {
   id: string
   entry: ServerEntry
   access: ReportAccess
-  /** リクエストにセッションの cookie が含まれていたか */
-  hadCookie: boolean
   /** readSalesReport() の呼び出しから戻るまでの時間（サーバーで計測） */
   totalMs: number
 }
@@ -65,7 +66,6 @@ export function buildServerEntryTrace({
   id,
   entry,
   access,
-  hadCookie,
   totalMs,
 }: ServerEntryTraceInput): FlowTrace {
   const config = ENTRY[entry]
@@ -78,9 +78,9 @@ export function buildServerEntryTrace({
       from: config.caller,
       to: "next-server",
       label: config.request,
-      detail: hadCookie
-        ? "セッションの cookie も一緒に送られる"
-        : "セッションの cookie は送られない",
+      // ユーザーを切り替えた直後の描画では、cookie は変更後の内容になるため、
+      // 「送られたか」は表示しない。cookie の有無は認証のステップで、確認した結果として表示する
+      detail: config.requestDetail,
     },
     { id: "invoke", from: "next-server", to: node, label: config.invoke },
     {
