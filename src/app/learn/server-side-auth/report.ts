@@ -76,7 +76,8 @@ export async function readSalesReport(): Promise<ReportAccess> {
 export async function readSalesReportWithTrace(
   entry: ServerEntry,
 ): Promise<{ access: ReportAccess; trace: FlowTrace }> {
-  // cookie を先に読み、リクエストのたびに実行される処理であることを確定させてから時刻を取る
+  // 先に cookie を読み、後の時刻の取得と ID の生成（crypto.randomUUID）をリクエスト時の処理にする。
+  // 秘密鍵が未設定の場合、readSalesReport() は cookie を読まずに終わるため、ここで読んでおく
   await cookies()
   const startedAt = performance.now()
   const access = await readSalesReport()

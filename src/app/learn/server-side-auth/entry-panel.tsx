@@ -85,6 +85,13 @@ function readReportOutcome(state: ReadReportState) {
   if (state.status === "ok") {
     return { outcome: "ok", label: "レポートを受け取った" } as const
   }
+  // 秘密鍵が未設定の場合は、認証・認可による拒否ではなく、確認できなかった状態として分ける
+  if (state.status === "unconfigured") {
+    return {
+      outcome: "error",
+      label: "確認できなかった（秘密鍵が未設定）",
+    } as const
+  }
   return { outcome: "denied", label: "拒否された（戻り値）" } as const
 }
 
