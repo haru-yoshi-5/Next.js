@@ -1,4 +1,5 @@
-import type { AnonymousReason, AuthState } from "@/lib/auth-demo/dal"
+import type { AuthState } from "@/lib/auth-demo/dal"
+import { describeAuth } from "@/lib/auth-demo/describe"
 import type { FlowStep, FlowTrace } from "@/types/flow"
 
 import type { DemoIntent, DemoOutcome } from "./action-state"
@@ -17,20 +18,6 @@ const COOKIE_LABEL: Record<"login" | "logout" | "tamper" | "expire", string> = {
   logout: "Set-Cookie: セッションの cookie を削除",
   tamper: "Set-Cookie: 中身を書き換えたセッションを保存",
   expire: "Set-Cookie: 期限切れのセッションを保存",
-}
-
-const ANONYMOUS_DETAIL: Record<AnonymousReason, string> = {
-  missing: "cookie がない → 未ログイン",
-  "bad-signature": "署名が一致しない → 未ログイン",
-  invalid: "形式や発行者の検証に失敗 → 未ログイン",
-  expired: "期限が切れている → 未ログイン",
-  "unknown-user": "存在しないユーザー → 未ログイン",
-}
-
-export function describeAuth(auth: AuthState): string {
-  if (auth.status === "unconfigured") return "秘密鍵が設定されていない"
-  if (auth.status === "anonymous") return ANONYMOUS_DETAIL[auth.reason]
-  return `${auth.viewer.name}（${auth.viewer.roleLabel}）と確認`
 }
 
 interface AuthDemoTraceInput {
