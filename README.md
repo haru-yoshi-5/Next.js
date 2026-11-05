@@ -41,6 +41,7 @@ App Router の Server Components・Server Actions・Streaming・Cache などは�
 | loading.tsx              | 教材本体を `layout.tsx` に置き、`loading.tsx` あり / なし / page 内の `<Suspense>` の3ページへ遷移して、待ちの表示と内容が出るまでを計測    |
 | Next.js Cache            | 同じ処理をキャッシュなしと `"use cache: remote"` で実行し、生成時刻から読み取り前の結果かを判定                                             |
 | Revalidation             | 本物の Server Action で `updateTag` / `revalidateTag` / `revalidatePath` を実行し、生成IDの変化を表示                                       |
+| Authenticationの考え方   | `jose` で署名した cookie のセッションを Server Action のたびにサーバーで検証し、認証（誰か）と認可（権限）の判定を分けて表示                |
 
 ### クイズや課題は作らない
 
@@ -88,6 +89,7 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 13. error.tsx（07 Error Handling）
 14. not-found.tsx（07 Error Handling）
 15. loading.tsx（07 Error Handling）
+16. Authenticationの考え方（08 Authentication）
 
 ---
 
@@ -99,6 +101,7 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 | UI                     | React 19 / TypeScript（strict）                                        |
 | スタイル               | Tailwind CSS v4 / shadcn/ui（Base UI） / Lucide Icons                  |
 | シンタックスハイライト | shiki                                                                  |
+| セッションの署名       | jose（Authentication 章の認証デモだけで使用）                          |
 | テーマ                 | next-themes                                                            |
 | 品質管理               | ESLint（eslint-config-next） / Prettier（prettier-plugin-tailwindcss） |
 | パッケージ管理         | pnpm                                                                   |
@@ -114,7 +117,9 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 - **Prettier**
   create-next-app の ESLint 構成をそのまま活かしつつ、Tailwind のクラス順を自動で揃えられる公式プラグインがあるためです。
 - **データベースは導入していない**
-  MVP の教材では永続化が学習目的に必要ないため、Server Actions のデモはサーバーのメモリ上のストアで動かしています（「技術を使いたいから DB を入れる」ことはしない方針）。
+  MVP の教材では永続化が学習目的に必要ないため、Server Actions のデモはサーバーのメモリ上のストアで動かしています（「技術を使いたいから DB を入れる」ことはしない方針）。認証デモのユーザーもコード内の固定データで、ログインの状態は署名付きの cookie だけで持ちます。
+- **認証デモは jose で署名し、認証ライブラリは入れていない**
+  教材の主題は「サーバーで認証・認可を確かめること」なので、セッションの署名と検証だけを Next.js のドキュメントでも紹介されている `jose` に任せています。署名の処理を自作するより実装ミスの余地が小さく、OAuth などを含む認証ライブラリほど大きくありません。サイト全体のログインはまだ作らず、デモの中だけで完結させています。
 - **MDX ではなく TypeScript で教材データを管理**
   教材本文を段落・リスト・注意書き・比較表などの型付きブロックとして定義し、UI 側で一貫した表示にしています。HTML を解釈しないため、表示の安全性も保てます。
 
@@ -145,6 +150,7 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 │ ├ ○ /learn/app-router/page-file
 │ ├ ○ /learn/app-router/layout-file
 │ └ ○ /learn/app-router/link-component
+├ ◐ /learn/authentication-basics        ← cookie を検証するデモだけがリクエスト時に実行
 ├ ○ /learn/client-components
 ├ ◐ /learn/data-fetching                ← デモだけがリクエスト時に実行
 ├ ○ /learn/dynamic-routes               ← デモはブラウザから記事ページを取得
@@ -229,7 +235,8 @@ src/
 │     ├ loading-file/        # layout.tsx が教材本体、loading.tsx あり / なし / Suspense の3ページ
 │     ├ nextjs-cache/        # キャッシュあり / なしの比較と再利用の判定
 │     ├ revalidation/        # 失効の Server Action とタグ付きキャッシュ
-│     └ server-client-boundary/ # children の組み合わせと境界の検査
+│     ├ server-client-boundary/ # children の組み合わせと境界の検査
+│     └ authentication-basics/  # デモのログインと、認証・認可を確かめる Server Action
 ├ components/
 │  ├ layout/       # ヘッダー・サイドバー・テーマ・エラー表示
 │  ├ learning/     # LessonPage / SourceCode / InsideThisPage / DemoLayout など
@@ -242,6 +249,7 @@ src/
 ├ proxy.ts         # not-found.tsx 教材のデモ用（matcher で checked/:id だけに限定）
 ├ hooks/
 ├ lib/             # source-code.ts（読み込み + ハイライト）/ measure.ts / metadata
+│  └ auth-demo/    # Authentication 章で共有する認証デモ（session / dal / users、すべて server-only）
 └ types/           # lesson / lesson-content / flow
 ```
 
@@ -268,6 +276,8 @@ pnpm dev
 
 http://localhost:3000 を開きます。
 
+Authentication 章の認証デモを動かすには、`.env.local` の `AUTH_DEMO_SECRET` に32文字以上のランダムな文字列を設定します（例: `openssl rand -base64 32` の出力）。未設定でも教材の本文は表示され、デモだけが使えない状態になります。Vercel では、Preview と Production に別々の値を環境変数として設定します。
+
 ## 開発コマンド
 
 | コマンド                            | 内容                                        |
@@ -288,11 +298,12 @@ http://localhost:3000 を開きます。
 - **Dynamic Routes 教材**の存在しない値は、App Shell を送った後に `notFound()` を呼ぶため、ステータスが 200 になります（`noindex` 付き）。404 を返すには proxy での確認が必要ですが、教材ではこの挙動を見せるためにそのままにしています。proxy で確かめて 404 を返す例は not-found.tsx 教材にあります。
 - **`src/proxy.ts`** は not-found.tsx 教材のデモ専用です。`matcher` で `/learn/not-found-file/checked/:id` だけに限定しているため、ほかのページのリクエストには影響しません。
 - **not-found.tsx 教材**は、表示されたファイルを調べるため、デモのページを見えない `iframe` で開きます。同じオリジンのページなので `contentDocument` を読めます。
+- **認証デモ**（`src/lib/auth-demo/`）は教材専用で、サイト全体のログインではありません。ログインは本人確認を省いたデモで、デモの管理者にもサイトを操作する権限はありません。cookie は `/learn` 以下にだけ送られ、同じブラウザでは Authentication 章の教材どうしでログインの状態が共有されます。データベースを使わないため、ログアウトしてもコピーされたトークンは期限（15分）まで有効です。
 - App Router 教材の遷移フローは、RSC Payload のやり取りをブラウザから直接観測できないため「モデル図」として表示しています（URL と `useSelectedLayoutSegment()` の値は実データ）。
 
 ## 今後追加する予定の教材
 
 - 01 Introduction: Next.jsとは / Reactとの関係 / Next.jsを使う理由
-- 08 Authentication: 認証の考え方 / サーバー側での認証 / 保護されたページ
+- 08 Authentication: サーバー側での認証 / 保護されたページ
 
 将来的な学習履歴・お気に入り機能に備え、教材データ（`content/`）と表示（`components/learning/`）を分離し、認証を後から追加できる構成にしています。

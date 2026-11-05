@@ -7,7 +7,11 @@ const nextConfig: NextConfig = {
   // Source Code / Inside This Page は実ファイルを読み込んで表示するため、
   // デプロイ先のサーバーバンドルにもソースファイルを含める。
   outputFileTracingIncludes: {
-    "/learn/**": ["./src/app/learn/**/*", "./src/components/**/*"],
+    "/learn/**": [
+      "./src/app/learn/**/*",
+      "./src/components/**/*",
+      "./src/lib/auth-demo/**/*",
+    ],
   },
 }
 
