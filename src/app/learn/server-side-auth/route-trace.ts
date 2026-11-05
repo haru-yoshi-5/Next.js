@@ -16,6 +16,7 @@ export function pendingRouteTrace(id: string, kind: RouteKind): FlowTrace {
     title: TITLE[kind],
     source: "measured",
     live: true,
+    waitingMessage: "サーバーからの応答を待っています…",
     steps: [
       {
         id: "request",

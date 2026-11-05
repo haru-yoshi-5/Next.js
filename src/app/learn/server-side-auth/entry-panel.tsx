@@ -69,6 +69,7 @@ const SA_PENDING_TRACE: FlowTrace = {
   title: "Server Action での確認",
   source: "measured",
   live: true,
+  waitingMessage: "サーバーからの応答を待っています…",
   steps: [
     {
       id: "request",
