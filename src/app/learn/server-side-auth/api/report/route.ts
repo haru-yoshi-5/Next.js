@@ -1,4 +1,5 @@
 import { unstable_rethrow } from "next/navigation"
+import { connection } from "next/server"
 
 import { readSalesReport } from "../../report"
 import { serverTiming } from "../server-timing"
@@ -10,9 +11,11 @@ const PRIVATE_HEADERS = { "Cache-Control": "private, no-store" }
  * GET /learn/server-side-auth/api/report
  * Route Handler は公開された API と同じで、画面を通らずに直接呼び出せる。
  * そのため、ページと同じ readSalesReport() で認証と認可を確かめ、結果をステータスコードで返す。
- * cookie を読むため、ビルド時にはプリレンダーされず、リクエストのたびに実行される。
+ * 利用者ごとに結果が変わるため、connection() でビルド時のプリレンダーを止め、リクエストのたびに実行させる。
+ * （秘密鍵が未設定の場合は cookie を読まずに終わるため、cookie の読み取りだけに頼らない）
  */
 export async function GET() {
+  await connection()
   const startedAt = performance.now()
 
   try {

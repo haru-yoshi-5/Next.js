@@ -125,7 +125,7 @@ export const serverSideAuthLesson: LessonContent = {
           type: "list",
           items: [
             "画面のボタンを隠すのは見た目の工夫で、守りにはならない。守るための確認は、必ずサーバーで呼ばれる関数の中で行う",
-            "セッションを読む処理は `use cache` の中に入れない。利用者ごとに結果が変わるため、共有のキャッシュに混ぜない",
+            "セッションを読む処理は、普通の `use cache` の中に入れない（中で `cookies()` を呼ぶと例外になる）。利用者ごとに結果が変わるため、共有のキャッシュに混ぜない。キャッシュしたい場合は、結果をブラウザ側にだけ保存する `use cache: private` を使う",
             "Server Component で cookie を読む部分は、Cache Components を有効にしたこのサイトでは `<Suspense>` の中に置く。教材の本文は静的なまま配信される",
             "デモのログインは本人確認を省いている。ログインの状態は、Authentication の章の教材どうしで共有される",
             "ページ下の「このデモを動かしているコード」には、教材として `sales-data.ts` の架空の数字をそのまま載せている。実際のアプリでは、守りたいデータをソースコードに書かず、データベースなどから読む",
@@ -234,7 +234,7 @@ export const serverSideAuthLesson: LessonContent = {
         path: `${dir}/api/report/route.ts`,
         role: "Route Handler",
         description:
-          "/learn/server-side-auth/api/report（cookie を読むため毎回実行）",
+          "/learn/server-side-auth/api/report（利用者ごとに結果が変わるため毎回実行）",
       },
       {
         path: `${dir}/api/unguarded/route.ts`,
