@@ -3,6 +3,7 @@ export type FlowNodeId =
   | "browser"
   | "client-component"
   | "next-server"
+  | "proxy"
   | "server-component"
   | "server-action"
   | "route-handler"

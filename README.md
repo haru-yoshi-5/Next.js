@@ -43,6 +43,7 @@ App Router の Server Components・Server Actions・Streaming・Cache などは�
 | Revalidation             | 本物の Server Action で `updateTag` / `revalidateTag` / `revalidatePath` を実行し、生成IDの変化を表示                                            |
 | Authenticationの考え方   | `jose` で署名した cookie のセッションを Server Action のたびにサーバーで検証し、認証（誰か）と認可（権限）の判定を分けて表示                     |
 | サーバー側での認証       | 認証・認可を確かめる `readSalesReport()` を Server Component・Server Action・`api/report/route.ts` から呼び、確認を忘れた Route Handler と比べる |
+| 保護されたページ         | 教材本体を `layout.tsx` に置き、ページの中の `redirect()` と `proxy.ts` で守った会員ページを取得して、リダイレクトのされ方と HTML の中身を調べる |
 
 ### クイズや課題は作らない
 
@@ -92,6 +93,7 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 15. loading.tsx（07 Error Handling）
 16. Authenticationの考え方（08 Authentication）
 17. サーバー側での認証（08 Authentication）
+18. 保護されたページ（08 Authentication）
 
 ---
 
@@ -166,6 +168,10 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 │ ├ ◐ /learn/loading-file/without-loading
 │ └ ◐ /learn/loading-file/with-suspense
 ├ ◐ /learn/nextjs-cache                 ← デモだけがリクエスト時に実行
+├ ◐ /learn/protected-pages              ← layout.tsx が教材本体、ユーザーの表示だけがリクエスト時に実行
+│ ├ ◐ /learn/protected-pages/login        ← ?next= とセッションの確認だけがリクエスト時に実行
+│ ├ ◐ /learn/protected-pages/members      ← 見出しは静的、確認とお知らせはリクエスト時（未ログインなら redirect()）
+│ └ ◐ /learn/protected-pages/proxied      ← members と同じ。描画の前に proxy.ts も確かめる
 ├ ○ /learn/not-found-file               ← デモはブラウザからデモのページを取得
 │ ├ ◐ /learn/not-found-file/items/[id]  ← 存在しない商品（notFound() で 200 + noindex）
 │ ├ ○ /learn/not-found-file/items/1
@@ -182,7 +188,7 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 ├ ƒ /learn/server-side-auth/api/unguarded ← 確認を忘れた Route Handler（悪い例）
 ├ ◐ /learn/static-and-dynamic           ← デモの一部だけがリクエスト時に実行
 ├ ◐ /learn/streaming                    ← デモだけがストリーミング
-└ ƒ Proxy (Middleware)                  ← /learn/not-found-file/checked/:id だけで動く
+└ ƒ Proxy (Middleware)                  ← /learn/not-found-file/checked/:id と /learn/protected-pages/proxied だけで動く
 ```
 
 ### データの流れ（Process Visualizer）
@@ -242,7 +248,8 @@ src/
 │     ├ revalidation/        # 失効の Server Action とタグ付きキャッシュ
 │     ├ server-client-boundary/ # children の組み合わせと境界の検査
 │     ├ authentication-basics/  # デモのログインと、認証・認可を確かめる Server Action
-│     └ server-side-auth/       # 同じ確認を3つの入口から呼ぶデモと、確認を忘れた Route Handler
+│     ├ server-side-auth/       # 同じ確認を3つの入口から呼ぶデモと、確認を忘れた Route Handler
+│     └ protected-pages/        # layout.tsx が教材本体、ログインページと、ページ / proxy で守る会員ページ
 ├ components/
 │  ├ layout/       # ヘッダー・サイドバー・テーマ・エラー表示
 │  ├ learning/     # LessonPage / SourceCode / InsideThisPage / DemoLayout など
@@ -302,7 +309,8 @@ Authentication 章の認証デモを動かすには、`.env.local` の `AUTH_DEM
 - **Cache 教材のデモ**は `"use cache: remote"` を使っています。Vercel の実測では通常の `"use cache"` が実行時に再利用されなかったためで、デプロイ先によっては料金が発生します。キャッシュは閲覧者全員で共有しますが、`cacheHandlers` を設定していないため、セルフホストで複数台動かすとインスタンスごとのメモリに分かれます。
 - Process Visualizer のステップ間隔（約0.65秒）は目で追うための演出です。実際の処理時間は各ステップの計測値で示しています。
 - **Dynamic Routes 教材**の存在しない値は、App Shell を送った後に `notFound()` を呼ぶため、ステータスが 200 になります（`noindex` 付き）。404 を返すには proxy での確認が必要ですが、教材ではこの挙動を見せるためにそのままにしています。proxy で確かめて 404 を返す例は not-found.tsx 教材にあります。
-- **`src/proxy.ts`** は not-found.tsx 教材のデモ専用です。`matcher` で `/learn/not-found-file/checked/:id` だけに限定しているため、ほかのページのリクエストには影響しません。
+- **`src/proxy.ts`** は教材のデモ専用です。`matcher` で `/learn/not-found-file/checked/:id`（not-found.tsx 教材）と `/learn/protected-pages/proxied`（保護されたページ 教材）だけに限定し、パスで教材ごとの処理に振り分けているため、ほかのページのリクエストには影響しません。
+- **保護されたページ 教材**の Live Demo は、枠の中（`children`）をパスが変わるたびに作り直しています。Cache Components では移動前のページが `<Activity>` で隠れたまま残り、未ログインで会員ページから送られた後にログインしても、残った「リダイレクトした」状態でログインページへ戻されてしまうためです。
 - **not-found.tsx 教材**は、表示されたファイルを調べるため、デモのページを見えない `iframe` で開きます。同じオリジンのページなので `contentDocument` を読めます。
 - **認証デモ**（`src/lib/auth-demo/`）は教材専用で、サイト全体のログインではありません。ログインは本人確認を省いたデモで、デモの管理者にもサイトを操作する権限はありません。cookie は `/learn` 以下にだけ送られ、同じブラウザでは Authentication 章の教材どうしでログインの状態が共有されます。データベースを使わないため、ログアウトしてもコピーされたトークンは期限（15分）まで有効です。
 - **サーバー側での認証 教材**の `api/unguarded` は、確認を忘れた Route Handler の悪い例として、ログインしていなくても架空の売上の数字を返します。返すのはコード内の固定のデモデータだけです。
@@ -311,6 +319,5 @@ Authentication 章の認証デモを動かすには、`.env.local` の `AUTH_DEM
 ## 今後追加する予定の教材
 
 - 01 Introduction: Next.jsとは / Reactとの関係 / Next.jsを使う理由
-- 08 Authentication: 保護されたページ
 
 将来的な学習履歴・お気に入り機能に備え、教材データ（`content/`）と表示（`components/learning/`）を分離し、認証を後から追加できる構成にしています。

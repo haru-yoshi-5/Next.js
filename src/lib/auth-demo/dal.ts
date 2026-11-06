@@ -1,5 +1,6 @@
 import "server-only"
 
+import { redirect } from "next/navigation"
 import { cache } from "react"
 
 import { readSession } from "./session"
@@ -62,3 +63,24 @@ export const getAuthState = cache(async (): Promise<AuthState> => {
     ),
   }
 })
+
+/** requireViewer() の結果。未ログインの場合は戻らずにリダイレクトする */
+export type RequiredViewer =
+  { status: "unconfigured" } | { status: "authenticated"; viewer: ViewerDTO }
+
+/**
+ * ページを守るための確認。getAuthState() で「誰か」を確かめ、未ログインなら loginHref へ redirect() する。
+ * redirect() は例外を投げて描画を止めるため、未ログインのときはこの関数から戻らない。
+ * 秘密鍵が未設定のときはリダイレクトせず、呼び出し側で案内を表示できるように返す
+ * （ログインページへ送っても、ログインできないため）。
+ *
+ * loginHref は呼び出し側が組み立てた、教材内の固定のパスだけを渡す（外から届いた値をそのまま渡さない）。
+ */
+export async function requireViewer(
+  loginHref: string,
+): Promise<RequiredViewer> {
+  const auth = await getAuthState()
+  if (auth.status === "unconfigured") return { status: "unconfigured" }
+  if (auth.status !== "authenticated") redirect(loginHref)
+  return { status: "authenticated", viewer: auth.viewer }
+}
