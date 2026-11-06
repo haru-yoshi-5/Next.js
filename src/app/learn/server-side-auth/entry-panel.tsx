@@ -367,7 +367,7 @@ export function EntryPanel({
         <ProcessVisualizer
           nodes={[...NODES]}
           trace={traces[selected]}
-          emptyMessage="入口のボタンを押すと、その入口での認証と認可の処理がここに表示されます"
+          emptyMessage="入口のボタンを押すと、その入口での処理がここに表示されます"
         />
       }
     />
