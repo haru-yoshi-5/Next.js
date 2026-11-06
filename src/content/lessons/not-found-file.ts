@@ -194,7 +194,8 @@ export const notFoundFileLesson: LessonContent = {
       {
         path: "src/proxy.ts",
         role: "Proxy",
-        description: "/learn/not-found-file/checked/[id] だけで動く",
+        description:
+          "この教材では /learn/not-found-file/checked/[id] で動く（保護されたページ 教材の URL も、パスで分けて扱う）",
         runtime: "server",
         runtimeReason: "リクエストごとに、描画より前にサーバーで実行される",
       },

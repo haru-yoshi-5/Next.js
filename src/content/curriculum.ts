@@ -198,7 +198,14 @@ export const curriculum: Chapter[] = [
           "管理者だけが見られるレポートを Server Component・Server Action・Route Handler から読み、同じ確認が入口ごとにどう伝わるかを比べます。",
         runtimes: ["server", "client"],
       },
-      { slug: "protected-pages", title: "保護されたページ", status: "planned" },
+      {
+        slug: "protected-pages",
+        title: "保護されたページ",
+        status: "available",
+        summary:
+          "未ログインの人を、ページの中の redirect() と Proxy でログインページへ送り、リダイレクトのされ方と守る内容の届き方を比べます。",
+        runtimes: ["server", "client"],
+      },
     ],
   },
 ]
