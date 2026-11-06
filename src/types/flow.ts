@@ -39,6 +39,11 @@ export interface FlowTrace {
   /** ステップが後から追加される（Streaming など）場合は true */
   live?: boolean
   /**
+   * live のとき、次のステップを待つ間に表示する文言。
+   * 省略すると、ストリーミング向けの「次のチャンクを待っています…」を表示する。
+   */
+  waitingMessage?: string
+  /**
    * durationMs を合計すると意味を持たない場合（並行処理の経過時間など）は true。
    * Process Visualizer のフッターに合計時間を表示しない。
    */

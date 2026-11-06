@@ -186,7 +186,7 @@ export function ProcessVisualizer({
                   aria-hidden
                   className="size-4 motion-safe:animate-spin"
                 />
-                次のチャンクを待っています…
+                {trace.waitingMessage ?? "次のチャンクを待っています…"}
               </li>
             ) : null}
           </ol>

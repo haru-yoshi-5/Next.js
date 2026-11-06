@@ -190,6 +190,14 @@ export const curriculum: Chapter[] = [
           "デモのログインと Server Action で、認証（誰か）と認可（何をしてよいか）の違いと、確認をサーバーで行う理由を確かめます。",
         runtimes: ["server", "client"],
       },
+      {
+        slug: "server-side-auth",
+        title: "サーバー側での認証",
+        status: "available",
+        summary:
+          "管理者だけが見られるレポートを Server Component・Server Action・Route Handler から読み、同じ確認が入口ごとにどう伝わるかを比べます。",
+        runtimes: ["server", "client"],
+      },
       { slug: "protected-pages", title: "保護されたページ", status: "planned" },
     ],
   },

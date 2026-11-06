@@ -24,24 +24,25 @@ App Router の Server Components・Server Actions・Streaming・Cache などは�
 
 サンプルコードを表示するだけの教材にはしていません。各教材は、解説している機能を教材ページそのものに使っています。
 
-| 教材                     | このページ自体の作り                                                                                                                        |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| App Router               | 教材本体を `layout.tsx` に置き、Live Demo の `children` だけが `page.tsx` / `[slug]/page.tsx` / `not-found.tsx` に切り替わる                |
-| Dynamic Routes           | `articles/[id]` を `generateStaticParams` で一部だけプリレンダーし、3種類の値でページの届き方を HTML から判定                               |
-| Server Components        | `io()` + `<Suspense>` でリクエストごとにサーバーで実行される async Server Component                                                         |
-| Client Components        | ページは Server Component のまま、`"use client"` のカウンターだけを境界として切り出す                                                       |
-| Server / Client Boundary | `children` で Server Component の出力を Client Component に置き、届いた応答と JavaScript を検索して確かめる                                 |
-| Data Fetching            | async Server Component で同じ取得を直列と `Promise.all` で実行し、実測した開始時間と所要時間を表示                                          |
-| Server Actions           | 本物の `"use server"` 関数でサーバー側バリデーション → データ更新 → `updateTag`                                                             |
-| Route Handlers           | 同じフォルダの `api/route.ts` へ `fetch()` し、GET / POST の応答と、未定義の PUT に返る 405 を表示                                          |
-| Streaming                | 1秒 / 2秒かかる Server Component を別々の `<Suspense>` 境界で配信                                                                           |
-| Static / Dynamic         | `"use cache"` の値を静的シェルに、`io()` 後の値を `<Suspense>` に置き、ページの応答から到着時間を計測                                       |
-| error.tsx                | 教材本体を `layout.tsx` に置き、Server Action で起こした一時的な障害を `error.tsx` が受け止め、`retry()` / `reset()` で回復できるかを比べる |
-| not-found.tsx            | `items/[id]` / `orders/[id]` / `proxy.ts` / 一致しない URL を取得し、ステータスと、見えないフレームで実際に表示されたファイルを調べる       |
-| loading.tsx              | 教材本体を `layout.tsx` に置き、`loading.tsx` あり / なし / page 内の `<Suspense>` の3ページへ遷移して、待ちの表示と内容が出るまでを計測    |
-| Next.js Cache            | 同じ処理をキャッシュなしと `"use cache: remote"` で実行し、生成時刻から読み取り前の結果かを判定                                             |
-| Revalidation             | 本物の Server Action で `updateTag` / `revalidateTag` / `revalidatePath` を実行し、生成IDの変化を表示                                       |
-| Authenticationの考え方   | `jose` で署名した cookie のセッションを Server Action のたびにサーバーで検証し、認証（誰か）と認可（権限）の判定を分けて表示                |
+| 教材                     | このページ自体の作り                                                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| App Router               | 教材本体を `layout.tsx` に置き、Live Demo の `children` だけが `page.tsx` / `[slug]/page.tsx` / `not-found.tsx` に切り替わる                     |
+| Dynamic Routes           | `articles/[id]` を `generateStaticParams` で一部だけプリレンダーし、3種類の値でページの届き方を HTML から判定                                    |
+| Server Components        | `io()` + `<Suspense>` でリクエストごとにサーバーで実行される async Server Component                                                              |
+| Client Components        | ページは Server Component のまま、`"use client"` のカウンターだけを境界として切り出す                                                            |
+| Server / Client Boundary | `children` で Server Component の出力を Client Component に置き、届いた応答と JavaScript を検索して確かめる                                      |
+| Data Fetching            | async Server Component で同じ取得を直列と `Promise.all` で実行し、実測した開始時間と所要時間を表示                                               |
+| Server Actions           | 本物の `"use server"` 関数でサーバー側バリデーション → データ更新 → `updateTag`                                                                  |
+| Route Handlers           | 同じフォルダの `api/route.ts` へ `fetch()` し、GET / POST の応答と、未定義の PUT に返る 405 を表示                                               |
+| Streaming                | 1秒 / 2秒かかる Server Component を別々の `<Suspense>` 境界で配信                                                                                |
+| Static / Dynamic         | `"use cache"` の値を静的シェルに、`io()` 後の値を `<Suspense>` に置き、ページの応答から到着時間を計測                                            |
+| error.tsx                | 教材本体を `layout.tsx` に置き、Server Action で起こした一時的な障害を `error.tsx` が受け止め、`retry()` / `reset()` で回復できるかを比べる      |
+| not-found.tsx            | `items/[id]` / `orders/[id]` / `proxy.ts` / 一致しない URL を取得し、ステータスと、見えないフレームで実際に表示されたファイルを調べる            |
+| loading.tsx              | 教材本体を `layout.tsx` に置き、`loading.tsx` あり / なし / page 内の `<Suspense>` の3ページへ遷移して、待ちの表示と内容が出るまでを計測         |
+| Next.js Cache            | 同じ処理をキャッシュなしと `"use cache: remote"` で実行し、生成時刻から読み取り前の結果かを判定                                                  |
+| Revalidation             | 本物の Server Action で `updateTag` / `revalidateTag` / `revalidatePath` を実行し、生成IDの変化を表示                                            |
+| Authenticationの考え方   | `jose` で署名した cookie のセッションを Server Action のたびにサーバーで検証し、認証（誰か）と認可（権限）の判定を分けて表示                     |
+| サーバー側での認証       | 認証・認可を確かめる `readSalesReport()` を Server Component・Server Action・`api/report/route.ts` から呼び、確認を忘れた Route Handler と比べる |
 
 ### クイズや課題は作らない
 
@@ -90,6 +91,7 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 14. not-found.tsx（07 Error Handling）
 15. loading.tsx（07 Error Handling）
 16. Authenticationの考え方（08 Authentication）
+17. サーバー側での認証（08 Authentication）
 
 ---
 
@@ -175,6 +177,9 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 ├ ◐ /learn/server-client-boundary       ← デモだけがリクエスト時に実行
 ├ ○ /learn/server-actions
 ├ ◐ /learn/server-components            ← デモだけがリクエスト時に実行
+├ ◐ /learn/server-side-auth             ← cookie を読んでレポートを描画する部分だけがリクエスト時に実行
+├ ƒ /learn/server-side-auth/api/report  ← 認証・認可を確かめる Route Handler（cookie を読むため毎回実行）
+├ ƒ /learn/server-side-auth/api/unguarded ← 確認を忘れた Route Handler（悪い例）
 ├ ◐ /learn/static-and-dynamic           ← デモの一部だけがリクエスト時に実行
 ├ ◐ /learn/streaming                    ← デモだけがストリーミング
 └ ƒ Proxy (Middleware)                  ← /learn/not-found-file/checked/:id だけで動く
@@ -236,7 +241,8 @@ src/
 │     ├ nextjs-cache/        # キャッシュあり / なしの比較と再利用の判定
 │     ├ revalidation/        # 失効の Server Action とタグ付きキャッシュ
 │     ├ server-client-boundary/ # children の組み合わせと境界の検査
-│     └ authentication-basics/  # デモのログインと、認証・認可を確かめる Server Action
+│     ├ authentication-basics/  # デモのログインと、認証・認可を確かめる Server Action
+│     └ server-side-auth/       # 同じ確認を3つの入口から呼ぶデモと、確認を忘れた Route Handler
 ├ components/
 │  ├ layout/       # ヘッダー・サイドバー・テーマ・エラー表示
 │  ├ learning/     # LessonPage / SourceCode / InsideThisPage / DemoLayout など
@@ -299,11 +305,12 @@ Authentication 章の認証デモを動かすには、`.env.local` の `AUTH_DEM
 - **`src/proxy.ts`** は not-found.tsx 教材のデモ専用です。`matcher` で `/learn/not-found-file/checked/:id` だけに限定しているため、ほかのページのリクエストには影響しません。
 - **not-found.tsx 教材**は、表示されたファイルを調べるため、デモのページを見えない `iframe` で開きます。同じオリジンのページなので `contentDocument` を読めます。
 - **認証デモ**（`src/lib/auth-demo/`）は教材専用で、サイト全体のログインではありません。ログインは本人確認を省いたデモで、デモの管理者にもサイトを操作する権限はありません。cookie は `/learn` 以下にだけ送られ、同じブラウザでは Authentication 章の教材どうしでログインの状態が共有されます。データベースを使わないため、ログアウトしてもコピーされたトークンは期限（15分）まで有効です。
+- **サーバー側での認証 教材**の `api/unguarded` は、確認を忘れた Route Handler の悪い例として、ログインしていなくても架空の売上の数字を返します。返すのはコード内の固定のデモデータだけです。
 - App Router 教材の遷移フローは、RSC Payload のやり取りをブラウザから直接観測できないため「モデル図」として表示しています（URL と `useSelectedLayoutSegment()` の値は実データ）。
 
 ## 今後追加する予定の教材
 
 - 01 Introduction: Next.jsとは / Reactとの関係 / Next.jsを使う理由
-- 08 Authentication: サーバー側での認証 / 保護されたページ
+- 08 Authentication: 保護されたページ
 
 将来的な学習履歴・お気に入り機能に備え、教材データ（`content/`）と表示（`components/learning/`）を分離し、認証を後から追加できる構成にしています。

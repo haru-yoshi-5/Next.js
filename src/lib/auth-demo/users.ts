@@ -14,7 +14,8 @@ export interface DemoUser {
 }
 
 /** 権限が必要な操作 */
-export type DemoPermission = "view-profile" | "publish-announcement"
+export type DemoPermission =
+  "view-profile" | "publish-announcement" | "view-sales-report"
 
 export const ROLE_LABEL: Record<DemoRole, string> = {
   member: "一般ユーザー",
@@ -29,7 +30,7 @@ const DEMO_USERS: readonly DemoUser[] = [
 /** ロールごとに許可する操作。認可のルールはここだけに書く */
 const PERMISSIONS: Record<DemoRole, readonly DemoPermission[]> = {
   member: ["view-profile"],
-  admin: ["view-profile", "publish-announcement"],
+  admin: ["view-profile", "publish-announcement", "view-sales-report"],
 }
 
 export function listDemoUsers(): readonly DemoUser[] {
