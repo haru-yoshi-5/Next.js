@@ -35,7 +35,7 @@ const ENTRY: Record<
       unconfigured: "代わりの案内を描画して返す",
     },
     respondDetail:
-      "拒否した場合、売上の数字は描画結果（HTML / RSC Payload）に含まれない。サーバー処理の合計時間",
+      "拒否した場合、レポートの表示部分には売上の数字を渡さない。サーバー処理の合計時間",
   },
   "server-action": {
     title: "Server Action での確認",

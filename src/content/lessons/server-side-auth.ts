@@ -67,7 +67,7 @@ export const serverSideAuthLesson: LessonContent = {
         {
           type: "list",
           items: [
-            "Server Component: ステータスコードを返す仕組みがないため、拒否したら代わりの表示を描画する。数字は描画結果（HTML / RSC Payload）に入らない。ページ全体を見せない場合は `redirect()` でログインページへ移動させる",
+            "Server Component: ステータスコードを返す仕組みがないため、拒否したら代わりの表示を描画する。その表示には売上の数字を渡さないため、数字はその部分の描画結果（HTML / RSC Payload）に入らない。ページ全体を見せない場合は `redirect()` でログインページへ移動させる",
             "Server Action: 呼び出し元の画面に戻り値を返す。拒否した場合は、データを含めない戻り値で理由だけを伝える",
             "Route Handler: HTTP のステータスで伝える。認証の失敗は 401、認可の失敗は 403。利用者ごとに内容が変わるため、`Cache-Control: private, no-store` で途中に保存させない",
           ],
@@ -128,6 +128,7 @@ export const serverSideAuthLesson: LessonContent = {
             "セッションを読む処理は `use cache` の中に入れない。利用者ごとに結果が変わるため、共有のキャッシュに混ぜない",
             "Server Component で cookie を読む部分は、Cache Components を有効にしたこのサイトでは `<Suspense>` の中に置く。教材の本文は静的なまま配信される",
             "デモのログインは本人確認を省いている。ログインの状態は、Authentication の章の教材どうしで共有される",
+            "ページ下の「このデモを動かしているコード」には、教材として `sales-data.ts` の架空の数字をそのまま載せている。実際のアプリでは、守りたいデータをソースコードに書かず、データベースなどから読む",
           ],
         },
       ],

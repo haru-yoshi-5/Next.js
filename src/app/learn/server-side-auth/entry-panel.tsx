@@ -467,7 +467,12 @@ function RouteEntryCard({
       }
     >
       {isPending ? (
-        <PendingNote />
+        // 確認を忘れた入口は認証・認可をしないため、「確認しています」とは表示しない
+        <PendingNote
+          message={
+            kind === "guarded" ? undefined : "サーバーからの応答を待っています…"
+          }
+        />
       ) : !state ? (
         <IdleNote />
       ) : state.status === "error" ? (
@@ -507,14 +512,18 @@ function OutcomeLabel({ outcome, label }: { outcome: Outcome; label: string }) {
   )
 }
 
-function PendingNote() {
+function PendingNote({
+  message = "サーバーで確認しています…",
+}: {
+  message?: string
+}) {
   return (
     <p
       role="status"
       className="flex items-center gap-1.5 text-sm text-muted-foreground"
     >
       <LoaderIcon aria-hidden className="size-4 motion-safe:animate-spin" />
-      サーバーで確認しています…
+      {message}
     </p>
   )
 }
