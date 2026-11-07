@@ -2,10 +2,14 @@ import type { FlowTrace } from "@/types/flow"
 
 import { formatKilobytes, type PageInspection } from "./inspect-page"
 
-/** 調べる前に表示する、ページが届くまでの流れ */
+/**
+ * このページが最初に届くまでの流れ（モデル図）。
+ * サーバー内部の組み立てとハイドレーションはブラウザから観測できないため、
+ * 「このページを調べる」の実測とは分けて表示する。
+ */
 export const pageModel: FlowTrace = {
   id: "page-model",
-  title: "このページが届くまで",
+  title: "このページが最初に届くまで",
   source: "model",
   steps: [
     {
@@ -26,23 +30,26 @@ export const pageModel: FlowTrace = {
       from: "server-component",
       to: "browser",
       label: "本文入りの HTML と RSC Payload を返す",
-      detail: "React のコンポーネントをサーバーで実行した結果",
+      detail:
+        "Server Components の結果に、Client Components の初回の HTML も含めて返す",
     },
     {
       id: "hydrate",
       from: "browser",
       to: "client-component",
-      label: "JavaScript を読み込み、ボタンを動かせるようにする",
+      label: "JavaScript を実行し、ボタンを動かせるようにする",
       detail: "ハイドレーション",
     },
   ],
 }
 
-/** 調べた結果を Process Visualizer 用のデータにする */
+/**
+ * 「このページを調べる」で実際に行った処理だけを Process Visualizer 用のデータにする。
+ * 取得した HTML と JavaScript は文字列として数えるだけで、実行しない。
+ */
 export function buildInspectionTrace(
   id: string,
   result: PageInspection,
-  routeFileCount: number,
 ): FlowTrace {
   return {
     id,
@@ -58,33 +65,25 @@ export function buildInspectionTrace(
         durationMs: result.responseMs,
       },
       {
-        id: "route",
-        from: "next-server",
-        to: "server-component",
-        label: `特別なファイル ${routeFileCount} 個を組み合わせて描画`,
-        detail:
-          "ファイル数は src/app を実際に探した結果。組み立てる処理そのものはブラウザから観測できない",
-      },
-      {
         id: "html",
-        from: "server-component",
+        from: "next-server",
         to: "browser",
-        label: "本文入りの HTML を返す",
-        detail: `HTML ${formatKilobytes(result.htmlBytes)}・JavaScript 実行前の本文 ${result.articleTextLength.toLocaleString()} 文字`,
+        label: "HTML を受け取る",
+        detail: `${formatKilobytes(result.htmlBytes)}`,
       },
       {
-        id: "payload",
-        from: "server-component",
-        to: "browser",
-        label: "RSC Payload を HTML に埋め込んで送る",
-        detail: `self.__next_f の script ${result.rscChunkCount} 個・${formatKilobytes(result.rscBytes)}`,
-      },
-      {
-        id: "hydrate",
+        id: "parse",
         from: "browser",
-        to: "client-component",
-        label: `JavaScript ${result.scriptCount} ファイルを読み込む`,
-        detail: `合計 ${formatKilobytes(result.scriptBytes)}（展開後）。読み込み後にハイドレーションする`,
+        to: "browser",
+        label: "script を実行せずに HTML を解析",
+        detail: `article 内のテキスト ${result.articleTextLength.toLocaleString()} 文字・RSC Payload を運ぶ script ${result.rscScriptCount} 個（${formatKilobytes(result.rscScriptBytes)}）`,
+      },
+      {
+        id: "scripts",
+        from: "browser",
+        to: "next-server",
+        label: `HTML が参照する JavaScript ${result.scriptCount} ファイルを取得`,
+        detail: `合計 ${formatKilobytes(result.scriptBytes)}（展開後）。このデモでは実行しない`,
       },
     ],
   }

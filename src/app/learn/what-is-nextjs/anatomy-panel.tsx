@@ -42,11 +42,6 @@ export function AnatomyPanel({ routeFolders }: AnatomyPanelProps) {
     status: "idle",
   })
 
-  const routeFileCount = routeFolders.reduce(
-    (sum, folder) => sum + folder.files.length,
-    0,
-  )
-
   async function inspect() {
     setInspection({ status: "loading" })
     try {
@@ -60,7 +55,7 @@ export function AnatomyPanel({ routeFolders }: AnatomyPanelProps) {
 
   const trace =
     inspection.status === "done"
-      ? buildInspectionTrace(inspection.id, inspection.result, routeFileCount)
+      ? buildInspectionTrace(inspection.id, inspection.result)
       : pageModel
   const isInspecting = inspection.status === "loading"
 
@@ -72,9 +67,9 @@ export function AnatomyPanel({ routeFolders }: AnatomyPanelProps) {
         <div className="flex flex-col gap-5">
           <section className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
-              <h4 className="text-sm font-medium">
-                ① この URL を作っているファイル
-              </h4>
+              <h3 className="text-sm font-medium">
+                ① この URL に関係する特別なファイル
+              </h3>
               <p className="text-xs leading-relaxed text-muted-foreground">
                 URL{" "}
                 <code className="font-mono break-all text-foreground">
@@ -132,7 +127,7 @@ export function AnatomyPanel({ routeFolders }: AnatomyPanelProps) {
 
           <section className="flex flex-col gap-3 border-t pt-4">
             <div className="flex flex-col gap-1">
-              <h4 className="text-sm font-medium">②〜④ このページの応答</h4>
+              <h3 className="text-sm font-medium">②〜④ このページの応答</h3>
               <p className="text-xs leading-relaxed text-muted-foreground">
                 このページの HTML と、HTML が読み込む JavaScript
                 を取得し直して数えます。
@@ -211,7 +206,7 @@ function InspectionResult({
         { label: "HTML の大きさ", value: formatKilobytes(result.htmlBytes) },
         { label: "HTML の中の見出し", value: result.heading ?? "見つからない" },
         {
-          label: "JavaScript 実行前の本文",
+          label: "article 内のテキスト（空白除外）",
           value: `${result.articleTextLength.toLocaleString()} 文字`,
         },
       ],
@@ -220,12 +215,12 @@ function InspectionResult({
       title: "③ サーバーとブラウザの橋渡し",
       rows: [
         {
-          label: "RSC Payload の script",
-          value: `${result.rscChunkCount} 個`,
+          label: "RSC Payload を運ぶ script",
+          value: `${result.rscScriptCount} 個`,
         },
         {
-          label: "RSC Payload の合計",
-          value: formatKilobytes(result.rscBytes),
+          label: "その script の本文合計",
+          value: formatKilobytes(result.rscScriptBytes),
         },
       ],
     },
@@ -248,9 +243,9 @@ function InspectionResult({
     <div role="status" className="flex flex-col gap-3">
       {groups.map((group) => (
         <section key={group.title} className="flex flex-col gap-1.5">
-          <h5 className="text-xs font-medium text-muted-foreground">
+          <h4 className="text-xs font-medium text-muted-foreground">
             {group.title}
-          </h5>
+          </h4>
           <dl className="flex flex-col gap-1 text-sm">
             {group.rows.map((row) => (
               <div
@@ -267,8 +262,10 @@ function InspectionResult({
         </section>
       ))}
       <p className="text-xs leading-relaxed text-muted-foreground">
-        開発サーバー（pnpm dev）では、デバッグ用のコードが入るため本番より
-        JavaScript が大きくなります。
+        取得した HTML と JavaScript
+        は数えるだけで実行しません。サーバー内部の組み立てやハイドレーションは観測できないため、調べる前に表示しているモデル図で示しています。開発サーバー（pnpm
+        dev）では、デバッグ用のコードが入るため本番より JavaScript
+        が大きくなります。
       </p>
     </div>
   )

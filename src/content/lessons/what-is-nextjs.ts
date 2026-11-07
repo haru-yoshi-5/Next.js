@@ -43,8 +43,8 @@ export const whatIsNextjsLesson: LessonContent = {
           type: "list",
           ordered: true,
           items: [
-            "ルーティング — `src/app` のフォルダ構成がそのまま URL になり、`layout.tsx` や `page.tsx` などの決まった名前のファイルで画面を組み立てる",
-            "サーバーでのレンダリング — Server Components をサーバーで実行し、内容の入った HTML をブラウザへ返す",
+            "ルーティング — 基本的に `src/app` のフォルダの区切りが URL の区切りに対応し、`layout.tsx` や `page.tsx` などの決まった名前のファイルで画面を組み立てる（Route Groups など、URL に現れないフォルダもある）",
+            "サーバーでのレンダリング — Server Components をサーバーで実行し、Client Components の初回の表示も含めて、内容の入った HTML をブラウザへ返す",
             "サーバーとブラウザの橋渡し — Server Components の結果を RSC Payload としてブラウザへ送り、Client Components と組み合わせる",
             "バンドルと分割 — コードをまとめてページごとに分割し、静的にできる部分は事前に生成しておく",
           ],
@@ -73,7 +73,7 @@ export const whatIsNextjsLesson: LessonContent = {
               title: "サーバーで行っていること",
               items: [
                 "URL から `layout.tsx` と `page.tsx` を選んで組み立てる",
-                "解説文や Source Code を、ビルド時に HTML にしておく",
+                "解説文や Source Code を、ビルド時のプリレンダーで HTML にしておく",
                 "Live Demo のファイル一覧を `src/app` から探す",
               ],
             },
@@ -99,13 +99,13 @@ export const whatIsNextjsLesson: LessonContent = {
   ],
   demo: {
     description:
-      "①は、この URL を表示するときに使われるファイルを、サーバーが `src/app` から実際に探した結果です。「このページを調べる」を押すと、このページの HTML と JavaScript を取得し直し、②〜④の仕事の跡を数えます。",
+      "①は、この URL に関係する特別なファイル（layout・error・loading など）を、サーバーが `src/app` から実際に探した結果です。「このページを調べる」を押すと、このページの HTML と JavaScript を取得し直し、②〜④の仕事の跡を数えます。取得した内容は数えるだけで実行しないため、ハイドレーションなど観測できない部分は、調べる前のモデル図で示しています。",
     steps: [
       "①で、URL の区切りごとにフォルダが対応していることを確認する",
       "「このページを調べる」を押す",
-      "JavaScript を実行する前の HTML に本文が入っていることを確認する",
-      "RSC Payload と JavaScript がいくつ届いたかを確認する",
-      "右側で、サーバーからブラウザへ処理が進む順番を確認する",
+      "JavaScript を実行する前の HTML に、見出しや本文が入っていることを確認する",
+      "RSC Payload を運ぶ script と、HTML が参照する JavaScript の数を確認する",
+      "右側で、調べる前のモデル図と、調べた後の実測の流れを見比べる",
     ],
   },
   sourceFiles: [
@@ -166,7 +166,7 @@ export const whatIsNextjsLesson: LessonContent = {
       {
         path: `${dir}/anatomy-demo.tsx`,
         role: "Server Component",
-        description: "ビルド時に実行され、ファイルの一覧を用意する",
+        description: "プリレンダー時に実行され、ファイルの一覧を用意する",
       },
       {
         path: `${dir}/route-files.ts`,
@@ -201,7 +201,7 @@ export const whatIsNextjsLesson: LessonContent = {
       {
         name: '"use cache"',
         description:
-          "route-files.ts のファイル探索をビルド時に一度だけ実行し、結果を静的な HTML に含めています。",
+          'route-files.ts のファイル探索をプリレンダー時に実行し、結果をキャッシュして静的な HTML に含めています。cacheLife("max") は長く保持する指定で、再検証などで再実行されることはあります。',
       },
       {
         name: "server-only",
@@ -211,7 +211,7 @@ export const whatIsNextjsLesson: LessonContent = {
       {
         name: "DOMParser",
         description:
-          "取得し直した HTML を、script を実行しない文書として読み込み、JavaScript を実行する前の中身を調べています。",
+          "取得し直した HTML を、script を実行しない文書として読み込み、JavaScript を実行する前の中身を調べています。RSC Payload を運ぶ script は、この HTML の書き方で使われている self.__next_f を目印に数えています。",
       },
     ],
   },

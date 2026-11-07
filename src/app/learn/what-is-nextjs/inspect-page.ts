@@ -7,11 +7,18 @@ export interface PageInspection {
   htmlBytes: number
   /** JavaScript を実行する前の HTML に入っていた見出し */
   heading: string | null
-  /** JavaScript を実行する前の HTML に入っていた本文の文字数（空白を除く） */
+  /**
+   * JavaScript を実行する前の HTML で、article 要素の中にあったテキストの文字数（空白を除く）。
+   * 解説だけでなく、デモや Source Code の表示（行番号を含む）も数に入る
+   */
   articleTextLength: number
-  /** HTML に埋め込まれた RSC Payload（self.__next_f）の script 要素の数 */
-  rscChunkCount: number
-  rscBytes: number
+  /**
+   * RSC Payload を運ぶ inline script 要素の数。
+   * この実装の HTML では self.__next_f を含むことを目印にしている（RSC の論理的なチャンク数ではない）
+   */
+  rscScriptCount: number
+  /** それらの script の本文の合計（UTF-8）。JavaScript の呼び出しやエスケープも含む */
+  rscScriptBytes: number
   /** HTML が読み込みを指示している JavaScript ファイルの数 */
   scriptCount: number
   scriptBytes: number
@@ -44,7 +51,7 @@ export async function inspectPage(): Promise<PageInspection> {
 
   const doc = new DOMParser().parseFromString(page.text, "text/html")
 
-  const rscChunks = [...doc.querySelectorAll("script:not([src])")]
+  const rscScripts = [...doc.querySelectorAll("script:not([src])")]
     .map((script) => script.textContent ?? "")
     .filter((text) => text.includes("self.__next_f"))
 
@@ -67,8 +74,8 @@ export async function inspectPage(): Promise<PageInspection> {
     articleTextLength: (
       doc.querySelector("article")?.textContent ?? ""
     ).replace(/\s+/g, "").length,
-    rscChunkCount: rscChunks.length,
-    rscBytes: rscChunks.reduce((sum, text) => sum + byteLength(text), 0),
+    rscScriptCount: rscScripts.length,
+    rscScriptBytes: rscScripts.reduce((sum, text) => sum + byteLength(text), 0),
     scriptCount: scriptUrls.length,
     scriptBytes: scripts.reduce(
       (sum, script) => sum + byteLength(script.text),

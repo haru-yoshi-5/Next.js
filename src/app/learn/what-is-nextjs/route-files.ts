@@ -39,11 +39,13 @@ async function exists(filePath: string) {
 }
 
 /**
- * この URL を表示するときに Next.js が使うファイルを、src/app から実際に探す。
+ * この URL に関係する特別なファイル（layout・error・loading など）を、src/app から実際に探す。
+ * error.tsx や loading.tsx は、エラーや待ち時間があるときにだけ表示に使われる。
  *
  * - URL の区切りごとに、対応するフォルダの特別なファイルを調べる
  * - page.tsx は URL の最後のフォルダのものだけが使われる
- * - "use cache" によりビルド時に一度だけ実行され、結果が静的シェルに含まれる
+ * - "use cache" によりプリレンダー時に実行され、結果をキャッシュして静的シェルに含める
+ *   （cacheLife("max") は長く保持する指定で、再検証などで再実行されることはある）
  */
 export async function findRouteFiles(): Promise<RouteFolder[]> {
   "use cache"

@@ -190,7 +190,7 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 ├ ƒ /learn/server-side-auth/api/unguarded ← 確認を忘れた Route Handler（悪い例）
 ├ ◐ /learn/static-and-dynamic           ← デモの一部だけがリクエスト時に実行
 ├ ◐ /learn/streaming                    ← デモだけがストリーミング
-├ ○ /learn/what-is-nextjs               ← ファイル一覧はビルド時、調査はブラウザから
+├ ○ /learn/what-is-nextjs               ← ファイル一覧はプリレンダー時、調査はブラウザから
 └ ƒ Proxy (Middleware)                  ← /learn/not-found-file/checked/:id と /learn/protected-pages/proxied だけで動く
 ```
 
