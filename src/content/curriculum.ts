@@ -18,7 +18,14 @@ export const curriculum: Chapter[] = [
           "Next.js が React に加える仕組みを、このページの HTML・RSC Payload・JavaScript を数えて確かめます。",
         runtimes: ["server", "client"],
       },
-      { slug: "react-and-nextjs", title: "Reactとの関係", status: "planned" },
+      {
+        slug: "react-and-nextjs",
+        title: "Reactとの関係",
+        status: "available",
+        summary:
+          "React が提供する仕組みと Next.js が組み込むものを、動いている React の版と、更新しても残る state で確かめます。",
+        runtimes: ["server", "client"],
+      },
       { slug: "why-nextjs", title: "Next.jsを使う理由", status: "planned" },
     ],
   },
