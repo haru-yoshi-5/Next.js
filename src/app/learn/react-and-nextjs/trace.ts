@@ -55,6 +55,8 @@ export function buildRefreshTrace(
     id,
     title: "サーバーの表示を更新した結果",
     source: "measured",
+    // 取得時間は並行した取得の最大値で、操作全体の所要時間ではないため合計を出さない
+    hideTotal: true,
     steps: [
       {
         id: "request",

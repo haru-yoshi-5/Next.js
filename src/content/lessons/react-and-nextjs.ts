@@ -30,7 +30,8 @@ export const reactAndNextjsLesson: LessonContent = {
             "state と Hooks — `useState` などで値を持ち、値が変わったら描画し直す仕組み",
             "差分の反映 — 描画し直した結果を前回と比べ、変わった部分だけを画面に反映する処理",
             "ハイドレーション — サーバーで作った HTML に、React DOM がボタンの操作などを結び付ける処理",
-            'Server Components・`"use client"`・Suspense — サーバーとブラウザで部品を分ける考え方と、それを処理する実装',
+            'Server Components と `"use client"` — サーバーとブラウザで部品を分ける考え方と、それを処理する実装',
+            "Suspense — 中の部品の準備が整うまで fallback を表示し、準備できた部分から段階的に表示する仕組み",
           ],
         },
       ],
@@ -138,7 +139,8 @@ export const reactAndNextjsLesson: LessonContent = {
     {
       path: `${dir}/observe-rsc.ts`,
       role: "ブラウザの処理",
-      description: "Resource Timing から RSC Payload の取得の候補を探す",
+      description:
+        "PerformanceObserver で、更新の間に記録された RSC Payload の取得の候補を集める",
       runtime: "client",
       runtimeReason: clientImportReason,
     },
@@ -205,9 +207,9 @@ export const reactAndNextjsLesson: LessonContent = {
           "ブラウザの React.version を、サーバーでの描画とハイドレーションの間は「確認中」とし、ブラウザで描画し直したときに表示しています。render 中にそのまま読むと、サーバーで描画した値と区別できないためです。",
       },
       {
-        name: "Resource Timing",
+        name: "PerformanceObserver（Resource Timing）",
         description:
-          "更新を始めた後に記録された、このページへの _rsc 付きの取得を探しています。リクエストヘッダーは読めないため、RSC Payload の取得の「候補」として扱います。",
+          "更新を始める直前に登録し、画面への反映が終わって少し後までに記録された、このページへの _rsc 付きの取得を集めています。リクエストヘッダーは読めないため、RSC Payload の取得の「候補」として扱います。",
       },
     ],
   },

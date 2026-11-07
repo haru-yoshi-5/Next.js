@@ -11,6 +11,7 @@ import {
 import { useRouter } from "next/navigation"
 import {
   type ReactNode,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -25,8 +26,9 @@ import { ProcessVisualizer } from "@/components/visualizer/process-visualizer"
 
 import {
   formatBytes,
-  observeRscSince,
   type RscObservation,
+  type RscObserver,
+  startRscObserver,
 } from "./observe-rsc"
 import { buildRefreshTrace, initialModel, type RefreshSnapshot } from "./trace"
 
@@ -41,7 +43,7 @@ interface ReactPanelProps {
 
 type RefreshState =
   | { status: "idle" }
-  | { status: "loading"; before: RefreshSnapshot; startedAt: number }
+  | { status: "loading"; before: RefreshSnapshot }
   | { status: "error" }
   | {
       status: "done"
@@ -52,6 +54,17 @@ type RefreshState =
     }
 
 const subscribeNothing = () => () => {}
+
+/** 更新が反映された後、サーバー生成IDが変わるのを待つ上限 */
+const ID_TIMEOUT_MS = 3000
+
+function readServerId(container: HTMLElement | null) {
+  return (
+    container
+      ?.querySelector("[data-nsc-server-id]")
+      ?.getAttribute("data-nsc-server-id") ?? null
+  )
+}
 
 /**
  * ブラウザで動いている React の版。
@@ -79,54 +92,71 @@ export function ReactPanel({
   const [refresh, setRefresh] = useState<RefreshState>({ status: "idle" })
   const [isPending, startTransition] = useTransition()
   const serverAreaRef = useRef<HTMLDivElement>(null)
+  const rscObserverRef = useRef<RscObserver | null>(null)
 
-  function readServerId() {
-    return (
-      serverAreaRef.current
-        ?.querySelector("[data-nsc-server-id]")
-        ?.getAttribute("data-nsc-server-id") ?? null
-    )
-  }
+  // ServerStamp が描画したサーバー生成IDを、DOM の変化から読む。
+  // Suspense の fallback が表示されている間は null になる。
+  const subscribeServerArea = useCallback((onChange: () => void) => {
+    const container = serverAreaRef.current
+    if (!container) return () => {}
+    const observer = new MutationObserver(onChange)
+    observer.observe(container, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["data-nsc-server-id"],
+    })
+    return () => observer.disconnect()
+  }, [])
+  const serverId = useSyncExternalStore(
+    subscribeServerArea,
+    () => readServerId(serverAreaRef.current),
+    () => null,
+  )
 
   function refreshServer() {
-    setRefresh({
-      status: "loading",
-      before: { count, serverId: readServerId() },
-      startedAt: performance.now(),
-    })
+    // 通信の観測は、更新を始める直前に登録する
+    rscObserverRef.current = startRscObserver()
+    setRefresh({ status: "loading", before: { count, serverId } })
     // Next.js のルーターがサーバーへ RSC Payload を要求し、React が結果を反映する
     startTransition(() => router.refresh())
   }
 
-  // 更新が反映された（transition が終わった）後に、表示と通信の記録を読む
+  // transition が終わった後、サーバー生成IDが変わったら完了とする。
+  // 期限までに変わらなければエラーにする。通信の観測は別に締め切る
   useEffect(() => {
     if (refresh.status !== "loading" || isPending) return
 
-    let ignore = false
-    const { before, startedAt } = refresh
-    const after: RefreshSnapshot = { count, serverId: readServerId() }
+    const { before } = refresh
+    const rscObserver = rscObserverRef.current
 
-    observeRscSince(startedAt).then((rsc) => {
-      if (ignore) return
-      if (after.serverId === null || after.serverId === before.serverId) {
-        setRefresh({ status: "error" })
-        return
-      }
-      setRefresh({
-        status: "done",
-        id: crypto.randomUUID(),
-        before,
-        after,
-        rsc,
+    if (serverId !== null && serverId !== before.serverId) {
+      let ignore = false
+      const after: RefreshSnapshot = { count, serverId }
+      rscObserver?.stop().then((rsc) => {
+        if (ignore) return
+        setRefresh({
+          status: "done",
+          id: crypto.randomUUID(),
+          before,
+          after,
+          rsc,
+        })
       })
-    })
-
-    return () => {
-      ignore = true
+      return () => {
+        ignore = true
+      }
     }
-  }, [refresh, isPending, count])
+
+    const timer = setTimeout(() => {
+      void rscObserver?.stop()
+      setRefresh({ status: "error" })
+    }, ID_TIMEOUT_MS)
+    return () => clearTimeout(timer)
+  }, [refresh, isPending, serverId, count])
 
   const isRefreshing = refresh.status === "loading"
+  const isWaitingServer = serverId === null && !isRefreshing
   const trace =
     refresh.status === "done"
       ? buildRefreshTrace(
@@ -197,7 +227,7 @@ export function ReactPanel({
             </div>
 
             <Button
-              disabled={isRefreshing}
+              disabled={isRefreshing || isWaitingServer}
               onClick={refreshServer}
               className="self-start"
             >
@@ -209,7 +239,11 @@ export function ReactPanel({
               サーバーの表示を更新
             </Button>
 
-            <RefreshResult refresh={refresh} onRetry={refreshServer} />
+            <RefreshResult
+              refresh={refresh}
+              isWaitingServer={isWaitingServer}
+              onRetry={refreshServer}
+            />
           </section>
         </div>
       }
@@ -293,9 +327,12 @@ function versionMessage(
 
 function RefreshResult({
   refresh,
+  isWaitingServer,
   onRetry,
 }: {
   refresh: RefreshState
+  /** 最初のサーバー生成IDがまだ表示されていない */
+  isWaitingServer: boolean
   onRetry: () => void
 }) {
   if (refresh.status === "error") {
@@ -303,9 +340,14 @@ function RefreshResult({
       <div role="alert" className="flex flex-col items-start gap-2">
         <p className="flex items-center gap-1.5 text-sm text-destructive">
           <CircleAlertIcon aria-hidden className="size-4 shrink-0" />
-          サーバーの表示が更新されませんでした。通信状態を確認して、もう一度お試しください。
+          サーバー生成IDの変化を確認できませんでした。もう一度更新してください。
         </p>
-        <Button variant="ghost" size="sm" onClick={onRetry}>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={isWaitingServer}
+          onClick={onRetry}
+        >
           <RotateCcwIcon aria-hidden />
           もう一度更新する
         </Button>
@@ -318,7 +360,9 @@ function RefreshResult({
       <p role="status" className="text-sm text-muted-foreground">
         {refresh.status === "loading"
           ? "サーバーの表示を更新しています…"
-          : "カウンターを何回か押してから、サーバーの表示を更新してみましょう。"}
+          : isWaitingServer
+            ? "サーバーの部分が表示されるのを待っています…"
+            : "カウンターを何回か押してから、サーバーの表示を更新してみましょう。"}
       </p>
     )
   }
@@ -352,28 +396,50 @@ function RefreshResult({
         <h4 className="text-xs font-medium text-muted-foreground">
           参考: 観測した RSC Payload の取得（候補）
         </h4>
-        <dl className="flex flex-col gap-1 text-sm">
-          <ResultRow
-            label="このページへの取得"
-            value={`${rsc.candidates.length} 件`}
-          />
-          {rsc.candidates.map((candidate, index) => (
-            <ResultRow
-              key={index}
-              label={`${index + 1} 件目（時間 / 圧縮 / 展開後）`}
-              value={`${candidate.fetchMs === null ? "取得できず" : `${candidate.fetchMs} ms`} / ${formatBytes(candidate.encodedBytes)} / ${formatBytes(candidate.decodedBytes)}`}
-            />
-          ))}
-        </dl>
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          ブラウザの Resource Timing
-          で、更新を始めた後に記録された、このページへの{" "}
-          <code className="font-mono">_rsc</code>{" "}
-          付きの取得を探しています。1回の更新で複数の取得が行われることがあり、ヘッダーまでは確認できないため候補として表示します。ほかのページへのリンクの先読みもやり直されますが、ここでは数えていません。DevTools
-          の Network でも確かめられます。
-        </p>
+        <RscCandidates rsc={rsc} />
       </section>
     </div>
+  )
+}
+
+function RscCandidates({ rsc }: { rsc: RscObservation }) {
+  if (!rsc.observed) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        このブラウザでは Resource Timing
+        を使えないため、候補を観測できませんでした。
+      </p>
+    )
+  }
+
+  return (
+    <>
+      <dl className="flex flex-col gap-1 text-sm">
+        <ResultRow
+          label="観測期間内に記録された候補"
+          value={`${rsc.candidates.length} 件`}
+        />
+        {rsc.candidates.map((candidate, index) => (
+          <ResultRow
+            key={index}
+            label={`${index + 1} 件目（時間 / 圧縮 / 展開後）`}
+            value={`${candidate.fetchMs === null ? "取得できず" : `${candidate.fetchMs} ms`} / ${formatBytes(candidate.encodedBytes)} / ${formatBytes(candidate.decodedBytes)}`}
+          />
+        ))}
+      </dl>
+      {rsc.candidates.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          観測期間内に、候補は記録されませんでした。
+        </p>
+      ) : null}
+      <p className="text-xs leading-relaxed text-muted-foreground">
+        更新を始める直前から、画面への反映が終わって少し後までの間に、ブラウザの
+        Resource Timing に記録された、このページへの{" "}
+        <code className="font-mono">_rsc</code>{" "}
+        付きの取得です。1回の更新で複数の取得が行われることがあり、ヘッダーまでは確認できないため候補として表示します。ほかのページへのリンクの先読みもやり直されますが、ここでは数えていません。DevTools
+        の Network でも確かめられます。
+      </p>
+    </>
   )
 }
 
