@@ -10,7 +10,14 @@ export const curriculum: Chapter[] = [
     number: "01",
     title: "Introduction",
     lessons: [
-      { slug: "what-is-nextjs", title: "Next.jsとは", status: "planned" },
+      {
+        slug: "what-is-nextjs",
+        title: "Next.jsとは",
+        status: "available",
+        summary:
+          "Next.js が React に加える仕組みを、このページの HTML・RSC Payload・JavaScript を数えて確かめます。",
+        runtimes: ["server", "client"],
+      },
       { slug: "react-and-nextjs", title: "Reactとの関係", status: "planned" },
       { slug: "why-nextjs", title: "Next.jsを使う理由", status: "planned" },
     ],

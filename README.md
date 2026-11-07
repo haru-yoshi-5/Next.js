@@ -26,6 +26,7 @@ App Router の Server Components・Server Actions・Streaming・Cache などは�
 
 | 教材                     | このページ自体の作り                                                                                                                             |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Next.jsとは              | URL の区切りごとに `src/app` の特別なファイルをサーバーで探し、このページの HTML・RSC Payload・JavaScript を取得し直して数える                   |
 | App Router               | 教材本体を `layout.tsx` に置き、Live Demo の `children` だけが `page.tsx` / `[slug]/page.tsx` / `not-found.tsx` に切り替わる                     |
 | Dynamic Routes           | `articles/[id]` を `generateStaticParams` で一部だけプリレンダーし、3種類の値でページの届き方を HTML から判定                                    |
 | Server Components        | `io()` + `<Suspense>` でリクエストごとにサーバーで実行される async Server Component                                                              |
@@ -76,24 +77,25 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 
 ## 公開中の教材（MVP）
 
-1. App Router（02 Routing）
-2. Dynamic Routes（02 Routing）
-3. Server Components（03 Server & Client）
-4. Client Components（03 Server & Client）
-5. Server / Client Boundary（03 Server & Client）
-6. Data Fetching（04 Data）
-7. Server Actions（04 Data）
-8. Route Handlers（04 Data）
-9. Streaming（05 Rendering）
-10. Static / Dynamic（05 Rendering）
-11. Next.js Cache（06 Cache）
-12. Revalidation（06 Cache）
-13. error.tsx（07 Error Handling）
-14. not-found.tsx（07 Error Handling）
-15. loading.tsx（07 Error Handling）
-16. Authenticationの考え方（08 Authentication）
-17. サーバー側での認証（08 Authentication）
-18. 保護されたページ（08 Authentication）
+1. Next.jsとは（01 Introduction）
+2. App Router（02 Routing）
+3. Dynamic Routes（02 Routing）
+4. Server Components（03 Server & Client）
+5. Client Components（03 Server & Client）
+6. Server / Client Boundary（03 Server & Client）
+7. Data Fetching（04 Data）
+8. Server Actions（04 Data）
+9. Route Handlers（04 Data）
+10. Streaming（05 Rendering）
+11. Static / Dynamic（05 Rendering）
+12. Next.js Cache（06 Cache）
+13. Revalidation（06 Cache）
+14. error.tsx（07 Error Handling）
+15. not-found.tsx（07 Error Handling）
+16. loading.tsx（07 Error Handling）
+17. Authenticationの考え方（08 Authentication）
+18. サーバー側での認証（08 Authentication）
+19. 保護されたページ（08 Authentication）
 
 ---
 
@@ -188,6 +190,7 @@ Live Demo を動かしている**実装ファイルそのもの**を、ビルド
 ├ ƒ /learn/server-side-auth/api/unguarded ← 確認を忘れた Route Handler（悪い例）
 ├ ◐ /learn/static-and-dynamic           ← デモの一部だけがリクエスト時に実行
 ├ ◐ /learn/streaming                    ← デモだけがストリーミング
+├ ○ /learn/what-is-nextjs               ← ファイル一覧はプリレンダー時、調査はブラウザから
 └ ƒ Proxy (Middleware)                  ← /learn/not-found-file/checked/:id と /learn/protected-pages/proxied だけで動く
 ```
 
@@ -318,6 +321,6 @@ Authentication 章の認証デモを動かすには、`.env.local` の `AUTH_DEM
 
 ## 今後追加する予定の教材
 
-- 01 Introduction: Next.jsとは / Reactとの関係 / Next.jsを使う理由
+- 01 Introduction: Reactとの関係 / Next.jsを使う理由
 
 将来的な学習履歴・お気に入り機能に備え、教材データ（`content/`）と表示（`components/learning/`）を分離し、認証を後から追加できる構成にしています。

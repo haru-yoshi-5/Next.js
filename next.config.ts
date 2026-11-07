@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
   // デプロイ先のサーバーバンドルにもソースファイルを含める。
   outputFileTracingIncludes: {
     "/learn/**": [
+      // Root Layout など src/app 直下のファイル（Inside This Page と「Next.jsとは」のデモで読む）
+      "./src/app/*.tsx",
       "./src/app/learn/**/*",
       "./src/components/**/*",
       "./src/lib/auth-demo/**/*",
