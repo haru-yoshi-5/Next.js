@@ -31,6 +31,8 @@ export interface RscObservation {
 export interface RscObserver {
   /** 観測期間を締め切り、集めた候補を返す。何度呼んでも同じ結果を返す */
   stop: () => Promise<RscObservation>
+  /** 結果を待たずに観測をやめる。アンマウント時に使う。stop() の結果は返らなくなる */
+  dispose: () => void
 }
 
 /** 画面への反映が終わってから、同時に始まった取得が記録されるまで待つ時間 */
@@ -92,7 +94,7 @@ export function startRscObserver(): RscObserver {
 
   if (!canObserveResources()) {
     const result = Promise.resolve(toObservation(false, []))
-    return { stop: () => result }
+    return { stop: () => result, dispose: () => {} }
   }
 
   const entries: PerformanceResourceTiming[] = []
@@ -105,16 +107,22 @@ export function startRscObserver(): RscObserver {
   observer.observe({ type: "resource" })
 
   let result: Promise<RscObservation> | null = null
+  let settleTimer: ReturnType<typeof setTimeout> | undefined
   return {
     stop: () => {
       result ??= new Promise((resolve) => {
-        setTimeout(() => {
+        settleTimer = setTimeout(() => {
           collect(observer.takeRecords())
           observer.disconnect()
           resolve(toObservation(true, entries))
         }, SETTLE_MS)
       })
       return result
+    },
+    dispose: () => {
+      clearTimeout(settleTimer)
+      observer.disconnect()
+      entries.length = 0
     },
   }
 }

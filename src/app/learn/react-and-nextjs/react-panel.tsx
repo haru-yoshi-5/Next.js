@@ -114,8 +114,18 @@ export function ReactPanel({
     () => null,
   )
 
+  // 更新の途中でアンマウントされたら、観測を止めて記録を手放す。
+  // 完了判定の Effect の cleanup で止めると、依存値が変わるたびに観測が止まるため分ける
+  useEffect(() => {
+    return () => {
+      rscObserverRef.current?.dispose()
+      rscObserverRef.current = null
+    }
+  }, [])
+
   function refreshServer() {
-    // 通信の観測は、更新を始める直前に登録する
+    // 通信の観測は、更新を始める直前に登録する。前回の観測が残っていれば止める
+    rscObserverRef.current?.dispose()
     rscObserverRef.current = startRscObserver()
     setRefresh({ status: "loading", before: { count, serverId } })
     // Next.js のルーターがサーバーへ RSC Payload を要求し、React が結果を反映する
