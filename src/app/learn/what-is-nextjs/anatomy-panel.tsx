@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  CheckIcon,
   CircleAlertIcon,
   FileIcon,
   FolderIcon,
@@ -34,6 +35,14 @@ type InspectionState =
   | { status: "error" }
   | { status: "done"; id: string; result: PageInspection }
 
+/** Process Visualizer に表示する流れ */
+type TraceView = "model" | "measured"
+
+const traceViews: { view: TraceView; label: string }[] = [
+  { view: "model", label: "モデル図（作られて届くまで）" },
+  { view: "measured", label: "実測（調べた結果）" },
+]
+
 // ボタンの操作と結果の state を扱うため Client Component。
 // ファイルの一覧はサーバーから props で受け取るだけで、node:fs は import しない。
 export function AnatomyPanel({ routeFolders }: AnatomyPanelProps) {
@@ -41,22 +50,27 @@ export function AnatomyPanel({ routeFolders }: AnatomyPanelProps) {
   const [inspection, setInspection] = useState<InspectionState>({
     status: "idle",
   })
+  const [view, setView] = useState<TraceView>("model")
 
   async function inspect() {
     setInspection({ status: "loading" })
+    setView("model")
     try {
       const result = await inspectPage()
       setInspection({ status: "done", id: crypto.randomUUID(), result })
+      setView("measured")
     } catch (error) {
       console.error("[inspectPage] ページの調査に失敗しました", error)
       setInspection({ status: "error" })
     }
   }
 
+  // 実測は調べ終えた後だけ選べる。モデル図にはいつでも戻せる
   const trace =
-    inspection.status === "done"
+    view === "measured" && inspection.status === "done"
       ? buildInspectionTrace(inspection.id, inspection.result)
       : pageModel
+  const activeView: TraceView = trace === pageModel ? "model" : "measured"
   const isInspecting = inspection.status === "loading"
 
   return (
@@ -147,6 +161,43 @@ export function AnatomyPanel({ routeFolders }: AnatomyPanelProps) {
               このページを調べる
             </Button>
             <InspectionResult inspection={inspection} onRetry={inspect} />
+          </section>
+
+          <section className="flex flex-col gap-2 border-t pt-4">
+            <h3 id="trace-view-heading" className="text-sm font-medium">
+              右側に表示する流れ
+            </h3>
+            <div
+              role="group"
+              aria-labelledby="trace-view-heading"
+              className="flex flex-wrap gap-2"
+            >
+              {traceViews.map((option) => {
+                const isActive = activeView === option.view
+                return (
+                  <Button
+                    key={option.view}
+                    type="button"
+                    // 選択中は色だけでなく、ボタンの種類とチェックアイコンでも示す
+                    variant={isActive ? "secondary" : "outline"}
+                    size="sm"
+                    aria-pressed={isActive}
+                    disabled={
+                      option.view === "measured" && inspection.status !== "done"
+                    }
+                    onClick={() => setView(option.view)}
+                  >
+                    {isActive ? <CheckIcon aria-hidden /> : null}
+                    {option.label}
+                  </Button>
+                )
+              })}
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {inspection.status === "done"
+                ? "切り替えても、調べた結果はそのまま残ります。"
+                : "実測は「このページを調べる」を押した後に選べます。"}
+            </p>
           </section>
         </div>
       }
@@ -263,7 +314,7 @@ function InspectionResult({
       ))}
       <p className="text-xs leading-relaxed text-muted-foreground">
         取得した HTML と JavaScript
-        は数えるだけで実行しません。サーバー内部の組み立てやハイドレーションは観測できないため、調べる前に表示しているモデル図で示しています。開発サーバー（pnpm
+        は数えるだけで実行しません。ビルド時の組み立てやハイドレーションは観測できないため、「モデル図」に切り替えて確認してください。開発サーバー（pnpm
         dev）では、デバッグ用のコードが入るため本番より JavaScript
         が大きくなります。
       </p>

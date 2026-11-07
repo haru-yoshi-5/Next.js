@@ -3,35 +3,45 @@ import type { FlowTrace } from "@/types/flow"
 import { formatKilobytes, type PageInspection } from "./inspect-page"
 
 /**
- * このページが最初に届くまでの流れ（モデル図）。
+ * このページが作られ、ブラウザに届くまでの流れ（モデル図）。
+ * このページは静的に生成される（ビルド結果の ○）ため、描画はビルド時に行い、
+ * リクエスト時は生成済みの HTML を返す。
  * サーバー内部の組み立てとハイドレーションはブラウザから観測できないため、
  * 「このページを調べる」の実測とは分けて表示する。
  */
 export const pageModel: FlowTrace = {
   id: "page-model",
-  title: "このページが最初に届くまで",
+  title: "このページが作られ、届くまで",
   source: "model",
   steps: [
+    {
+      id: "build-render",
+      from: "next-server",
+      to: "server-component",
+      label:
+        "ビルド時: URL に合うファイルを選び、外側の layout から組み立てて描画",
+      detail: "ルーティングとプリレンダーは Next.js が担当する",
+    },
+    {
+      id: "build-output",
+      from: "server-component",
+      to: "next-server",
+      label: "ビルド時: 本文入りの HTML と RSC Payload を生成して保存",
+      detail:
+        "Server Components の結果に、Client Components の初回の HTML も含めて生成する",
+    },
     {
       id: "request",
       from: "browser",
       to: "next-server",
-      label: "URL にリクエストを送る",
+      label: "リクエスト時: URL にリクエストを送る",
     },
     {
-      id: "route",
+      id: "response",
       from: "next-server",
-      to: "server-component",
-      label: "URL に合うファイルを選び、外側の layout から組み立てる",
-      detail: "ルーティングは Next.js が担当する",
-    },
-    {
-      id: "html",
-      from: "server-component",
       to: "browser",
-      label: "本文入りの HTML と RSC Payload を返す",
-      detail:
-        "Server Components の結果に、Client Components の初回の HTML も含めて返す",
+      label: "リクエスト時: 生成済みの HTML（RSC Payload を含む）を返す",
+      detail: "アクセスのたびに描画し直すわけではない",
     },
     {
       id: "hydrate",

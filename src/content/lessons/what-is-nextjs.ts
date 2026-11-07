@@ -72,7 +72,7 @@ export const whatIsNextjsLesson: LessonContent = {
               runtime: "server",
               title: "サーバーで行っていること",
               items: [
-                "URL から `layout.tsx` と `page.tsx` を選んで組み立てる",
+                "ビルド時に、URL から `layout.tsx` と `page.tsx` を選んで組み立てる",
                 "解説文や Source Code を、ビルド時のプリレンダーで HTML にしておく",
                 "Live Demo のファイル一覧を `src/app` から探す",
               ],
@@ -99,13 +99,13 @@ export const whatIsNextjsLesson: LessonContent = {
   ],
   demo: {
     description:
-      "①は、この URL に関係する特別なファイル（layout・error・loading など）を、サーバーが `src/app` から実際に探した結果です。「このページを調べる」を押すと、このページの HTML と JavaScript を取得し直し、②〜④の仕事の跡を数えます。取得した内容は数えるだけで実行しないため、ハイドレーションなど観測できない部分は、調べる前のモデル図で示しています。",
+      "①は、この URL に関係する特別なファイル（layout・error・loading など）を、サーバーが `src/app` から実際に探した結果です。「このページを調べる」を押すと、このページの HTML と JavaScript を取得し直し、②〜④の仕事の跡を数えます。取得した内容は数えるだけで実行しないため、ビルド時の組み立てやハイドレーションなど観測できない部分は、モデル図で示しています。このページは静的に生成されるため、描画はビルド時に行い、リクエスト時は生成済みの HTML を返します。",
     steps: [
       "①で、URL の区切りごとにフォルダが対応していることを確認する",
       "「このページを調べる」を押す",
       "JavaScript を実行する前の HTML に、見出しや本文が入っていることを確認する",
       "RSC Payload を運ぶ script と、HTML が参照する JavaScript の数を確認する",
-      "右側で、調べる前のモデル図と、調べた後の実測の流れを見比べる",
+      "「右側に表示する流れ」で、モデル図と実測を切り替えて見比べる",
     ],
   },
   sourceFiles: [
