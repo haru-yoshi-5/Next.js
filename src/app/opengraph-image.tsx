@@ -1,8 +1,10 @@
 import { ImageResponse } from "next/og"
 
-export const alt = "NextScope — See what happens inside Next.js"
-export const size = { width: 1200, height: 630 }
-export const contentType = "image/png"
+import { siteOgImage } from "@/lib/site-metadata"
+
+export const alt = siteOgImage.alt
+export const size = { width: siteOgImage.width, height: siteOgImage.height }
+export const contentType = siteOgImage.type
 
 const nodes = [
   { label: "Browser", runtime: "CLIENT", color: "#b45309" },
