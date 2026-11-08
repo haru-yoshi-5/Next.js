@@ -26,7 +26,14 @@ export const curriculum: Chapter[] = [
           "React が提供する仕組みと Next.js が組み込むものを、動いている React の版と、更新しても残る state で確かめます。",
         runtimes: ["server", "client"],
       },
-      { slug: "why-nextjs", title: "Next.jsを使う理由", status: "planned" },
+      {
+        slug: "why-nextjs",
+        title: "Next.jsを使う理由",
+        status: "available",
+        summary:
+          "このサイトに必要だったことと Next.js の仕組みを結び付け、フォント・メタデータ・sitemap に残る跡を調べます。",
+        runtimes: ["server", "client"],
+      },
     ],
   },
   {
