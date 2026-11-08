@@ -54,7 +54,7 @@ export function RequestPanel() {
       demo={
         <div className="flex flex-col gap-5">
           <section className="flex flex-col gap-2">
-            <h4 className="text-sm font-medium">一覧を取得する</h4>
+            <h3 className="text-sm font-medium">一覧を取得する</h3>
             <Button
               variant="outline"
               disabled={isLoading}
@@ -96,9 +96,9 @@ export function RequestPanel() {
           </form>
 
           <section className="flex flex-col gap-2 border-t pt-4">
-            <h4 className="text-sm font-medium">
+            <h3 className="text-sm font-medium">
               定義していないメソッドを送る
-            </h4>
+            </h3>
             <Button
               variant="outline"
               disabled={isLoading}

@@ -53,7 +53,7 @@ export function DeliveryPanel({ children }: { children: ReactNode }) {
 
           <section className="flex flex-col gap-3 border-t pt-4">
             <div className="flex flex-col gap-1">
-              <h4 className="text-sm font-medium">配信を計測</h4>
+              <h3 className="text-sm font-medium">配信を計測</h3>
               <p className="text-xs leading-relaxed text-muted-foreground">
                 このページを取得し直し、応答を読みながら、それぞれの値が届いた時間を記録します。
               </p>

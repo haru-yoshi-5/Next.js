@@ -101,7 +101,7 @@ export function ArticlePanel() {
       demo={
         <div className="flex flex-col gap-5">
           <section className="flex flex-col gap-2">
-            <h4 className="text-sm font-medium">値を選んで記事ページを取得</h4>
+            <h3 className="text-sm font-medium">値を選んで記事ページを取得</h3>
             <ul className="grid gap-2 sm:grid-cols-3">
               {PRESETS.map((preset) => (
                 <li key={preset.value} className="flex">
@@ -229,9 +229,9 @@ function LatestResult({ run }: { run: ArticleRun }) {
   return (
     <section className="flex flex-col gap-2 rounded-lg border px-3 py-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h5 className="font-mono text-sm break-all">
+        <h4 className="font-mono text-sm break-all">
           {run.status} · {DELIVERY_LABEL[run.delivery]}
-        </h5>
+        </h4>
         <Link
           href={run.path}
           className="flex items-center gap-1 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"

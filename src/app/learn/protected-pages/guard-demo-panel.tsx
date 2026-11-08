@@ -68,12 +68,12 @@ export function GuardDemoPanel({ children }: { children: ReactNode }) {
             aria-labelledby="protected-pages-navigate"
             className="flex flex-col gap-3"
           >
-            <h4
+            <h3
               id="protected-pages-navigate"
               className="text-xs font-medium text-muted-foreground"
             >
               枠の中で移動する（Link による画面の移動）
-            </h4>
+            </h3>
             <nav aria-label="デモのページ">
               <ul className="flex flex-wrap gap-2">
                 {NAV_LINKS.map((link) => {
@@ -117,12 +117,12 @@ export function GuardDemoPanel({ children }: { children: ReactNode }) {
             className="flex flex-col gap-3"
           >
             <div className="flex flex-col gap-1">
-              <h4
+              <h3
                 id="protected-pages-probe"
                 className="text-xs font-medium text-muted-foreground"
               >
                 URL を直接開いたときの応答を調べる
-              </h4>
+              </h3>
               <p className="text-xs leading-relaxed text-muted-foreground">
                 新しいタブで URL を開いたときと同じ GET
                 を送り、リダイレクトの仕方と、守る内容が HTML
