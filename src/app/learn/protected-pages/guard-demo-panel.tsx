@@ -68,12 +68,12 @@ export function GuardDemoPanel({ children }: { children: ReactNode }) {
             aria-labelledby="protected-pages-navigate"
             className="flex flex-col gap-3"
           >
-            <h4
+            <h3
               id="protected-pages-navigate"
               className="text-xs font-medium text-muted-foreground"
             >
               枠の中で移動する（Link による画面の移動）
-            </h4>
+            </h3>
             <nav aria-label="デモのページ">
               <ul className="flex flex-wrap gap-2">
                 {NAV_LINKS.map((link) => {
@@ -117,12 +117,12 @@ export function GuardDemoPanel({ children }: { children: ReactNode }) {
             className="flex flex-col gap-3"
           >
             <div className="flex flex-col gap-1">
-              <h4
+              <h3
                 id="protected-pages-probe"
                 className="text-xs font-medium text-muted-foreground"
               >
                 URL を直接開いたときの応答を調べる
-              </h4>
+              </h3>
               <p className="text-xs leading-relaxed text-muted-foreground">
                 新しいタブで URL を開いたときと同じ GET
                 を送り、リダイレクトの仕方と、守る内容が HTML
@@ -201,6 +201,39 @@ function ProbeView({ probe }: { probe: ProbeState }) {
   let summary: { icon: ReactNode; text: string }
 
   switch (outcome.kind) {
+    case "http-error":
+      summary = {
+        icon: (
+          <CircleAlertIcon aria-hidden className="size-4 text-destructive" />
+        ),
+        text: "サーバーがエラーを返した（守られているかは判定できない）",
+      }
+      rows.push(
+        { label: "ステータス", value: String(outcome.status) },
+        {
+          label: "守る内容",
+          value: "エラー応答のため調べていない",
+        },
+      )
+      break
+    case "unconfigured":
+      summary = {
+        icon: (
+          <CircleSlashIcon
+            aria-hidden
+            className="size-4 text-muted-foreground"
+          />
+        ),
+        text: "秘密鍵が未設定のため、ログインの確認が動いていない",
+      }
+      rows.push(
+        { label: "ステータス", value: String(outcome.status) },
+        ...(result.page === "proxied"
+          ? [{ label: "Proxy", value: "cookie を確かめずにページへ渡した" }]
+          : []),
+        { label: "守る内容", value: "HTML に入っていない（未設定の案内のみ）" },
+      )
+      break
     case "proxy-redirect":
       summary = {
         icon: <ShieldAlertIcon aria-hidden className="size-4 text-client" />,
@@ -247,7 +280,7 @@ function ProbeView({ probe }: { probe: ProbeState }) {
             className="size-4 text-muted-foreground"
           />
         ),
-        text: "守る内容もリダイレクトもなかった",
+        text: "守る内容もリダイレクトもなかった（想定していない応答）",
       }
       rows.push({ label: "ステータス", value: String(outcome.status) })
       break

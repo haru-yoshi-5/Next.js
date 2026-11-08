@@ -202,12 +202,12 @@ export function EntryPanel({
             className="flex flex-col gap-3 rounded-lg border px-3 py-3"
           >
             <div className="flex flex-col gap-1">
-              <h4
+              <h3
                 id="server-side-auth-viewer"
                 className="text-xs font-medium text-muted-foreground"
               >
                 サーバーが確認したユーザー
-              </h4>
+              </h3>
               <p className="flex items-center gap-2 text-sm font-medium">
                 <UserRoundIcon
                   aria-hidden
@@ -399,7 +399,7 @@ function EntryCard({
       )}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="flex items-center gap-2 text-sm font-medium">
+        <h3 className="flex items-center gap-2 text-sm font-medium">
           <span
             className={cn(
               "rounded border px-1.5 font-mono text-[0.7rem] text-muted-foreground",
@@ -409,7 +409,7 @@ function EntryCard({
             {number}
           </span>
           {title}
-        </h4>
+        </h3>
         <RuntimeBadge runtime="server" detail={runtimeDetail} />
       </div>
       <p className="text-xs leading-relaxed text-muted-foreground">{how}</p>

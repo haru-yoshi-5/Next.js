@@ -10,10 +10,10 @@ interface StampCardProps {
 export function StampCard({ title, icon, rows }: StampCardProps) {
   return (
     <section className="flex min-w-0 flex-col rounded-lg border">
-      <h4 className="flex items-center gap-1.5 border-b px-3 py-2 text-sm font-medium">
+      <h3 className="flex items-center gap-1.5 border-b px-3 py-2 text-sm font-medium">
         {icon}
         {title}
-      </h4>
+      </h3>
       <dl className="flex flex-col gap-2 px-3 py-3 text-sm">
         {rows.map((row) => (
           <div
