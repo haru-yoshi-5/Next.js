@@ -20,7 +20,7 @@ export function FetchTimeline({
   return (
     <section className="flex min-w-0 flex-col gap-3 rounded-lg border p-3">
       <header className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <h4 className="text-sm font-medium">{title}</h4>
+        <h3 className="text-sm font-medium">{title}</h3>
         <p className="font-mono text-sm tabular-nums">
           <span className="sr-only">合計 </span>
           {formatMs(run.totalMs)}

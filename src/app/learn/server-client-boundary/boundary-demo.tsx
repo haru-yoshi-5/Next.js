@@ -30,10 +30,10 @@ function ServerOutput({
 
   return (
     <section className="rounded-lg border">
-      <h4 className="flex items-center gap-1.5 border-b px-3 py-2 text-sm font-medium">
+      <h3 className="flex items-center gap-1.5 border-b px-3 py-2 text-sm font-medium">
         <ServerIcon aria-hidden className="size-3.5 text-server" />
         Server Component の出力
-      </h4>
+      </h3>
       <dl className="flex flex-col gap-2 px-3 py-3 text-sm">
         {rows.map((row) => (
           <div

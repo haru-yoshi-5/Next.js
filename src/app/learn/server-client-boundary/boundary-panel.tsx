@@ -159,7 +159,7 @@ export function BoundaryPanel({
       demo={
         <div className="flex flex-col gap-5">
           <section className="flex flex-col gap-3 rounded-lg border p-3">
-            <h4 className="text-sm font-medium">Client Component</h4>
+            <h3 className="text-sm font-medium">Client Component</h3>
             <div className="flex flex-wrap items-center gap-2">
               <output
                 aria-live="polite"
@@ -205,7 +205,7 @@ export function BoundaryPanel({
           </Button>
 
           <section className="flex flex-col gap-2">
-            <h4 className="text-sm font-medium">props で受け取った値の型</h4>
+            <h3 className="text-sm font-medium">props で受け取った値の型</h3>
             <div className="overflow-x-auto rounded-lg border">
               <table className="w-full text-left text-sm">
                 <thead className="text-xs text-muted-foreground">
@@ -236,7 +236,7 @@ export function BoundaryPanel({
 
           <section className="flex flex-col gap-3 border-t pt-4">
             <div className="flex flex-col gap-1">
-              <h4 className="text-sm font-medium">境界を越えた内容を検査</h4>
+              <h3 className="text-sm font-medium">境界を越えた内容を検査</h3>
               <p className="text-xs leading-relaxed text-muted-foreground">
                 このページの応答と、読み込んだ JavaScript
                 ファイルを取得し直して検索します。

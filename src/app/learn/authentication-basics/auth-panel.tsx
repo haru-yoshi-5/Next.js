@@ -68,7 +68,7 @@ export function AuthPanel({ auth, loginOptions }: AuthPanelProps) {
       <DemoLayout
         runtime="client"
         runtimeDetail="ログインと操作のボタン"
-        demo={<AuthDemoUnconfiguredNotice />}
+        demo={<AuthDemoUnconfiguredNotice headingLevel={3} />}
         visualizer={
           <ProcessVisualizer
             nodes={[...NODES]}
@@ -244,7 +244,7 @@ function DemoSection({
 }) {
   return (
     <section className="flex flex-col gap-2">
-      <h4 className="text-sm font-medium">{title}</h4>
+      <h3 className="text-sm font-medium">{title}</h3>
       <p className="text-xs leading-relaxed text-muted-foreground">{note}</p>
       {children}
     </section>
@@ -263,12 +263,12 @@ function ServerViewCard({
       aria-labelledby="auth-server-view"
       className="flex flex-col gap-1.5 rounded-lg border px-3 py-3"
     >
-      <h4
+      <h3
         id="auth-server-view"
         className="text-xs font-medium text-muted-foreground"
       >
         サーバーが確認したユーザー
-      </h4>
+      </h3>
       <p className="flex items-center gap-2 text-sm font-medium">
         <UserRoundIcon
           aria-hidden

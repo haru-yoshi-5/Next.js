@@ -124,7 +124,7 @@ export function NotFoundPanel() {
       demo={
         <div className="flex flex-col gap-5">
           <section className="flex flex-col gap-2">
-            <h4 className="text-sm font-medium">URL を選んで取得</h4>
+            <h3 className="text-sm font-medium">URL を選んで取得</h3>
             <ul className="grid gap-2 sm:grid-cols-2">
               {CASES.map((demoCase) => (
                 <li key={demoCase.path} className="flex">
@@ -213,10 +213,10 @@ function LatestResult({ run }: { run: NotFoundRun }) {
   return (
     <section className="flex flex-col gap-2 rounded-lg border px-3 py-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h5 className="font-mono text-sm break-all">
+        <h4 className="font-mono text-sm break-all">
           {run.status} ·{" "}
           {run.renderedFile ?? "表示されたファイルを確かめられませんでした"}
-        </h5>
+        </h4>
         {/* next/link で開くと、一致しない URL では教材ページごと app/not-found.tsx に置き換わるため a を使う */}
         <a
           href={run.path}

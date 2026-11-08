@@ -24,7 +24,7 @@ export async function ReportDemo() {
       <DemoLayout
         runtime="client"
         runtimeDetail="ユーザーの切り替えと、入口を呼ぶボタン"
-        demo={<AuthDemoUnconfiguredNotice />}
+        demo={<AuthDemoUnconfiguredNotice headingLevel={3} />}
         visualizer={
           <ProcessVisualizer
             nodes={["browser", "next-server", "server-component"]}
