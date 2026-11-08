@@ -15,7 +15,14 @@ import { PROTECTED_PAGES, type ProtectedPageKey } from "./return-to"
 export async function MemberArea({ page }: { page: ProtectedPageKey }) {
   const area = await readMemberArea(PROTECTED_PAGES[page])
 
-  if (area.status === "unconfigured") return <AuthDemoUnconfiguredNotice />
+  if (area.status === "unconfigured") {
+    return (
+      // data-nsc-auth-unconfigured は、Live Demo が「秘密鍵が未設定で確認していない」ことを見分けるための目印
+      <div data-nsc-auth-unconfigured={page}>
+        <AuthDemoUnconfiguredNotice />
+      </div>
+    )
+  }
 
   return (
     // data-nsc-protected-content は、Live Demo が「守る内容が HTML に入っているか」を確かめるための目印

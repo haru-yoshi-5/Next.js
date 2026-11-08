@@ -18,6 +18,7 @@ const formatMs = (ms: number) => `${Math.round(ms).toLocaleString("ja-JP")} ms`
 export function buildProbeTrace(id: string, result: ProbeResult): FlowTrace {
   const { page, outcome } = result
   const roundTrip = `往復 ${formatMs(result.roundTripMs)}（ブラウザで計測）`
+  const title = `${PAGE_LABEL[page]}を直接取得`
 
   const steps: FlowStep[] = [
     {
@@ -30,7 +31,36 @@ export function buildProbeTrace(id: string, result: ProbeResult): FlowTrace {
     },
   ]
 
-  if (page === "proxied") {
+  // エラー応答からは、Proxy・描画のどこで失敗したかが分からないため、途中の処理は並べない
+  if (outcome.kind === "http-error") {
+    steps.push({
+      id: "http-error",
+      from: "next-server",
+      to: "browser",
+      label: `${outcome.status} のエラー応答が返った`,
+      detail: `どこで失敗したかは、この応答からは分からない。守られているかも判定しない。${roundTrip}`,
+      status: "error",
+    })
+    return { id, title, source: "measured", steps, hideTotal: true }
+  }
+
+  if (page === "proxied" && outcome.kind === "unconfigured") {
+    steps.push(
+      {
+        id: "proxy",
+        from: "next-server",
+        to: "proxy",
+        label: "proxy.ts: 秘密鍵が未設定のため、cookie を確かめない",
+        detail: "ページに未設定の案内が出たことから判定",
+      },
+      {
+        id: "proxy-pass",
+        from: "proxy",
+        to: "server-component",
+        label: "確かめずにページの描画へ渡す",
+      },
+    )
+  } else if (page === "proxied") {
     steps.push({
       id: "proxy",
       from: "next-server",
@@ -47,13 +77,7 @@ export function buildProbeTrace(id: string, result: ProbeResult): FlowTrace {
         detail: roundTrip,
         status: "error",
       })
-      return {
-        id,
-        title: `${PAGE_LABEL[page]}を直接取得`,
-        source: "measured",
-        steps,
-        hideTotal: true,
-      }
+      return { id, title, source: "measured", steps, hideTotal: true }
     }
     steps.push({
       id: "proxy-pass",
@@ -70,11 +94,16 @@ export function buildProbeTrace(id: string, result: ProbeResult): FlowTrace {
     })
   }
 
+  // members ページには Proxy がないため、ここで proxy-redirect になることはない
+  if (outcome.kind === "proxy-redirect") {
+    return { id, title, source: "measured", steps, hideTotal: true }
+  }
+
   steps.push({
     id: "shell",
     from: "server-component",
     to: "browser",
-    label: "見出しと fallback（静的な部分）を 200 で送り始める",
+    label: `見出しと fallback（静的な部分）を ${outcome.status} で送り始める`,
     detail: "送り始めた後は、ステータスを変えられない",
   })
 
@@ -108,25 +137,26 @@ export function buildProbeTrace(id: string, result: ProbeResult): FlowTrace {
         },
       )
       break
+    case "unconfigured":
+      steps.push({
+        id: "unconfigured",
+        from: "server-component",
+        to: "browser",
+        label:
+          "readMemberArea(): 秘密鍵が未設定 → 確認せずに案内を表示（お知らせは読まない）",
+        detail: roundTrip,
+      })
+      break
     case "neither":
       steps.push({
         id: "neither",
         from: "server-component",
         to: "browser",
-        label: "守る内容もリダイレクトもない応答（秘密鍵が未設定の案内など）",
+        label: "守る内容もリダイレクトもない応答（想定していない応答）",
         detail: roundTrip,
       })
       break
-    case "proxy-redirect":
-      // members には Proxy がないため、ここには来ない
-      break
   }
 
-  return {
-    id,
-    title: `${PAGE_LABEL[page]}を直接取得`,
-    source: "measured",
-    steps,
-    hideTotal: true,
-  }
+  return { id, title, source: "measured", steps, hideTotal: true }
 }
