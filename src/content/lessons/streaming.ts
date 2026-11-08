@@ -210,5 +210,5 @@ export const streamingLesson: LessonContent = {
       },
     ],
   },
-  related: ["server-components", "server-actions", "app-router"],
+  related: ["loading-file", "server-components", "app-router"],
 }

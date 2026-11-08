@@ -10,9 +10,30 @@ export const curriculum: Chapter[] = [
     number: "01",
     title: "Introduction",
     lessons: [
-      { slug: "what-is-nextjs", title: "Next.jsとは", status: "planned" },
-      { slug: "react-and-nextjs", title: "Reactとの関係", status: "planned" },
-      { slug: "why-nextjs", title: "Next.jsを使う理由", status: "planned" },
+      {
+        slug: "what-is-nextjs",
+        title: "Next.jsとは",
+        status: "available",
+        summary:
+          "Next.js が React に加える仕組みを、このページの HTML・RSC Payload・JavaScript を数えて確かめます。",
+        runtimes: ["server", "client"],
+      },
+      {
+        slug: "react-and-nextjs",
+        title: "Reactとの関係",
+        status: "available",
+        summary:
+          "React が提供する仕組みと Next.js が組み込むものを、動いている React の版と、更新しても残る state で確かめます。",
+        runtimes: ["server", "client"],
+      },
+      {
+        slug: "why-nextjs",
+        title: "Next.jsを使う理由",
+        status: "available",
+        summary:
+          "このサイトに必要だったことと Next.js の仕組みを結び付け、フォント・メタデータ・sitemap に残る跡を調べます。",
+        runtimes: ["server", "client"],
+      },
     ],
   },
   {
@@ -28,7 +49,14 @@ export const curriculum: Chapter[] = [
           "フォルダ構成がURLになる仕組みと、layout を保ったまま page だけが切り替わる様子を確認します。",
         runtimes: ["server", "client"],
       },
-      { slug: "dynamic-routes", title: "Dynamic Routes", status: "planned" },
+      {
+        slug: "dynamic-routes",
+        title: "Dynamic Routes",
+        status: "available",
+        summary:
+          "generateStaticParams に含まれる値・含まれない値・存在しない値で、ページの届き方が変わる様子を実測で比べます。",
+        runtimes: ["server", "client"],
+      },
     ],
   },
   {
@@ -67,7 +95,14 @@ export const curriculum: Chapter[] = [
     number: "04",
     title: "Data",
     lessons: [
-      { slug: "data-fetching", title: "Data Fetching", status: "planned" },
+      {
+        slug: "data-fetching",
+        title: "Data Fetching",
+        status: "available",
+        summary:
+          "同じデータ取得を直列と並列で実行し、await の書き方で待ち時間が変わる様子を実測で確認します。",
+        runtimes: ["server"],
+      },
       {
         slug: "server-actions",
         title: "Server Actions",
@@ -76,7 +111,14 @@ export const curriculum: Chapter[] = [
           "フォーム送信から本物の Server Action が実行され、キャッシュ更新を経て画面に戻るまでを追います。",
         runtimes: ["client", "server"],
       },
-      { slug: "route-handlers", title: "Route Handlers", status: "planned" },
+      {
+        slug: "route-handlers",
+        title: "Route Handlers",
+        status: "available",
+        summary:
+          "教材ページから本物の route.ts へ GET / POST / PUT を送り、ステータスコードとレスポンスを確認します。",
+        runtimes: ["client", "server"],
+      },
     ],
   },
   {
@@ -130,9 +172,30 @@ export const curriculum: Chapter[] = [
     number: "07",
     title: "Error Handling",
     lessons: [
-      { slug: "error-file", title: "error.tsx", status: "planned" },
-      { slug: "not-found-file", title: "not-found.tsx", status: "planned" },
-      { slug: "loading-file", title: "loading.tsx", status: "planned" },
+      {
+        slug: "error-file",
+        title: "error.tsx",
+        status: "available",
+        summary:
+          "デモの中で障害を起こし、error.tsx が page の部分だけを差し替えて、retry() で回復する様子を確かめます。",
+        runtimes: ["server", "client"],
+      },
+      {
+        slug: "not-found-file",
+        title: "not-found.tsx",
+        status: "available",
+        summary:
+          "notFound() からどの not-found.tsx が選ばれるか、ステータスが 200 と 404 のどちらになるかを、実際に URL を取得して確かめます。",
+        runtimes: ["server", "client"],
+      },
+      {
+        slug: "loading-file",
+        title: "loading.tsx",
+        status: "available",
+        summary:
+          "loading.tsx がページを Suspense で包み、遷移した直後に待ちの表示を出す様子を、実際の遷移で計測します。",
+        runtimes: ["server", "client"],
+      },
     ],
   },
   {
@@ -143,9 +206,27 @@ export const curriculum: Chapter[] = [
       {
         slug: "authentication-basics",
         title: "Authenticationの考え方",
-        status: "planned",
+        status: "available",
+        summary:
+          "デモのログインと Server Action で、認証（誰か）と認可（何をしてよいか）の違いと、確認をサーバーで行う理由を確かめます。",
+        runtimes: ["server", "client"],
       },
-      { slug: "protected-pages", title: "保護されたページ", status: "planned" },
+      {
+        slug: "server-side-auth",
+        title: "サーバー側での認証",
+        status: "available",
+        summary:
+          "管理者だけが見られるレポートを Server Component・Server Action・Route Handler から読み、同じ確認が入口ごとにどう伝わるかを比べます。",
+        runtimes: ["server", "client"],
+      },
+      {
+        slug: "protected-pages",
+        title: "保護されたページ",
+        status: "available",
+        summary:
+          "未ログインの人を、ページの中の redirect() と Proxy でログインページへ送り、リダイレクトのされ方と守る内容の届き方を比べます。",
+        runtimes: ["server", "client"],
+      },
     ],
   },
 ]

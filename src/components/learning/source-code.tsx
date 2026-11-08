@@ -10,12 +10,22 @@ export async function SourceCode({ files }: { files: LessonFile[] }) {
     files.map((file) => getHighlightedSource(file.path)),
   )
 
+  // 同じ名前のファイル（route.ts など）が複数あるときは、親フォルダも付けて区別する
+  const nameCounts = new Map<string, number>()
+  for (const source of sources) {
+    nameCounts.set(source.fileName, (nameCounts.get(source.fileName) ?? 0) + 1)
+  }
+  const tabLabel = (path: string, fileName: string) =>
+    (nameCounts.get(fileName) ?? 0) > 1
+      ? path.split("/").slice(-2).join("/")
+      : fileName
+
   const items = files.map((file, index) => {
     const source = sources[index]
     const runtime = resolveRuntime(source.directive, file)
     return {
       value: file.path,
-      label: source.fileName,
+      label: tabLabel(file.path, source.fileName),
       runtime: runtime.runtime,
       content: (
         <CodeBlock

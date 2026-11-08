@@ -6,6 +6,7 @@ import {
   LayersIcon,
   type LucideIcon,
   ServerIcon,
+  ShieldCheckIcon,
   WaypointsIcon,
   ZapIcon,
 } from "lucide-react"
@@ -38,6 +39,13 @@ export const flowNodes: Record<FlowNodeId, FlowNodeDefinition> = {
     runtime: "server",
     description: "リクエストを受け取りルーティングとレンダリングを行う",
     Icon: ServerIcon,
+  },
+  proxy: {
+    label: "Proxy",
+    runtime: "server",
+    description:
+      "proxy.ts。ページを描画する前に、リクエストを通すか振り分けるかを決める",
+    Icon: ShieldCheckIcon,
   },
   "server-component": {
     label: "Server Component",

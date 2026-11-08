@@ -12,6 +12,8 @@ export default function NotFound() {
   return (
     <main
       id="main-content"
+      // not-found.tsx 教材の Live Demo が、表示されたファイルを見つけるための目印
+      data-nsc-rendered-file="app/not-found.tsx"
       className="mx-auto flex max-w-xl flex-1 flex-col items-start justify-center gap-4 px-4 py-24"
     >
       <p className="font-mono text-sm text-muted-foreground">404</p>
