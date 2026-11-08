@@ -6,12 +6,17 @@ import { PROTECTED_PAGES, type ProtectedPageKey } from "./return-to"
  *
  * - redirect: "manual" にすると、3xx の応答は中身を読めない opaqueredirect になる。
  *   ステータスの数字は読めないが、「描画の前にリダイレクトされた」ことは分かる
- * - 200 の応答は HTML を最後まで読み、リダイレクトの meta タグと守る内容の目印を探す
+ * - 2xx の応答は HTML を最後まで読み、リダイレクトの meta タグと守る内容などの目印を探す
+ * - 4xx / 5xx の応答は、守られているかを判定できないエラーとして扱う（目印は探さない）
  */
 
 export type ProbeOutcome =
   /** Proxy が描画の前に 3xx で応答した */
   | { kind: "proxy-redirect" }
+  /** サーバーがエラー（4xx / 5xx）を返した。どこで失敗したかは応答からは分からない */
+  | { kind: "http-error"; status: number }
+  /** 秘密鍵が未設定のため、確認せずに案内を表示した（Proxy も確かめずに通す） */
+  | { kind: "unconfigured"; status: number }
   /** 200 で送り始めた後、ページの中の redirect() が meta タグで移動を伝えた */
   | {
       kind: "page-redirect"
@@ -22,7 +27,7 @@ export type ProbeOutcome =
     }
   /** 確認を通り、守る内容が届いた */
   | { kind: "content"; status: number; dataMs: number | null }
-  /** どちらも見つからなかった（秘密鍵が未設定の場合など） */
+  /** どの目印も見つからなかった（想定していない応答） */
   | { kind: "neither"; status: number }
 
 export interface ProbeResult {
@@ -37,10 +42,14 @@ const PAGE_REDIRECT_META = /<meta[^>]*id="__next-page-redirect"[^>]*>/
 const META_URL = /url=([^"]+)"/
 
 /** member-area.tsx の目印。HTML の属性と、RSC Payload（script 内の文字列）の両方で探す */
-function containsProtectedContent(html: string, page: ProtectedPageKey) {
+function containsMarker(
+  html: string,
+  attribute: string,
+  page: ProtectedPageKey,
+) {
   return (
-    html.includes(`data-nsc-protected-content="${page}"`) ||
-    html.includes(`data-nsc-protected-content\\":\\"${page}`)
+    html.includes(`${attribute}="${page}"`) ||
+    html.includes(`${attribute}\\":\\"${page}`)
   )
 }
 
@@ -74,7 +83,17 @@ export async function probeProtectedPage(
 
   const html = await response.text()
   const roundTripMs = performance.now() - startedAt
-  const leaked = containsProtectedContent(html, page)
+
+  // エラーページの中身からは、守られているかを判定しない
+  if (!response.ok) {
+    return {
+      page,
+      outcome: { kind: "http-error", status: response.status },
+      roundTripMs,
+    }
+  }
+
+  const leaked = containsMarker(html, "data-nsc-protected-content", page)
   const meta = html.match(PAGE_REDIRECT_META)
 
   if (meta) {
@@ -98,6 +117,13 @@ export async function probeProtectedPage(
         status: response.status,
         dataMs: readDataMs(html),
       },
+      roundTripMs,
+    }
+  }
+  if (containsMarker(html, "data-nsc-auth-unconfigured", page)) {
+    return {
+      page,
+      outcome: { kind: "unconfigured", status: response.status },
       roundTripMs,
     }
   }

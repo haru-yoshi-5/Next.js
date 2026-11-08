@@ -201,6 +201,39 @@ function ProbeView({ probe }: { probe: ProbeState }) {
   let summary: { icon: ReactNode; text: string }
 
   switch (outcome.kind) {
+    case "http-error":
+      summary = {
+        icon: (
+          <CircleAlertIcon aria-hidden className="size-4 text-destructive" />
+        ),
+        text: "サーバーがエラーを返した（守られているかは判定できない）",
+      }
+      rows.push(
+        { label: "ステータス", value: String(outcome.status) },
+        {
+          label: "守る内容",
+          value: "エラー応答のため調べていない",
+        },
+      )
+      break
+    case "unconfigured":
+      summary = {
+        icon: (
+          <CircleSlashIcon
+            aria-hidden
+            className="size-4 text-muted-foreground"
+          />
+        ),
+        text: "秘密鍵が未設定のため、ログインの確認が動いていない",
+      }
+      rows.push(
+        { label: "ステータス", value: String(outcome.status) },
+        ...(result.page === "proxied"
+          ? [{ label: "Proxy", value: "cookie を確かめずにページへ渡した" }]
+          : []),
+        { label: "守る内容", value: "HTML に入っていない（未設定の案内のみ）" },
+      )
+      break
     case "proxy-redirect":
       summary = {
         icon: <ShieldAlertIcon aria-hidden className="size-4 text-client" />,
@@ -247,7 +280,7 @@ function ProbeView({ probe }: { probe: ProbeState }) {
             className="size-4 text-muted-foreground"
           />
         ),
-        text: "守る内容もリダイレクトもなかった",
+        text: "守る内容もリダイレクトもなかった（想定していない応答）",
       }
       rows.push({ label: "ステータス", value: String(outcome.status) })
       break
