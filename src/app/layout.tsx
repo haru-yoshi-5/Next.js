@@ -4,6 +4,7 @@ import { Geist, Geist_Mono, Noto_Sans_JP } from "next/font/google"
 import { SiteHeader } from "@/components/layout/site-header"
 import { ThemeProvider } from "@/components/layout/theme-provider"
 import { siteConfig } from "@/lib/site"
+import { sharedOpenGraph } from "@/lib/site-metadata"
 
 import "./globals.css"
 
@@ -32,9 +33,8 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   openGraph: {
+    ...sharedOpenGraph,
     type: "website",
-    locale: "ja_JP",
-    siteName: siteConfig.name,
     title: siteConfig.name,
     description: siteConfig.description,
   },
