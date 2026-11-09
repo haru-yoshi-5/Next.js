@@ -5,14 +5,14 @@ import { KeyRoundIcon } from "lucide-react"
  * Authentication 章の教材で共通して使う。
  *
  * 見出しのレベルは置く場所で変わる。Live Demo（h2）の直下なら 3、
- * 枠の中のページ（h3）の下なら 4（既定）を指定する。
+ * 枠の中のページ（h4）の下なら 5（既定）を指定する。
  */
 export function AuthDemoUnconfiguredNotice({
-  headingLevel = 4,
+  headingLevel = 5,
 }: {
-  headingLevel?: 3 | 4
+  headingLevel?: 3 | 5
 }) {
-  const Heading = headingLevel === 3 ? "h3" : "h4"
+  const Heading = headingLevel === 3 ? "h3" : "h5"
   return (
     <section className="flex flex-col gap-2 rounded-lg border border-dashed px-4 py-4">
       <Heading className="flex items-center gap-2 text-sm font-medium">

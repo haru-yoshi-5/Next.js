@@ -12,10 +12,20 @@ interface ProcessNodeProps {
    * 再生中は出発側も state="active" で強調するが、「今のステップ」は1つにする
    */
   current?: boolean
+  /**
+   * 再生が終わった後か。終わった後も到着側のノードは state="active" で強調するが、
+   * 処理はもう終わっているため、スクリーンリーダー向けの「処理中」は出さない
+   */
+  finished?: boolean
 }
 
 /** Process Visualizer 上のノード（Browser / Next.js Server など） */
-export function ProcessNode({ id, state, current = false }: ProcessNodeProps) {
+export function ProcessNode({
+  id,
+  state,
+  current = false,
+  finished = false,
+}: ProcessNodeProps) {
   const { label, description, Icon } = flowNodes[id]
 
   return (
@@ -45,7 +55,7 @@ export function ProcessNode({ id, state, current = false }: ProcessNodeProps) {
             aria-hidden
             className="size-2 rounded-full bg-flow motion-safe:animate-pulse"
           />
-          <span className="sr-only">処理中</span>
+          {finished ? null : <span className="sr-only">処理中</span>}
         </span>
       ) : null}
     </li>

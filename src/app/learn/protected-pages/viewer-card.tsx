@@ -25,12 +25,12 @@ export async function ViewerCard() {
       className="flex flex-col gap-3 rounded-lg border px-3 py-3"
     >
       <div className="flex flex-col gap-1">
-        <h4
+        <h5
           id="protected-pages-viewer"
           className="text-xs font-medium text-muted-foreground"
         >
           サーバーが確認したユーザー
-        </h4>
+        </h5>
         <p className="flex items-center gap-2 text-sm font-medium">
           <UserRoundIcon
             aria-hidden

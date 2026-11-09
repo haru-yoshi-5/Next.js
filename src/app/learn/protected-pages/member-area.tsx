@@ -36,12 +36,12 @@ export async function MemberArea({ page }: { page: ProtectedPageKey }) {
         <BadgeCheckIcon aria-hidden className="size-4 shrink-0 text-server" />
         {area.viewer.name}（{area.viewer.roleLabel}）として確認を通りました
       </p>
-      <h4
+      <h5
         id={`${page}-notices`}
         className="text-xs font-medium text-muted-foreground"
       >
         会員向けのお知らせ
-      </h4>
+      </h5>
       <ul className="flex flex-col gap-2">
         {area.notices.map((notice) => (
           <li key={notice.id} className="flex flex-col gap-0.5">
