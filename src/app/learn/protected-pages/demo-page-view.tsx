@@ -15,6 +15,8 @@ interface DemoPageViewProps {
  * Live Demo の枠に表示するページの共通部分。
  * 見出しと説明は静的なまま配信し、リクエスト時に確かめる部分だけを <Suspense> の中に置く。
  * 見出しと説明には、守る内容を書かない。
+ *
+ * 枠は Live Demo の項目（h3）の中に置くため、見出しは h4、その下の見出しは h5 にする。
  */
 export function DemoPageView({
   file,
@@ -29,7 +31,7 @@ export function DemoPageView({
         <FileCode2Icon aria-hidden className="size-3.5 shrink-0" />
         {file}
       </p>
-      <h3 className="font-semibold">{title}</h3>
+      <h4 className="font-semibold">{title}</h4>
       <p className="text-sm leading-relaxed text-muted-foreground">
         {description}
       </p>

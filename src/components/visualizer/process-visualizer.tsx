@@ -166,6 +166,7 @@ export function ProcessVisualizer({
               id={id}
               state={nodeState(id)}
               current={id === currentNode}
+              finished={isComplete}
             />
           ))}
         </NodeZone>
@@ -176,6 +177,7 @@ export function ProcessVisualizer({
               id={id}
               state={nodeState(id)}
               current={id === currentNode}
+              finished={isComplete}
             />
           ))}
         </NodeZone>
