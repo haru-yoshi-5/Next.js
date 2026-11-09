@@ -7,15 +7,20 @@ export type ProcessNodeState = "idle" | "visited" | "active"
 interface ProcessNodeProps {
   id: FlowNodeId
   state: ProcessNodeState
+  /**
+   * 今のステップの到着側のノードか。aria-current="step" はこのノードだけに付ける。
+   * 再生中は出発側も state="active" で強調するが、「今のステップ」は1つにする
+   */
+  current?: boolean
 }
 
 /** Process Visualizer 上のノード（Browser / Next.js Server など） */
-export function ProcessNode({ id, state }: ProcessNodeProps) {
+export function ProcessNode({ id, state, current = false }: ProcessNodeProps) {
   const { label, description, Icon } = flowNodes[id]
 
   return (
     <li
-      aria-current={state === "active" ? "step" : undefined}
+      aria-current={current ? "step" : undefined}
       className={cn(
         "flex min-w-0 items-center gap-2.5 rounded-lg border px-3 py-2 transition-colors duration-300",
         state === "active" &&
