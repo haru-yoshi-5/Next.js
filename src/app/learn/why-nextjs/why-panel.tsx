@@ -186,7 +186,7 @@ function ResultSection({
   return (
     <section className="flex flex-col gap-2 border-t pt-3">
       <div className="flex flex-wrap items-center gap-2">
-        <h4 className="text-sm font-medium">{title}</h4>
+        <h3 className="text-sm font-medium">{title}</h3>
         <StatusBadge status={status} />
       </div>
       {children}
