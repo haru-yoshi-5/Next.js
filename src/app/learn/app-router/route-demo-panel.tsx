@@ -63,6 +63,8 @@ export function RouteDemoPanel({ children }: { children: ReactNode }) {
     }
   }
 
+  // Link の onNavigate から呼ぶ。onClick と違い、Ctrl / Cmd を押して別のタブで開くクリックでは呼ばれないため、
+  // このタブで実際にページ内の移動が起きたときだけ記録できる
   function handleNavigate(href: string, file: string) {
     if (href === pathname) return
     setNavigationCount((count) => count + 1)
@@ -100,7 +102,7 @@ export function RouteDemoPanel({ children }: { children: ReactNode }) {
                     <Link
                       href={link.href}
                       scroll={false}
-                      onClick={() => handleNavigate(link.href, link.file)}
+                      onNavigate={() => handleNavigate(link.href, link.file)}
                       aria-current={isActive ? "page" : undefined}
                       className={cn(
                         "inline-flex h-7 items-center rounded-md border px-2.5 font-mono text-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
