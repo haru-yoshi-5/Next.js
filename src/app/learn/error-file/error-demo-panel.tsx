@@ -168,7 +168,7 @@ export function ErrorDemoPanel({ children }: { children: ReactNode }) {
             </div>
 
             <section className="flex flex-col gap-2">
-              <h4 className="text-sm font-medium">出来事の記録</h4>
+              <h3 className="text-sm font-medium">出来事の記録</h3>
               {events.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   まだ記録はありません。障害を起こすと、ここに出来事が順に残ります。

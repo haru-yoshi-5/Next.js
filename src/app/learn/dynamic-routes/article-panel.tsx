@@ -229,9 +229,9 @@ function LatestResult({ run }: { run: ArticleRun }) {
   return (
     <section className="flex flex-col gap-2 rounded-lg border px-3 py-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="font-mono text-sm break-all">
+        <h3 className="font-mono text-sm break-all">
           {run.status} · {DELIVERY_LABEL[run.delivery]}
-        </h4>
+        </h3>
         <Link
           href={run.path}
           className="flex items-center gap-1 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
