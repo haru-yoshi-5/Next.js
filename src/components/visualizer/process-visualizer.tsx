@@ -79,6 +79,8 @@ export function ProcessVisualizer({
   const steps = trace?.steps ?? []
   const activeStep = shown > 0 ? steps[shown - 1] : undefined
   const isComplete = trace !== null && !isPlaying && !trace.live && shown > 0
+  // aria-current="step" を付けるノード。再生中も再生後も、今のステップの到着側の1つだけにする
+  const currentNode = activeStep?.to
 
   const nodeState = (id: FlowNodeId): ProcessNodeState => {
     if (
@@ -159,12 +161,22 @@ export function ProcessVisualizer({
       <div className="grid gap-3 border-b p-4 sm:grid-cols-2">
         <NodeZone runtime="client" title="ブラウザ側">
           {clientNodes.map((id) => (
-            <ProcessNode key={id} id={id} state={nodeState(id)} />
+            <ProcessNode
+              key={id}
+              id={id}
+              state={nodeState(id)}
+              current={id === currentNode}
+            />
           ))}
         </NodeZone>
         <NodeZone runtime="server" title="サーバー側">
           {serverNodes.map((id) => (
-            <ProcessNode key={id} id={id} state={nodeState(id)} />
+            <ProcessNode
+              key={id}
+              id={id}
+              state={nodeState(id)}
+              current={id === currentNode}
+            />
           ))}
         </NodeZone>
       </div>
