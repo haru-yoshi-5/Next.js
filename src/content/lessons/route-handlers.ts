@@ -98,13 +98,29 @@ export const routeHandlersLesson: LessonContent = {
         },
       ],
     },
+    {
+      id: "demo-store",
+      title: "このデモの保存先",
+      blocks: [
+        {
+          type: "paragraph",
+          text: "デモのメッセージは、データベースの代わりにサーバーのメモリ（`message-store.ts`）へ一時的に保存しています。一覧はこのサイトを見ているすべての人で共有され、新しい順に20件まで残ります。GET では、そのうち最新の3件を返します。",
+        },
+        {
+          type: "callout",
+          tone: "caution",
+          title: "本番では、追加したメッセージが GET の一覧に出ないことがある",
+          text: "Vercel などのサーバーレス環境では、リクエストごとに別のサーバー（インスタンス）が応答することがあり、メモリの内容はインスタンスの間で共有されません。POST と GET は別のリクエストのため、GET が別のインスタンスに届くと、追加したメッセージは一覧に出ません。保存できたかどうかは、POST の応答（201 Created と、返ってきたメッセージ）で確かめてください。本番のアプリでは、どのインスタンスからも読み書きできるデータベースなどに保存します。",
+        },
+      ],
+    },
   ],
   demo: {
     description:
       "ボタンを押すと、教材ページから本物の Route Handler（api/route.ts）へ fetch() でリクエストを送ります。届いたステータスコード・ヘッダー・本文をそのまま表示し、サーバーでの処理時間は Server-Timing ヘッダーから読み取っています。",
     steps: [
       "「GET を送る」を押し、200 OK と JSON の一覧が届くことを確認する",
-      "メッセージを入力して「POST を送る」を押し、201 Created が返った後に GET で一覧に増えていることを確認する",
+      "メッセージを入力して「POST を送る」を押し、201 Created と、保存されたメッセージが本文で返ることを確認する",
       "空欄のまま POST を送り、Route Handler の検証で 400 Bad Request が返ることを確認する",
       "「PUT を送る」を押し、関数が実行されずに 405 Method Not Allowed が返ることを確認する",
     ],
@@ -118,7 +134,8 @@ export const routeHandlersLesson: LessonContent = {
     {
       path: `${dir}/message-store.ts`,
       role: "Data Source",
-      description: "データベースの代わりにメモリへ保存するストア",
+      description:
+        "データベースの代わりにメモリへ一時保存するストア（インスタンスの間で共有されない）",
     },
     {
       path: `${dir}/request-panel.tsx`,

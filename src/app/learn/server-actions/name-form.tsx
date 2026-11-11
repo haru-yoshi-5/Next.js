@@ -80,7 +80,7 @@ export function NameForm({ list }: NameFormProps) {
               </Button>
             </div>
             <p id="guest-name-hint" className="text-xs text-muted-foreground">
-              20文字以内。検証はサーバー側で行うため、空欄や長すぎる名前もそのまま送信できます。「error」と入力すると、データ更新の失敗を再現できます。
+              20文字以内。検証はサーバー側で行うため、空欄や長すぎる名前もそのまま送信できます。「error」と入力すると、データ更新の失敗を再現できます。名前は他の人にも表示されるため、実名は入力しないでください。
             </p>
             <p
               id="guest-name-message"
