@@ -288,7 +288,7 @@ src/
 
 ## セットアップ
 
-必要環境: Node.js 20 以上 / pnpm 9
+必要環境: Node.js 22.12 以上 / pnpm 9（Gemini の SDK と Vitest が Node.js 22 以上を必要とするため）
 
 ```bash
 pnpm install
@@ -300,6 +300,15 @@ http://localhost:3000 を開きます。
 
 Authentication 章の認証デモを動かすには、`.env.local` の `AUTH_DEMO_SECRET` に32文字以上のランダムな文字列を設定します（例: `openssl rand -base64 32` の出力）。未設定でも教材の本文は表示され、デモだけが使えない状態になります。Vercel では、Preview と Production に別々の値を環境変数として設定します。
 
+### AI 機能（開発中）
+
+教材について AI に質問する機能を、Gemini API の無料枠で段階的に追加しています（計画: [`docs/AI_IMPLEMENTATION_PLAN.md`](docs/AI_IMPLEMENTATION_PLAN.md)）。現在は API（`POST /api/ai/explain`）だけで、画面はまだありません。
+
+- **既定では無効**です（`NEXTSCOPE_AI_ENABLED=false`）。無効・未設定・上限・障害のときも、教材とデモはそのまま使えます
+- 対象は **18 歳以上・日本国内からの利用だけ**です（Gemini API の規約の条件）。本番では、国コードが日本のリクエストだけを受け付けます
+- 無料枠の入力は Google の製品改善に使われ、人が読むことがあります。個人情報や秘密情報らしい質問は、送る前にサーバーで断ります
+- 使う環境変数は `.env.example` の「AI 機能」を参照してください。本番では、利用制限の保存先（Upstash Redis）も必要です。請求先アカウントやカードは登録しません
+
 ## 開発コマンド
 
 | コマンド                            | 内容                                        |
@@ -310,6 +319,7 @@ Authentication 章の認証デモを動かすには、`.env.local` の `AUTH_DEM
 | `pnpm lint`                         | ESLint                                      |
 | `pnpm typecheck`                    | TypeScript の型チェック                     |
 | `pnpm format` / `pnpm format:check` | Prettier による整形 / 確認                  |
+| `pnpm test`                         | Vitest による自動テスト                     |
 
 ## 設計上の制約と注意点
 
