@@ -64,7 +64,7 @@ export async function saveName(
 
     return {
       status: "success",
-      message: `「${entry.name}」を保存しました。`,
+      message: `「${entry.name}」を一時保存しました。`,
       submittedName: "",
       trace: buildActionTrace({
         requestId,

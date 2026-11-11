@@ -25,7 +25,7 @@ export async function GuestbookList() {
     <section aria-labelledby="guestbook-title" className="rounded-lg border">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
         <h3 id="guestbook-title" className="text-sm font-medium">
-          保存された名前
+          一時保存された名前（最新8件）
         </h3>
         <p className="font-mono text-[0.7rem] text-muted-foreground">
           キャッシュ生成 {timeFormatter.format(readAt)}

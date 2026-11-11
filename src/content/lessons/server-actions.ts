@@ -98,6 +98,12 @@ export const serverActionsLesson: LessonContent = {
             },
           ],
         },
+        {
+          type: "callout",
+          tone: "caution",
+          title: "このデモの名前は一時保存",
+          text: '名前は、データベースの代わりにサーバーのメモリ（`guestbook-store.ts`）へ一時的に保存しています。一覧は同じインスタンスにアクセスした利用者の間で共有されるため、他の人の名前も表示されることがあります。新しい順に8件まで残ります。保存した直後は、Server Action と同じ応答の中で一覧が描画されるため、名前が一覧に出ます。ただし Vercel などのサーバーレス環境では、ページを読み込み直すと別のサーバー（インスタンス）が応答し、名前が消えて見えることがあります。メモリの内容も、`"use cache"` の既定のキャッシュも、インスタンスごとに別々だからです。本番のアプリでは、どのインスタンスからも読み書きできるデータベースなどに保存します。',
+        },
       ],
     },
   ],
@@ -106,7 +112,7 @@ export const serverActionsLesson: LessonContent = {
       "フォームの送信は本物の Server Action（actions.ts）を呼び出します。右側には、Server Action がサーバーで計測して返した処理の記録が表示されます。",
     steps: [
       "名前を入力して「保存する」を押す",
-      "一覧に名前が追加され、「キャッシュ生成」の時刻が更新されることを確認する",
+      "保存した直後の画面で、一覧に名前が追加され、「キャッシュ生成」の時刻が更新されることを確認する",
       "空欄のまま送信したり「error」と入力したりして、エラー時のフローも比べる",
     ],
   },
@@ -129,7 +135,8 @@ export const serverActionsLesson: LessonContent = {
     {
       path: `${dir}/guestbook-store.ts`,
       role: "Data Source",
-      description: "データベースの代わりにメモリへ保存するストア",
+      description:
+        "データベースの代わりにメモリへ一時保存するストア（インスタンスの間で共有されない）",
     },
     {
       path: `${dir}/page.tsx`,
