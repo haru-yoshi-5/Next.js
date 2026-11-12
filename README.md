@@ -302,12 +302,21 @@ Authentication 章の認証デモを動かすには、`.env.local` の `AUTH_DEM
 
 ### AI 機能（開発中）
 
-教材について AI に質問する機能を、Gemini API の無料枠で段階的に追加しています（計画: [`docs/AI_IMPLEMENTATION_PLAN.md`](docs/AI_IMPLEMENTATION_PLAN.md)）。現在は API（`POST /api/ai/explain`）だけで、画面はまだありません。
+教材について AI に質問する機能を、Gemini API の無料枠で段階的に追加しています（計画: [`docs/AI_IMPLEMENTATION_PLAN.md`](docs/AI_IMPLEMENTATION_PLAN.md)）。現在は、各教材ページの見出しの下にある「AI に質問する」パネル（AI Context Tutor）が使えます。
 
-- **既定では無効**です（`NEXTSCOPE_AI_ENABLED=false`）。無効・未設定・上限・障害のときも、教材とデモはそのまま使えます
+- **既定では無効**です（`NEXTSCOPE_AI_ENABLED=false`）。無効・未設定のときは、パネルの代わりに「現在使えません」という案内を出します。上限・障害のときも、パネルの中にエラーを出すだけで、教材とデモはそのまま使えます
 - 対象は **18 歳以上・日本国内からの利用だけ**です（Gemini API の規約の条件）。本番では、国コードが日本のリクエストだけを受け付けます
-- 無料枠の入力は Google の製品改善に使われ、人が読むことがあります。個人情報や秘密情報らしい質問は、送る前にサーバーで断ります
+- API を呼ぶのは、利用者が質問を送信したときだけです。教材の表示やデモの操作では呼びません
+- 送るデータは、教材の ID と質問だけです。サーバーが教材の本文を ID から読み込み、Google の Gemini API に送ります。無料枠の入力は Google の製品改善に使われ、人が読むことがあります。個人情報や秘密情報らしい質問は、送る前にサーバーで断ります
+- 利用回数を数えるため、匿名の Cookie（`nextscope_ai_session`、24 時間有効）と、IP アドレスから作ったハッシュを使います（パネルにも表示します）
 - 使う環境変数は `.env.example` の「AI 機能」を参照してください。本番では、利用制限の保存先（Upstash Redis）も必要です。請求先アカウントやカードは登録しません
+- 教材ページはビルド時にプリレンダーされるため、パネルを出すかどうかはビルド時の環境変数で決まります。Vercel で AI の環境変数を変えたら、再デプロイしてください
+
+手元で試す手順は次のとおりです。
+
+1. [Google AI Studio](https://aistudio.google.com/) で API キーを作る（無料枠のまま使う）
+2. `.env.local` に `NEXTSCOPE_AI_ENABLED=true`、`GEMINI_API_KEY`、`GEMINI_MODEL`、`NEXTSCOPE_AI_HASH_SECRET`（32 文字以上のランダムな文字列）を設定する。開発中は Upstash を設定しなくても、メモリで代用します
+3. `pnpm dev` を起動し直し、教材ページの「AI に質問する」を開く
 
 ## 開発コマンド
 

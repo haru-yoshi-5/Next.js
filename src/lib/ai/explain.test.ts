@@ -338,6 +338,22 @@ describe("handleExplain: Gemini の失敗", () => {
     },
   )
 
+  it("Gemini の HTTP ステータスだけをログに残す", async () => {
+    const { deps, generate, log } = setup()
+    generate.mockResolvedValue({
+      ok: false,
+      reason: "model_unavailable",
+      upstreamStatus: 400,
+    })
+    await call(deps)
+    expect(log).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        outcome: "model_unavailable",
+        upstreamStatus: 400,
+      }),
+    )
+  })
+
   it("SDK のエラーを分類する", () => {
     const live = new AbortController().signal
     const aborted = AbortSignal.abort()
@@ -354,8 +370,16 @@ describe("handleExplain: Gemini の失敗", () => {
     expect(classifyGeminiError(apiError(404), live)).toMatchObject({
       reason: "model_unavailable",
     })
-    expect(classifyGeminiError(apiError(500), live)).toMatchObject({
+    // モデル名に表示名（「Gemini 2.5 Flash」）を指定すると 400 が返る
+    expect(classifyGeminiError(apiError(400), live)).toEqual({
+      ok: false,
+      reason: "model_unavailable",
+      upstreamStatus: 400,
+    })
+    expect(classifyGeminiError(apiError(500), live)).toEqual({
+      ok: false,
       reason: "upstream_error",
+      upstreamStatus: 500,
     })
     expect(classifyGeminiError(new Error("network"), live)).toMatchObject({
       reason: "upstream_error",

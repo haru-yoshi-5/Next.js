@@ -81,6 +81,8 @@ export interface ExplainLogEntry {
   mode?: string
   outcome: "ok" | ExplainErrorCode
   cached?: boolean
+  /** Gemini の呼び出しに失敗したときの HTTP ステータス（原因の切り分け用） */
+  upstreamStatus?: number
   durationMs: number
 }
 
@@ -176,12 +178,15 @@ export async function handleExplain(
   const finish = (
     status: number,
     body: ExplainResponseBody,
-    extra?: { cached?: boolean },
+    extra?: { cached?: boolean; upstreamStatus?: number },
   ) => {
     deps.log({
       ...logContext,
       outcome: body.status === "ok" ? "ok" : body.code,
       cached: extra?.cached,
+      ...(extra?.upstreamStatus !== undefined
+        ? { upstreamStatus: extra.upstreamStatus }
+        : {}),
       durationMs: performance.now() - startedAt,
     })
     return Response.json(body, { status, headers })
@@ -191,16 +196,21 @@ export async function handleExplain(
     code: ExplainErrorCode,
     message: string,
     retryAfterSeconds?: number,
+    upstreamStatus?: number,
   ) => {
     if (retryAfterSeconds !== undefined) {
       headers.set("Retry-After", String(retryAfterSeconds))
     }
-    return finish(status, {
-      status: "error",
-      code,
-      message,
-      ...(retryAfterSeconds !== undefined ? { retryAfterSeconds } : {}),
-    })
+    return finish(
+      status,
+      {
+        status: "error",
+        code,
+        message,
+        ...(retryAfterSeconds !== undefined ? { retryAfterSeconds } : {}),
+      },
+      { upstreamStatus },
+    )
   }
 
   // 1. 機能フラグ・キー・保存先の設定
@@ -355,7 +365,13 @@ export async function handleExplain(
   })
   if (!result.ok) {
     const error = GENERATE_ERRORS[result.reason]
-    return fail(error.status, error.code, error.message)
+    return fail(
+      error.status,
+      error.code,
+      error.message,
+      undefined,
+      result.upstreamStatus,
+    )
   }
 
   const answer = result.text.slice(0, ANSWER_MAX_LENGTH)
