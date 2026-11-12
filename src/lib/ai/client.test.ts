@@ -118,8 +118,44 @@ describe("formatAnswer", () => {
     )
   })
 
-  it("回答に目印の文字が含まれていても、ほかのコードと取り違えない", () => {
-    expect(formatAnswer("\u00000\u0000 と `a ** b`")).toBe("0 と `a ** b`")
+  it("閉じていないコードブロックは、末尾までコードとして扱う", () => {
+    // 回答はサーバーで文字数を切るため、閉じる ``` がなくなることがある
+    expect(formatAnswer("**例**\n```ts\nconst x = 2 ** 3\n* item")).toBe(
+      "例\n```ts\nconst x = 2 ** 3\n* item",
+    )
+  })
+
+  it('コードブロックの中の文字列 "```" では、ブロックを閉じない', () => {
+    const block = '```ts\nconst fence = "```"\nconst x = 2 ** 3\n```'
+    expect(formatAnswer(`${block}\n**後**`)).toBe(`${block}\n後`)
+  })
+
+  it("~~~ のコードブロックも保護する", () => {
+    const block = "~~~\nconst x = 2 ** 3\n~~~"
+    expect(formatAnswer(`${block}\n**後**`)).toBe(`${block}\n後`)
+  })
+
+  it("長いフェンスは、同じ長さ以上の記号だけの行で閉じる", () => {
+    const block = "````md\n```\nconst x = 2 ** 3\n```\n````"
+    expect(formatAnswer(`${block}\n**後**`)).toBe(`${block}\n後`)
+  })
+
+  it("二重バッククォートのインラインコードも保護する", () => {
+    expect(formatAnswer("**例**: ``const s = `2 ** 3`;``")).toBe(
+      "例: ``const s = `2 ** 3`;``",
+    )
+  })
+
+  it("閉じていないインラインコードは、行の末尾まで残す", () => {
+    expect(formatAnswer("**例**: `2 ** 3\n**次の行**")).toBe(
+      "例: `2 ** 3\n次の行",
+    )
+  })
+
+  it("1 行に書いた ```a``` はコードブロックではなく、インラインコードとして扱う", () => {
+    expect(formatAnswer("```2 ** 3``` と **強調**\n**次**")).toBe(
+      "```2 ** 3``` と 強調\n次",
+    )
   })
 
   it("行頭の箇条書きを「・」にし、見出しの記号を取り除く", () => {
