@@ -148,12 +148,24 @@ export function parseExplainResponse(body: unknown): TutorResult {
  * - 強調（**）は取り除く
  * - 行頭の見出し（#）は取り除く
  * - 行頭の箇条書き（* / -）は「・」にする
- * コードを表すバッククォート（`）は、意味が伝わるため残す。
+ * コード（```…``` のブロックと `…` のインラインコード）は、中身もバッククォートも変えない。
+ * 例: `2 ** 3` や `app/**\/page.tsx` の ** を消すと、コードの意味が変わるため
  */
 export function formatAnswer(answer: string) {
-  return answer
+  // コードの部分を目印に置き換えてから整形し、最後に元へ戻す。
+  // 目印に使う文字（U+0000）は、回答の本文からあらかじめ取り除いておく
+  const codes: string[] = []
+  const masked = answer
+    .replaceAll("\u0000", "")
+    .replace(/```[\s\S]*?```|`[^`\n]+`/g, (code) => {
+      codes.push(code)
+      return `\u0000${codes.length - 1}\u0000`
+    })
+
+  return masked
     .replaceAll("**", "")
     .replace(/^[ \t]*#{1,6}[ \t]+/gm, "")
     .replace(/^([ \t]*)[*-][ \t]+/gm, "$1・")
+    .replace(/\u0000(\d+)\u0000/g, (_, index: string) => codes[Number(index)])
     .trim()
 }

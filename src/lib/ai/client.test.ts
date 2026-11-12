@@ -105,6 +105,23 @@ describe("formatAnswer", () => {
     )
   })
 
+  it("インラインコードの中の ** は消さない", () => {
+    expect(
+      formatAnswer("**べき乗**は `2 ** 3`、glob は `app/**/page.tsx` です"),
+    ).toBe("べき乗は `2 ** 3`、glob は `app/**/page.tsx` です")
+  })
+
+  it("コードブロックの中身（行頭の * や # を含む）は変えない", () => {
+    const block = "```ts\n# コメントではない行\n* 2 ** 3\n- item\n```"
+    expect(formatAnswer(`## 例\n${block}\n- まとめ`)).toBe(
+      `例\n${block}\n・まとめ`,
+    )
+  })
+
+  it("回答に目印の文字が含まれていても、ほかのコードと取り違えない", () => {
+    expect(formatAnswer("\u00000\u0000 と `a ** b`")).toBe("0 と `a ** b`")
+  })
+
   it("行頭の箇条書きを「・」にし、見出しの記号を取り除く", () => {
     expect(
       formatAnswer(
