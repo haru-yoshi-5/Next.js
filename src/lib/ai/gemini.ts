@@ -17,6 +17,8 @@ export type GenerateResult =
         | "model_unavailable"
         | "no_answer"
         | "upstream_error"
+      /** Gemini が返した HTTP ステータス（ログで原因を見分けるため。本文やメッセージは持たない） */
+      upstreamStatus?: number
     }
 
 export interface GenerateInput {
@@ -36,11 +38,16 @@ export function classifyGeminiError(
 ): GenerateResult {
   if (signal.aborted) return { ok: false, reason: "timeout" }
   if (error instanceof ApiError) {
-    if (error.status === 429) return { ok: false, reason: "rate_limited" }
-    // モデル名の誤り・廃止（404）や、キーの権限（401 / 403）
-    if ([401, 403, 404].includes(error.status)) {
-      return { ok: false, reason: "model_unavailable" }
+    const upstreamStatus = error.status
+    if (upstreamStatus === 429) {
+      return { ok: false, reason: "rate_limited", upstreamStatus }
     }
+    // 設定の誤りで、送り直しても直らないもの。
+    // モデル名の誤り（400。例: 表示名の「Gemini 2.5 Flash」を指定した）・廃止（404）、キーの権限（401 / 403）
+    if ([400, 401, 403, 404].includes(upstreamStatus)) {
+      return { ok: false, reason: "model_unavailable", upstreamStatus }
+    }
+    return { ok: false, reason: "upstream_error", upstreamStatus }
   }
   return { ok: false, reason: "upstream_error" }
 }

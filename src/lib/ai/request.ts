@@ -4,10 +4,12 @@ import { getAvailableLessons } from "@/content/curriculum"
 import { getLessonContent } from "@/content/lessons"
 import type { LessonContent } from "@/types/lesson-content"
 
+import { QUESTION_MAX_LENGTH } from "./client"
+
 /** 受け付ける本文の最大サイズ（バイト） */
 export const BODY_MAX_BYTES = 4096
-/** 質問の最大文字数 */
-export const QUESTION_MAX_LENGTH = 300
+/** 質問の最大文字数（画面の入力チェックと同じ値を使う） */
+export { QUESTION_MAX_LENGTH }
 
 /** 許可する mode。Phase 1 は context_tutor だけ */
 const ALLOWED_MODES = ["context_tutor"] as const
