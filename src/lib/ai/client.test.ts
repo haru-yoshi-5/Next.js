@@ -1,11 +1,117 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import {
+  EXPLAIN_ENDPOINT,
   formatAnswer,
   parseExplainResponse,
   QUESTION_MAX_LENGTH,
+  requestExplanation,
   validateQuestion,
 } from "./client"
+
+describe("requestExplanation", () => {
+  const okBody = {
+    status: "ok",
+    answer: "回答です",
+    references: [],
+    cached: false,
+    notice: "注意",
+  }
+
+  it("教材 ID と質問だけを JSON で送り、応答を画面の形に直す", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => Response.json(okBody))
+    const result = await requestExplanation({
+      lessonId: "server-actions",
+      question: "なぜ？",
+      fetchImpl,
+    })
+
+    expect(result).toEqual({ ...okBody, status: "ok" })
+    expect(fetchImpl).toHaveBeenCalledTimes(1)
+    const [url, init] = fetchImpl.mock.calls[0]
+    expect(url).toBe(EXPLAIN_ENDPOINT)
+    expect(init?.method).toBe("POST")
+    expect(init?.credentials).toBe("same-origin")
+    expect(init?.signal).toBeInstanceOf(AbortSignal)
+    expect(JSON.parse(String(init?.body))).toEqual({
+      lessonId: "server-actions",
+      mode: "context_tutor",
+      question: "なぜ？",
+    })
+  })
+
+  it("API のエラー応答（HTTP 429 など）も、メッセージと再試行の可否に直す", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () =>
+      Response.json(
+        { status: "error", code: "rate_limited", message: "上限です" },
+        { status: 429 },
+      ),
+    )
+    expect(
+      await requestExplanation({ lessonId: "a", question: "q", fetchImpl }),
+    ).toEqual({
+      status: "error",
+      code: "rate_limited",
+      message: "上限です",
+      retryable: false,
+    })
+  })
+
+  it("通信に失敗したら network_error（再試行できる）を返す", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => {
+      throw new TypeError("Failed to fetch")
+    })
+    expect(
+      await requestExplanation({ lessonId: "a", question: "q", fetchImpl }),
+    ).toMatchObject({ status: "error", code: "network_error", retryable: true })
+  })
+
+  it("時間内に応答がなければ打ち切り、network_error を返す", async () => {
+    // signal が中断されたら、fetch と同じように DOMException で失敗する
+    const fetchImpl = vi.fn<typeof fetch>(
+      (_, init) =>
+        new Promise((_, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(init.signal?.reason),
+          )
+        }),
+    )
+    expect(
+      await requestExplanation({
+        lessonId: "a",
+        question: "q",
+        fetchImpl,
+        timeoutMs: 10,
+      }),
+    ).toMatchObject({ status: "error", code: "network_error" })
+  })
+
+  it("本文の読み取り中に中断されたら network_error を返す", async () => {
+    const response = new Response("{}")
+    vi.spyOn(response, "json").mockRejectedValue(
+      new DOMException("timed out", "TimeoutError"),
+    )
+    const fetchImpl = vi.fn<typeof fetch>(async () => response)
+    expect(
+      await requestExplanation({ lessonId: "a", question: "q", fetchImpl }),
+    ).toMatchObject({ status: "error", code: "network_error" })
+  })
+
+  it.each([
+    ["JSON でない本文", new Response("<html>502</html>", { status: 502 })],
+    ["空の本文", new Response(null, { status: 500 })],
+    ["想定外の形の JSON", Response.json({ foo: 1 })],
+  ])("%s なら invalid_response（再試行できる）を返す", async (_, response) => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => response)
+    expect(
+      await requestExplanation({ lessonId: "a", question: "q", fetchImpl }),
+    ).toMatchObject({
+      status: "error",
+      code: "invalid_response",
+      retryable: true,
+    })
+  })
+})
 
 describe("validateQuestion", () => {
   it("空や空白だけの質問を断る", () => {

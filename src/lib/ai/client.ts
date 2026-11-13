@@ -142,6 +142,50 @@ export function parseExplainResponse(body: unknown): TutorResult {
   return INVALID_RESPONSE_RESULT
 }
 
+interface RequestExplanationOptions {
+  lessonId: string
+  /** 前後の空白を除いた質問 */
+  question: string
+  /** テストで差し替えるためのもの。省略時はブラウザの fetch を使う */
+  fetchImpl?: typeof fetch
+  timeoutMs?: number
+}
+
+/**
+ * AI の API に質問を送り、結果を画面で扱う形で返す。例外は投げない。
+ * - 通信の失敗・タイムアウトは network_error
+ * - 本文が JSON でない、または想定外の形なら invalid_response
+ */
+export async function requestExplanation({
+  lessonId,
+  question,
+  fetchImpl = fetch,
+  timeoutMs = CLIENT_TIMEOUT_MS,
+}: RequestExplanationOptions): Promise<TutorResult> {
+  let response: Response
+  try {
+    response = await fetchImpl(EXPLAIN_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lessonId, mode: "context_tutor", question }),
+      credentials: "same-origin",
+      signal: AbortSignal.timeout(timeoutMs),
+    })
+  } catch {
+    return NETWORK_ERROR_RESULT
+  }
+
+  let body: unknown
+  try {
+    body = await response.json()
+  } catch (error) {
+    // 本文の読み取り中に時間切れ・切断したときは、通信の失敗として扱う
+    if (error instanceof DOMException) return NETWORK_ERROR_RESULT
+    return INVALID_RESPONSE_RESULT
+  }
+  return parseExplainResponse(body)
+}
+
 /**
  * 回答の本文を、プレーンテキストとして読みやすくする。
  * HTML としては描画しないため、Markdown の記号のうち、文字のまま見えると読みにくいものだけを直す。

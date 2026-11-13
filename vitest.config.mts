@@ -20,7 +20,8 @@ export default defineConfig({
     ],
   },
   test: {
+    // 画面を描画するテスト（*.test.tsx）は、ファイルの先頭で jsdom 環境を指定する
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.{ts,tsx}"],
   },
 })

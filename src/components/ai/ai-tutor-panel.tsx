@@ -28,13 +28,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import {
-  CLIENT_TIMEOUT_MS,
   countCharacters,
-  EXPLAIN_ENDPOINT,
   formatAnswer,
-  NETWORK_ERROR_RESULT,
-  parseExplainResponse,
   QUESTION_MAX_LENGTH,
+  requestExplanation,
   type TutorResult,
   validateQuestion,
 } from "@/lib/ai/client"
@@ -94,31 +91,8 @@ export function AiTutorPanel({ lessonId, lessonTitle }: AiTutorPanelProps) {
     inFlight.current = true
     setState({ status: "loading", question: trimmed })
 
-    let result: TutorResult
-    try {
-      const response = await fetch(EXPLAIN_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lessonId,
-          mode: "context_tutor",
-          question: trimmed,
-        }),
-        credentials: "same-origin",
-        signal: AbortSignal.timeout(CLIENT_TIMEOUT_MS),
-      })
-      let body: unknown = null
-      try {
-        body = await response.json()
-      } catch {
-        body = null
-      }
-      result = parseExplainResponse(body)
-    } catch {
-      result = NETWORK_ERROR_RESULT
-    } finally {
-      inFlight.current = false
-    }
+    const result = await requestExplanation({ lessonId, question: trimmed })
+    inFlight.current = false
     setState({ status: "done", question: trimmed, result })
   }
 
