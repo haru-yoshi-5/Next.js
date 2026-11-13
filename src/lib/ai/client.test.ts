@@ -111,33 +111,24 @@ describe("formatAnswer", () => {
     ).toBe("べき乗は `2 ** 3`、glob は `app/**/page.tsx` です")
   })
 
-  it("コードブロックの中身（行頭の * や # を含む）は変えない", () => {
-    const block = "```ts\n# コメントではない行\n* 2 ** 3\n- item\n```"
-    expect(formatAnswer(`## 例\n${block}\n- まとめ`)).toBe(
-      `例\n${block}\n・まとめ`,
-    )
-  })
-
-  it("閉じていないコードブロックは、末尾までコードとして扱う", () => {
-    // 回答はサーバーで文字数を切るため、閉じる ``` がなくなることがある
-    expect(formatAnswer("**例**\n```ts\nconst x = 2 ** 3\n* item")).toBe(
-      "例\n```ts\nconst x = 2 ** 3\n* item",
-    )
-  })
-
-  it('コードブロックの中の文字列 "```" では、ブロックを閉じない', () => {
-    const block = '```ts\nconst fence = "```"\nconst x = 2 ** 3\n```'
-    expect(formatAnswer(`${block}\n**後**`)).toBe(`${block}\n後`)
-  })
-
-  it("~~~ のコードブロックも保護する", () => {
-    const block = "~~~\nconst x = 2 ** 3\n~~~"
-    expect(formatAnswer(`${block}\n**後**`)).toBe(`${block}\n後`)
-  })
-
-  it("長いフェンスは、同じ長さ以上の記号だけの行で閉じる", () => {
-    const block = "````md\n```\nconst x = 2 ** 3\n```\n````"
-    expect(formatAnswer(`${block}\n**後**`)).toBe(`${block}\n後`)
+  // コードブロックがありうる回答は、まったく変えずに返す（前後の空白だけ除く）
+  it.each([
+    ["通常のコードブロック", "## 例\n```ts\n# 行\n* 2 ** 3\n```\n- **まとめ**"],
+    ["閉じていないコードブロック", "**例**\n```ts\nconst x = 2 ** 3\n* item"],
+    [
+      'ブロックの中の文字列 "```"',
+      '```ts\nconst fence = "```"\nconst x = 2 ** 3\n```\n**後**',
+    ],
+    ["~~~ のコードブロック", "~~~\nconst x = 2 ** 3\n~~~\n**後**"],
+    ["長いフェンス", "````md\n```\nconst x = 2 ** 3\n```\n````\n**後**"],
+    ["箇条書きの中のフェンス", "- ```js\n  const x = 2 ** 3;\n  ```\n- **後**"],
+    ["引用の中のフェンス", "> ```js\n> const x = 2 ** 3;\n> ```\n**後**"],
+    ["タブで字下げした閉じ記号", "```js\n\t```\nconst x = 2 ** 3;\n```"],
+    ["4 つの空白で字下げしたコード", "**例**\n\n    const x = 2 ** 3\n"],
+    ["タブで字下げしたコード", "**例**\n\n\tconst x = 2 ** 3"],
+    ["1 行に書いた ```a```", "```2 ** 3``` と **強調**"],
+  ])("%s を含む回答は整形しない", (_, answer) => {
+    expect(formatAnswer(answer)).toBe(answer.trim())
   })
 
   it("二重バッククォートのインラインコードも保護する", () => {
@@ -149,12 +140,6 @@ describe("formatAnswer", () => {
   it("閉じていないインラインコードは、行の末尾まで残す", () => {
     expect(formatAnswer("**例**: `2 ** 3\n**次の行**")).toBe(
       "例: `2 ** 3\n次の行",
-    )
-  })
-
-  it("1 行に書いた ```a``` はコードブロックではなく、インラインコードとして扱う", () => {
-    expect(formatAnswer("```2 ** 3``` と **強調**\n**次**")).toBe(
-      "```2 ** 3``` と 強調\n次",
     )
   })
 

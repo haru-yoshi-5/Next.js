@@ -148,51 +148,32 @@ export function parseExplainResponse(body: unknown): TutorResult {
  * - 強調（**）は取り除く
  * - 行頭の見出し（#）は取り除く
  * - 行頭の箇条書き（* / -）は「・」にする
- * コード（``` / ~~~ のブロックと、`…` のインラインコード）は、中身も記号も変えない。
- * 例: `2 ** 3` や `app/**\/page.tsx` の ** を消すと、コードの意味が変わるため
+ * コードの中身は変えない。例: `2 ** 3` や `app/**\/page.tsx` の ** を消すと、コードの意味が変わるため
  *
- * コードの範囲は、正規表現ではなく 1 行ずつ読んで判定する（CommonMark の決まりに沿う）。
- * - コードブロックは、開いた記号と同じ種類・同じ長さ以上の記号だけの行で閉じる。閉じていなければ末尾まで
- *   （回答はサーバーで文字数を切るため、閉じる記号がなくなることがある）
- * - インラインコードは、同じ個数のバッククォートで閉じる。閉じていなければ、その行の末尾まで
- *   （CommonMark では行をまたげるが、ここでは安全側に倒し、記号を消さない範囲を広く取る）
+ * コードブロックの範囲を自前で正確に判定するのは難しい（リストや引用の中のフェンス、タブの字下げなど）。
+ * そのため、コードブロックがありうる回答は、まったく整形せずにそのまま返す（安全側に倒す）。
+ * - ``` か ~~~ をどこかに含む
+ * - タブ、または 4 つ以上の空白で字下げした行がある（字下げで書くコードブロックの可能性）
+ * 最悪の場合でも、記号が見えたままになるだけで、コードの意味は変わらない。
+ *
+ * それ以外の回答では、インラインコード（`…`）の中を除いて整形する。
  */
 export function formatAnswer(answer: string) {
-  let fence: { char: string; length: number } | null = null
+  const trimmed = answer.trim()
+  if (MAY_CONTAIN_CODE_BLOCK.test(trimmed)) return trimmed
 
-  const lines = answer.split(/\r?\n/).map((line) => {
-    if (fence) {
-      const close = line.match(CLOSING_FENCE)
-      if (
-        close &&
-        close[1][0] === fence.char &&
-        close[1].length >= fence.length
-      ) {
-        fence = null
-      }
-      return line
-    }
-
-    const open = line.match(OPENING_FENCE)
-    // バッククォートのフェンスは、情報文字列（```ts の ts）にバッククォートを含められない
-    if (open && !(open[1][0] === "`" && open[2].includes("`"))) {
-      fence = { char: open[1][0], length: open[1].length }
-      return line
-    }
-
-    const body = line
-      .replace(/^[ \t]*#{1,6}[ \t]+/, "")
-      .replace(/^([ \t]*)[*-][ \t]+/, "$1・")
-    return stripEmphasisOutsideCode(body)
-  })
-
-  return lines.join("\n").trim()
+  return trimmed
+    .split(/\r?\n/)
+    .map((line) =>
+      stripEmphasisOutsideCode(
+        line.replace(/^[ ]*#{1,6}[ ]+/, "").replace(/^([ ]*)[*-][ ]+/, "$1・"),
+      ),
+    )
+    .join("\n")
 }
 
-/** コードブロックの開始行（インデント 3 つまで + ``` か ~~~ が 3 つ以上 + 情報文字列） */
-const OPENING_FENCE = /^[ \t]{0,3}(`{3,}|~{3,})(.*)$/
-/** コードブロックの終了行（記号と空白だけ） */
-const CLOSING_FENCE = /^[ \t]{0,3}(`{3,}|~{3,})[ \t]*$/
+/** コードブロックの可能性がある回答（フェンスの記号、またはタブ・4 つ以上の空白での字下げ） */
+const MAY_CONTAIN_CODE_BLOCK = /```|~~~|^(?:\t| {0,3}\t| {4})/m
 
 /** バッククォートが連続する長さ */
 function backtickRunLength(text: string, start: number) {
