@@ -150,30 +150,41 @@ export function parseExplainResponse(body: unknown): TutorResult {
  * - 行頭の箇条書き（* / -）は「・」にする
  * コードの中身は変えない。例: `2 ** 3` や `app/**\/page.tsx` の ** を消すと、コードの意味が変わるため
  *
- * コードブロックの範囲を自前で正確に判定するのは難しい（リストや引用の中のフェンス、タブの字下げなど）。
- * そのため、コードブロックがありうる回答は、まったく整形せずにそのまま返す（安全側に倒す）。
+ * コードの範囲を自前で正確に判定するのは難しい（リストや引用の中のフェンス、タブの字下げ、
+ * 改行をまたぐインラインコードなど）。そのため、コードの範囲がはっきりしない回答は、
+ * まったく整形せずにそのまま返す（安全側に倒す）。
  * - ``` か ~~~ をどこかに含む
- * - タブ、または 4 つ以上の空白で字下げした行がある（字下げで書くコードブロックの可能性）
+ * - タブ、または 4 つ以上の空白で字下げした行がある（引用 > やリスト記号の後ろも含む）
+ * - その行のうちに閉じないインラインコードがある（次の行へまたがる可能性）
  * 最悪の場合でも、記号が見えたままになるだけで、コードの意味は変わらない。
  *
  * それ以外の回答では、インラインコード（`…`）の中を除いて整形する。
  */
 export function formatAnswer(answer: string) {
-  const trimmed = answer.trim()
-  if (MAY_CONTAIN_CODE_BLOCK.test(trimmed)) return trimmed
+  // 判定は trim する前に行う（trim すると 1 行目の字下げが消え、コードを見落とすため）
+  if (MAY_CONTAIN_CODE_BLOCK.test(answer)) return keepAsIs(answer)
 
-  return trimmed
-    .split(/\r?\n/)
-    .map((line) =>
-      stripEmphasisOutsideCode(
-        line.replace(/^[ ]*#{1,6}[ ]+/, "").replace(/^([ ]*)[*-][ ]+/, "$1・"),
-      ),
+  const formatted: string[] = []
+  for (const line of answer.trim().split(/\r?\n/)) {
+    const body = stripEmphasisOutsideCode(
+      line.replace(/^[ ]*#{1,6}[ ]+/, "").replace(/^([ ]*)[*-][ ]+/, "$1・"),
     )
-    .join("\n")
+    if (body === null) return keepAsIs(answer)
+    formatted.push(body)
+  }
+  return formatted.join("\n")
 }
 
-/** コードブロックの可能性がある回答（フェンスの記号、またはタブ・4 つ以上の空白での字下げ） */
-const MAY_CONTAIN_CODE_BLOCK = /```|~~~|^(?:\t| {0,3}\t| {4})/m
+/**
+ * コードブロックの可能性がある回答。
+ * フェンスの記号か、行頭（引用 > ・リスト記号・番号の後ろも含む）のタブ・4 つ以上の空白での字下げ
+ */
+const MAY_CONTAIN_CODE_BLOCK = /```|~~~|^[ \t>*+\-\d.)]*(?:\t| {4})/m
+
+/** 整形せずに返す。字下げを残すため、先頭の空行と末尾の空白だけを除く */
+function keepAsIs(answer: string) {
+  return answer.replace(/^(?:[ \t]*\r?\n)+/, "").trimEnd()
+}
 
 /** バッククォートが連続する長さ */
 function backtickRunLength(text: string, start: number) {
@@ -182,8 +193,11 @@ function backtickRunLength(text: string, start: number) {
   return end - start
 }
 
-/** 1 行のうち、インラインコードの外側だけから強調記号（**）を取り除く */
-function stripEmphasisOutsideCode(line: string) {
+/**
+ * 1 行のうち、インラインコードの外側だけから強調記号（**）を取り除く。
+ * 行のうちに閉じないインラインコードがあるときは null を返す（次の行へまたがる可能性があるため）
+ */
+function stripEmphasisOutsideCode(line: string): string | null {
   let result = ""
   let index = 0
 
@@ -210,11 +224,7 @@ function stripEmphasisOutsideCode(line: string) {
       search = next + length
     }
 
-    if (closeEnd === -1) {
-      // 閉じていないときは、行の末尾までコードとして残す
-      result += line.slice(open)
-      break
-    }
+    if (closeEnd === -1) return null
     result += line.slice(open, closeEnd)
     index = closeEnd
   }
