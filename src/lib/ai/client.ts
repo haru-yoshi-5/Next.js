@@ -200,13 +200,14 @@ export async function requestExplanation({
  * - ``` か ~~~ をどこかに含む
  * - タブ、または 4 つ以上の空白で字下げした行がある（引用 > やリスト記号の後ろも含む）
  * - その行のうちに閉じないインラインコードがある（次の行へまたがる可能性）
+ * - エスケープしたバッククォート（\`）を含む（コードの区切りかどうかの判定がずれるため）
  * 最悪の場合でも、記号が見えたままになるだけで、コードの意味は変わらない。
  *
  * それ以外の回答では、インラインコード（`…`）の中を除いて整形する。
  */
 export function formatAnswer(answer: string) {
   // 判定は trim する前に行う（trim すると 1 行目の字下げが消え、コードを見落とすため）
-  if (MAY_CONTAIN_CODE_BLOCK.test(answer)) return keepAsIs(answer)
+  if (UNCLEAR_CODE_RANGE.test(answer)) return keepAsIs(answer)
 
   const formatted: string[] = []
   for (const line of answer.trim().split(/\r?\n/)) {
@@ -220,10 +221,11 @@ export function formatAnswer(answer: string) {
 }
 
 /**
- * コードブロックの可能性がある回答。
- * フェンスの記号か、行頭（引用 > ・リスト記号・番号の後ろも含む）のタブ・4 つ以上の空白での字下げ
+ * コードの範囲がはっきりしない回答。
+ * フェンスの記号、行頭（引用 > ・リスト記号・番号の後ろも含む）のタブ・4 つ以上の空白での字下げ、
+ * またはエスケープしたバッククォート
  */
-const MAY_CONTAIN_CODE_BLOCK = /```|~~~|^[ \t>*+\-\d.)]*(?:\t| {4})/m
+const UNCLEAR_CODE_RANGE = /```|~~~|\\`|^[ \t>*+\-\d.)]*(?:\t| {4})/m
 
 /** 整形せずに返す。字下げを残すため、先頭の空行と末尾の空白だけを除く */
 function keepAsIs(answer: string) {
