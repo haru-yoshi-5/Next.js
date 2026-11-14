@@ -211,6 +211,9 @@ describe("handleExplain: runtime_explain", () => {
     const { cookie, token } = await prepare()
     const first = await call(deps, runtimeBody(token), cookie)
     expect(first.response.status).toBe(200)
+    // 期限内なら、回答がキャッシュに残っていることを先に確かめる
+    const cachedCall = await call(deps, runtimeBody(token), cookie)
+    expect(cachedCall.body.cached).toBe(true)
 
     // 有効期限（10 分）を過ぎる
     advance(11 * 60 * 1000)
