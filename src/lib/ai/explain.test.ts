@@ -86,7 +86,7 @@ describe("handleExplain: 成功", () => {
     const { deps } = setup()
     const { response } = await call(deps)
     expect(response.headers.get("Set-Cookie")).toMatch(
-      /^nextscope_ai_session=.+HttpOnly/,
+      /^nextscope_ai_sid=.+HttpOnly/,
     )
   })
 

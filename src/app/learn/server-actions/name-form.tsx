@@ -3,14 +3,29 @@
 import { CircleAlertIcon, CircleCheckIcon, LoaderIcon } from "lucide-react"
 import { type ReactNode, useActionState } from "react"
 
+import { RuntimeDetective } from "@/components/ai/runtime-detective"
 import { DemoLayout } from "@/components/learning/demo-layout"
 import { Button } from "@/components/ui/button"
 import { ProcessVisualizer } from "@/components/visualizer/process-visualizer"
 import { cn } from "@/lib/utils"
 import type { FlowTrace } from "@/types/flow"
 
-import { initialSaveNameState } from "./action-state"
+import { initialSaveNameState, type SaveNameState } from "./action-state"
 import { saveName } from "./actions"
+
+/**
+ * Server Action を呼び、送信から応答を受け取るまでの時間をブラウザで計測して付け足す。
+ * この値は改ざんできるため、AI には「ブラウザからの申告」として送る
+ */
+async function saveNameWithTiming(
+  previousState: SaveNameState,
+  formData: FormData,
+): Promise<SaveNameState> {
+  const startedAt = performance.now()
+  const next = await saveName(previousState, formData)
+  if (next.status === "idle") return next
+  return { ...next, browserRoundTripMs: performance.now() - startedAt }
+}
 
 interface NameFormProps {
   /** Server Component（GuestbookList）の描画結果 */
@@ -21,7 +36,7 @@ interface NameFormProps {
 // 保存処理そのものは actions.ts の Server Action がサーバーで行う。
 export function NameForm({ list }: NameFormProps) {
   const [state, formAction, isPending] = useActionState(
-    saveName,
+    saveNameWithTiming,
     initialSaveNameState,
   )
 
@@ -106,19 +121,30 @@ export function NameForm({ list }: NameFormProps) {
         </div>
       }
       visualizer={
-        <ProcessVisualizer
-          nodes={[
-            "browser",
-            "client-component",
-            "next-server",
-            "server-action",
-            "data-source",
-            "cache",
-            "server-component",
-          ]}
-          trace={isPending ? pendingTrace : state.trace}
-          emptyMessage="名前を入力して「保存する」を押すと、Server Action の処理がここに表示されます"
-        />
+        <div className="flex flex-col gap-4">
+          <ProcessVisualizer
+            nodes={[
+              "browser",
+              "client-component",
+              "next-server",
+              "server-action",
+              "data-source",
+              "cache",
+              "server-component",
+            ]}
+            trace={isPending ? pendingTrace : state.trace}
+            emptyMessage="名前を入力して「保存する」を押すと、Server Action の処理がここに表示されます"
+          />
+          {state.status !== "idle" && state.explain && !isPending ? (
+            <RuntimeDetective
+              // 実行が変わったら作り直し、前の実行の回答を残さない
+              key={state.trace.id}
+              lessonId="server-actions"
+              ticket={state.explain}
+              browserRoundTripMs={state.browserRoundTripMs}
+            />
+          ) : null}
+        </div>
       }
     />
   )
