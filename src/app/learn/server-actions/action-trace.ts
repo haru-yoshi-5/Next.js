@@ -12,6 +12,22 @@ interface ActionTraceInput {
   outcome: ActionOutcome
 }
 
+/**
+ * サーバーで計測した範囲を表すステップ。
+ * 計測しているのは saveName の開始から、この記録を作るまで。応答の送信や画面の更新は含まない
+ */
+function measuredStep(totalMs: number): FlowStep {
+  return {
+    id: "measured",
+    from: "server-action",
+    to: "server-action",
+    label: "サーバー処理の計測を終了",
+    evidence: "observed",
+    detail: "saveName の開始から、この記録を作るまで（応答の送信は含まない）",
+    durationMs: totalMs,
+  }
+}
+
 /** Server Action の実行結果を Process Visualizer 用のデータにする（サーバーで実行） */
 export function buildActionTrace({
   requestId,
@@ -49,14 +65,15 @@ export function buildActionTrace({
         detail: outcome.message,
         status: "error",
       },
+      measuredStep(totalMs),
       {
         id: "respond",
         from: "server-action",
         to: "client-component",
         label: "エラー内容を state として返す",
-        evidence: "observed",
-        detail: "データもキャッシュも更新しない（サーバー処理の合計）",
-        durationMs: totalMs,
+        // 返送は Next.js が行うため、観測していない
+        evidence: "conceptual",
+        detail: "データもキャッシュも更新しない",
         status: "error",
       },
     )
@@ -81,14 +98,15 @@ export function buildActionTrace({
           "try / catch でエラーを捕捉し、利用者向けのメッセージに置き換える",
         status: "error",
       },
+      measuredStep(totalMs),
       {
         id: "respond",
         from: "server-action",
         to: "client-component",
         label: "エラー内容を state として返す",
-        evidence: "observed",
-        detail: "キャッシュは更新しない（サーバー処理の合計）",
-        durationMs: totalMs,
+        // 返送は Next.js が行うため、観測していない
+        evidence: "conceptual",
+        detail: "キャッシュは更新しない",
         status: "error",
       },
     )
@@ -120,6 +138,7 @@ export function buildActionTrace({
         evidence: "conceptual",
         detail: "名前一覧のキャッシュを期限切れにする",
       },
+      measuredStep(totalMs),
       {
         id: "rerender",
         from: "cache",
@@ -133,9 +152,8 @@ export function buildActionTrace({
         from: "next-server",
         to: "client-component",
         label: "結果と更新後の UI を1回の往復で返す",
-        evidence: "observed",
-        detail: "サーバー処理の合計時間",
-        durationMs: totalMs,
+        // 再描画と返送は Next.js が行うため、観測していない
+        evidence: "conceptual",
       },
     )
   }
@@ -144,7 +162,7 @@ export function buildActionTrace({
     id: requestId,
     title: "Server Action の実行",
     source: "measured",
-    // 最後のステップが合計時間なので、データ更新時間と足し合わせない
+    // 計測を終了したステップが合計時間なので、データ更新時間と足し合わせない
     hideTotal: true,
     steps,
   }

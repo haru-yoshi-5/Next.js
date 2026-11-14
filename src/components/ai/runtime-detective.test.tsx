@@ -50,7 +50,7 @@ describe("RuntimeDetective", () => {
 
     const list = screen.getByRole("list", { name: "AI に送るステップ" })
     expect(within(list).getAllByText("実測")).toHaveLength(4)
-    expect(within(list).getAllByText("概念")).toHaveLength(3)
+    expect(within(list).getAllByText("概念")).toHaveLength(4)
     expect(screen.getAllByText("申告").length).toBeGreaterThan(0)
     expect(
       screen.getByText(/送信から応答を受け取るまで/).textContent,
@@ -121,5 +121,66 @@ describe("RuntimeDetective", () => {
     expect(
       screen.queryByRole("button", { name: "もう一度送信する" }),
     ).toBeNull()
+  })
+
+  it("送信中はローディングを表示し、ボタンを押せないため重複して送らない", async () => {
+    let resolve!: (response: Response) => void
+    fetchMock.mockReturnValue(
+      new Promise<Response>((r) => {
+        resolve = r
+      }),
+    )
+    const user = userEvent.setup()
+    renderDetective()
+    await user.click(
+      screen.getByRole("button", { name: "この実行を AI で解説" }),
+    )
+
+    expect(screen.getByText(/解説を作成しています/)).toBeTruthy()
+    const button = screen.getByRole("button", { name: "解説を作成中…" })
+    expect((button as HTMLButtonElement).disabled).toBe(true)
+    await user.click(button)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    resolve(
+      Response.json({
+        status: "ok",
+        answer: "見出しのない回答",
+        references: [],
+        cached: false,
+        notice: "AI が生成した解説です。",
+        sections: null,
+      }),
+    )
+    // 見出しで分けられない回答は、そのまま表示する
+    expect(await screen.findByText("見出しのない回答")).toBeTruthy()
+  })
+
+  it("通信に失敗したら案内と再送ボタンを表示し、押すともう一度送れる", async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch"))
+    fetchMock.mockResolvedValueOnce(
+      Response.json({
+        status: "ok",
+        answer: "全文",
+        references: [],
+        cached: false,
+        notice: "AI が生成した解説です。",
+        sections: {
+          observed: "観測の内容",
+          lessonExplanation: "教材の内容",
+          unobservable: "分からない内容",
+        },
+      }),
+    )
+    const user = userEvent.setup()
+    renderDetective()
+    await user.click(
+      screen.getByRole("button", { name: "この実行を AI で解説" }),
+    )
+    expect(await screen.findByText(/通信状況を確認して/)).toBeTruthy()
+
+    await user.click(screen.getByRole("button", { name: "もう一度送信する" }))
+    expect(await screen.findByText("観測の内容")).toBeTruthy()
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 })

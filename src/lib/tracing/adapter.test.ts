@@ -34,12 +34,43 @@ describe("summarizeTrace", () => {
       [2, "validate", "observed"],
       [3, "write", "observed"],
       [4, "revalidate", "conceptual"],
-      [5, "rerender", "conceptual"],
-      [6, "respond", "observed"],
+      [5, "measured", "observed"],
+      [6, "rerender", "conceptual"],
+      [7, "respond", "conceptual"],
     ])
     expect(summary.steps[3].durationMs).toBe(251)
-    expect(summary.steps[6].durationMs).toBe(263.5)
+    expect(summary.steps[5].durationMs).toBe(263.5)
   })
+
+  it.each([
+    { type: "saved", name: "テスト", writeMs: 10 },
+    { type: "invalid", message: "名前を入力してください。" },
+    { type: "failed" },
+  ] as const)(
+    "応答の返送は観測していないため conceptual で、合計時間は計測したステップだけが持つ（$type）",
+    (outcome) => {
+      const summary = summarizeTrace(
+        "server-actions",
+        buildActionTrace({ requestId: TRACE_ID, totalMs: 100, outcome }),
+      )
+      const respond = summary.steps.find((step) => step.id === "respond")
+      expect(respond).toMatchObject({
+        evidence: "conceptual",
+        durationMs: null,
+      })
+      expect(
+        summary.steps
+          .filter((step) => step.durationMs === 100)
+          .map((s) => s.id),
+      ).toEqual(["measured"])
+      // 時間を持つのは observed のステップだけ
+      expect(
+        summary.steps.every(
+          (step) => step.durationMs === null || step.evidence === "observed",
+        ),
+      ).toBe(true)
+    },
+  )
 
   it("観測していないステップには、所要時間があっても送らない", () => {
     const trace: FlowTrace = {
