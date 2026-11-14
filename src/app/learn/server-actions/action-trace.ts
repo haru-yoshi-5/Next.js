@@ -25,12 +25,16 @@ export function buildActionTrace({
       to: "next-server",
       label: "フォームを送信（POST）",
       detail: "Server Action を識別する ID とフォームデータが送られる",
+      // 送信そのものは Next.js が行うため、ここでは観測していない
+      evidence: "conceptual",
     },
     {
       id: "invoke",
       from: "next-server",
       to: "server-action",
       label: "saveName(prevState, formData) を実行",
+      // この関数の中で計測を始めているため、実行されたことは観測している
+      evidence: "observed",
     },
   ]
 
@@ -41,6 +45,7 @@ export function buildActionTrace({
         from: "server-action",
         to: "server-action",
         label: "バリデーション: NG",
+        evidence: "observed",
         detail: outcome.message,
         status: "error",
       },
@@ -49,6 +54,7 @@ export function buildActionTrace({
         from: "server-action",
         to: "client-component",
         label: "エラー内容を state として返す",
+        evidence: "observed",
         detail: "データもキャッシュも更新しない（サーバー処理の合計）",
         durationMs: totalMs,
         status: "error",
@@ -63,12 +69,14 @@ export function buildActionTrace({
         from: "server-action",
         to: "server-action",
         label: "バリデーション: OK",
+        evidence: "observed",
       },
       {
         id: "write",
         from: "server-action",
         to: "data-source",
         label: "データ更新に失敗",
+        evidence: "observed",
         detail:
           "try / catch でエラーを捕捉し、利用者向けのメッセージに置き換える",
         status: "error",
@@ -78,6 +86,7 @@ export function buildActionTrace({
         from: "server-action",
         to: "client-component",
         label: "エラー内容を state として返す",
+        evidence: "observed",
         detail: "キャッシュは更新しない（サーバー処理の合計）",
         durationMs: totalMs,
         status: "error",
@@ -92,6 +101,7 @@ export function buildActionTrace({
         from: "server-action",
         to: "server-action",
         label: "バリデーション: OK",
+        evidence: "observed",
         detail: `name = "${outcome.name}"`,
       },
       {
@@ -99,6 +109,7 @@ export function buildActionTrace({
         from: "server-action",
         to: "data-source",
         label: "addEntry() でデータを更新",
+        evidence: "observed",
         durationMs: outcome.writeMs,
       },
       {
@@ -106,6 +117,7 @@ export function buildActionTrace({
         from: "server-action",
         to: "cache",
         label: 'updateTag("guestbook")',
+        evidence: "conceptual",
         detail: "名前一覧のキャッシュを期限切れにする",
       },
       {
@@ -113,6 +125,7 @@ export function buildActionTrace({
         from: "cache",
         to: "server-component",
         label: "<GuestbookList /> を新しいデータで再実行",
+        evidence: "conceptual",
         detail: "キャッシュが無効になったため、次の描画で作り直される",
       },
       {
@@ -120,6 +133,7 @@ export function buildActionTrace({
         from: "next-server",
         to: "client-component",
         label: "結果と更新後の UI を1回の往復で返す",
+        evidence: "observed",
         detail: "サーバー処理の合計時間",
         durationMs: totalMs,
       },

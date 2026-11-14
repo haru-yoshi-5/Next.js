@@ -20,7 +20,13 @@ import {
 import { findSensitiveContent } from "./inspect"
 import {
   buildContextTutorPrompt,
+  buildRuntimeExplainPrompt,
+  formatTraceForPrompt,
   PROMPT_VERSION,
+  RUNTIME_PROMPT_VERSION,
+  RUNTIME_SYSTEM_INSTRUCTION,
+  type RuntimeSections,
+  splitRuntimeAnswer,
   SYSTEM_INSTRUCTION,
 } from "./prompts"
 import { isAllowedRegion } from "./region"
@@ -30,6 +36,7 @@ import {
   readBodyWithLimit,
 } from "./request"
 import type { AiStore, QuotaEntry } from "./store"
+import { verifyTraceToken } from "./trace-token"
 import {
   jstDateKey,
   nextJstMidnightSeconds,
@@ -53,6 +60,7 @@ export type ExplainErrorCode =
   | "payload_too_large"
   | "invalid_request"
   | "sensitive_content"
+  | "invalid_trace"
   | "rate_limited"
   | "store_unavailable"
   | "timeout"
@@ -68,6 +76,8 @@ export type ExplainResponseBody =
       references: LessonReference[]
       cached: boolean
       notice: string
+      /** runtime_explain のときだけ。見出しで分けられなかったときは null */
+      sections?: RuntimeSections | null
     }
   | {
       status: "error"
@@ -100,6 +110,13 @@ export interface ExplainDeps {
 
 const UNAVAILABLE_MESSAGE =
   "AI 機能は現在利用できません。教材とデモはそのままお使いいただけます。"
+
+const SESSION_MISSING_MESSAGE =
+  "実行の記録を、この利用者のものとして確認できませんでした。ページを読み込み直してから、もう一度デモを実行してください。"
+const TRACE_EXPIRED_MESSAGE =
+  "実行の記録の有効期限（10 分）が切れました。もう一度デモを実行してから、解説を依頼してください。"
+const TRACE_INVALID_MESSAGE =
+  "実行の記録を確認できませんでした。もう一度デモを実行してから、解説を依頼してください。"
 
 const GENERATE_ERRORS = {
   timeout: {
@@ -156,6 +173,33 @@ export function buildCacheKey(input: {
         input.mode,
         input.lessonId,
         normalizeQuestion(input.question),
+      ]),
+    )
+    .digest("base64url")
+  return `${KEY_PREFIX}:cache:${digest}`
+}
+
+/**
+ * 実行記録の解説のキャッシュのキー。
+ * 同じ利用者（匿名のセッション ID）・同じ実行記録（要約のハッシュ）・同じ申告・同じ指示・同じモデルのときだけ一致する
+ */
+export function buildRuntimeCacheKey(input: {
+  model: string
+  lessonId: string
+  sessionId: string
+  summaryHash: string
+  browserRoundTripMs: number | null
+}) {
+  const digest = createHash("sha256")
+    .update(
+      JSON.stringify([
+        RUNTIME_PROMPT_VERSION,
+        input.model,
+        "runtime_explain",
+        input.lessonId,
+        input.sessionId,
+        input.summaryHash,
+        input.browserRoundTripMs,
       ]),
     )
     .digest("base64url")
@@ -259,29 +303,92 @@ export async function handleExplain(
       parsed.message,
     )
   }
-  const { lesson, question } = parsed.value
+  const { lesson } = parsed.value
   logContext.lessonId = lesson.slug
   logContext.mode = parsed.value.mode
 
-  // 4. 送る内容の検査
-  if (findSensitiveContent(question).length > 0) {
-    return fail(
-      400,
-      "sensitive_content",
-      "個人情報や秘密情報（メールアドレス・電話番号・API キーなど）らしい内容が含まれているため、送信しませんでした。該当する部分を削除してから、もう一度お試しください。",
+  const now = deps.now()
+  const references = buildLessonReferences(lesson)
+  let sessionId = verifySessionCookie(
+    config.hashSecret,
+    readSessionCookie(request.headers),
+  )
+  let cacheKey: string
+  let systemInstruction: string
+  let prompt: string
+
+  if (parsed.value.mode === "context_tutor") {
+    const { question } = parsed.value
+    // 4. 送る内容の検査
+    if (findSensitiveContent(question).length > 0) {
+      return fail(
+        400,
+        "sensitive_content",
+        "個人情報や秘密情報（メールアドレス・電話番号・API キーなど）らしい内容が含まれているため、送信しませんでした。該当する部分を削除してから、もう一度お試しください。",
+      )
+    }
+
+    // 5. 教材の内容と参照先は、サーバーで教材 ID から組み立てる
+    cacheKey = buildCacheKey({
+      model: config.model,
+      mode: parsed.value.mode,
+      lessonId: lesson.slug,
+      question,
+    })
+    systemInstruction = SYSTEM_INSTRUCTION
+    prompt = buildContextTutorPrompt(buildLessonContext(lesson), question)
+  } else {
+    const { summary, token, browserReport } = parsed.value
+    // 4. 実行記録の検証。匿名 Cookie と署名で、この利用者の実行で改ざんがないことを確かめる
+    if (!sessionId) {
+      return fail(400, "invalid_trace", SESSION_MISSING_MESSAGE)
+    }
+    const check = await verifyTraceToken({
+      secret: config.hashSecret,
+      sessionId,
+      summary,
+      now,
+      token,
+      lessonId: lesson.slug,
+    })
+    if (!check.ok) {
+      return fail(
+        400,
+        "invalid_trace",
+        check.reason === "expired"
+          ? TRACE_EXPIRED_MESSAGE
+          : TRACE_INVALID_MESSAGE,
+      )
+    }
+
+    // 5. 実行記録の回答は、その実行をした利用者にだけ返す（キーにセッション ID を含める）
+    const browserRoundTripMs = browserReport?.roundTripMs ?? null
+    cacheKey = buildRuntimeCacheKey({
+      model: config.model,
+      lessonId: lesson.slug,
+      sessionId,
+      summaryHash: check.summaryHash,
+      browserRoundTripMs,
+    })
+    systemInstruction = RUNTIME_SYSTEM_INSTRUCTION
+    prompt = buildRuntimeExplainPrompt(
+      buildLessonContext(lesson),
+      formatTraceForPrompt(summary),
+      browserRoundTripMs,
     )
   }
 
-  // 5. 教材の内容と参照先は、サーバーで教材 ID から組み立てる
-  const references = buildLessonReferences(lesson)
-  const cacheKey = buildCacheKey({
-    model: config.model,
-    mode: parsed.value.mode,
-    lessonId: lesson.slug,
-    question,
+  const okBody = (answer: string, cached: boolean): ExplainResponseBody => ({
+    status: "ok",
+    answer,
+    references,
+    cached,
+    notice: AI_NOTICE,
+    ...(parsed.value.mode === "runtime_explain"
+      ? { sections: splitRuntimeAnswer(answer) }
+      : {}),
   })
 
-  const now = deps.now()
   let store: AiStore
 
   // 6. キャッシュ（保存先が使えなければ AI を止める）
@@ -289,17 +396,7 @@ export async function handleExplain(
     store = deps.getStore()
     const cached = await store.getCachedAnswer(cacheKey)
     if (cached) {
-      return finish(
-        200,
-        {
-          status: "ok",
-          answer: cached.answer,
-          references,
-          cached: true,
-          notice: AI_NOTICE,
-        },
-        { cached: true },
-      )
+      return finish(200, okBody(cached.answer, true), { cached: true })
     }
   } catch {
     return fail(503, "store_unavailable", UNAVAILABLE_MESSAGE)
@@ -307,10 +404,7 @@ export async function handleExplain(
 
   // 7. 利用制限（サイト全体・IP アドレス・匿名 Cookie を別々に数える）
   const dateKey = jstDateKey(now)
-  let sessionId = verifySessionCookie(
-    config.hashSecret,
-    readSessionCookie(request.headers),
-  )
+  // context_tutor は Cookie がなくても使える。なければここで発行する
   if (!sessionId) {
     const session = createSession(config.hashSecret)
     sessionId = session.id
@@ -359,10 +453,7 @@ export async function handleExplain(
   } catch {
     return fail(503, "model_unavailable", UNAVAILABLE_MESSAGE)
   }
-  const result = await generator.generate({
-    systemInstruction: SYSTEM_INSTRUCTION,
-    prompt: buildContextTutorPrompt(buildLessonContext(lesson), question),
-  })
+  const result = await generator.generate({ systemInstruction, prompt })
   if (!result.ok) {
     const error = GENERATE_ERRORS[result.reason]
     return fail(
@@ -386,11 +477,5 @@ export async function handleExplain(
   }
 
   // 9. 回答と、サーバーで決めた参照先だけを返す
-  return finish(200, {
-    status: "ok",
-    answer,
-    references,
-    cached: false,
-    notice: AI_NOTICE,
-  })
+  return finish(200, okBody(answer, false))
 }

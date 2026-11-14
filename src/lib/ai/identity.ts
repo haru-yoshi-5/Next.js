@@ -2,9 +2,16 @@ import "server-only"
 
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto"
 
-export const SESSION_COOKIE_NAME = "nextscope_ai_session"
+/**
+ * 匿名 Cookie の名前。
+ * Phase 2（Runtime Detective）で、教材ページの Server Action からも読めるよう Path を / に広げた。
+ * 以前の Cookie（nextscope_ai_session、Path=/api/ai）と取り違えないよう、名前も変えている
+ */
+export const SESSION_COOKIE_NAME = "nextscope_ai_sid"
+/** 匿名 Cookie を送る範囲 */
+export const SESSION_COOKIE_PATH = "/"
 /** 匿名 Cookie の有効期間（秒）。保存するのはランダムな ID と署名だけ */
-const SESSION_MAX_AGE_SECONDS = 24 * 60 * 60
+export const SESSION_MAX_AGE_SECONDS = 24 * 60 * 60
 
 function hmac(secret: string, value: string) {
   return createHmac("sha256", secret).update(value).digest("base64url")
@@ -66,7 +73,7 @@ export function buildSessionSetCookie(
 ) {
   return [
     `${SESSION_COOKIE_NAME}=${cookieValue}`,
-    "Path=/api/ai",
+    `Path=${SESSION_COOKIE_PATH}`,
     `Max-Age=${SESSION_MAX_AGE_SECONDS}`,
     "HttpOnly",
     "SameSite=Lax",

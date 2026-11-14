@@ -1,6 +1,9 @@
 // ブラウザ（AI パネル）とサーバーの両方から使う。秘密の値や server-only のモジュールは読み込まない。
+import type { BrowserReport, RuntimeExplainTicket } from "@/lib/tracing/adapter"
+
 import type { LessonReference } from "./context"
 import type { ExplainErrorCode } from "./explain"
+import type { RuntimeSections } from "./prompts"
 
 /** AI の API の場所 */
 export const EXPLAIN_ENDPOINT = "/api/ai/explain"
@@ -34,6 +37,8 @@ export type TutorResult =
       references: LessonReference[]
       cached: boolean
       notice: string
+      /** 実行の解説（runtime_explain）を 3 つの見出しで分けたもの。分けられなければ null */
+      sections?: RuntimeSections | null
     }
   | {
       status: "error"
@@ -78,6 +83,7 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ExplainErrorCode>([
   "payload_too_large",
   "invalid_request",
   "sensitive_content",
+  "invalid_trace",
   "rate_limited",
   "store_unavailable",
   "timeout",
@@ -102,6 +108,22 @@ function isLessonReference(value: unknown): value is LessonReference {
   )
 }
 
+function parseSections(value: unknown): RuntimeSections | null {
+  if (
+    isRecord(value) &&
+    typeof value.observed === "string" &&
+    typeof value.lessonExplanation === "string" &&
+    typeof value.unobservable === "string"
+  ) {
+    return {
+      observed: value.observed,
+      lessonExplanation: value.lessonExplanation,
+      unobservable: value.unobservable,
+    }
+  }
+  return null
+}
+
 /**
  * API の応答本文を、画面で扱う形に直す。
  * 想定外の形なら、読み取れなかった失敗として扱う（例外にしない）。
@@ -121,6 +143,8 @@ export function parseExplainResponse(body: unknown): TutorResult {
         : [],
       cached: body.cached === true,
       notice: typeof body.notice === "string" ? body.notice : DEFAULT_NOTICE,
+      // 実行の解説（runtime_explain）の応答にだけ含まれる
+      ...("sections" in body ? { sections: parseSections(body.sections) } : {}),
     }
   }
 
@@ -142,32 +166,33 @@ export function parseExplainResponse(body: unknown): TutorResult {
   return INVALID_RESPONSE_RESULT
 }
 
-interface RequestExplanationOptions {
-  lessonId: string
-  /** 前後の空白を除いた質問 */
-  question: string
+interface FetchOptions {
   /** テストで差し替えるためのもの。省略時はブラウザの fetch を使う */
   fetchImpl?: typeof fetch
   timeoutMs?: number
 }
 
+interface RequestExplanationOptions extends FetchOptions {
+  lessonId: string
+  /** 前後の空白を除いた質問 */
+  question: string
+}
+
 /**
- * AI の API に質問を送り、結果を画面で扱う形で返す。例外は投げない。
+ * AI の API に本文を送り、結果を画面で扱う形で返す。例外は投げない。
  * - 通信の失敗・タイムアウトは network_error
  * - 本文が JSON でない、または想定外の形なら invalid_response
  */
-export async function requestExplanation({
-  lessonId,
-  question,
-  fetchImpl = fetch,
-  timeoutMs = CLIENT_TIMEOUT_MS,
-}: RequestExplanationOptions): Promise<TutorResult> {
+async function postExplain(
+  payload: Record<string, unknown>,
+  { fetchImpl = fetch, timeoutMs = CLIENT_TIMEOUT_MS }: FetchOptions,
+): Promise<TutorResult> {
   let response: Response
   try {
     response = await fetchImpl(EXPLAIN_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lessonId, mode: "context_tutor", question }),
+      body: JSON.stringify(payload),
       credentials: "same-origin",
       signal: AbortSignal.timeout(timeoutMs),
     })
@@ -184,6 +209,45 @@ export async function requestExplanation({
     return INVALID_RESPONSE_RESULT
   }
   return parseExplainResponse(body)
+}
+
+/** AI の API に質問を送る（AI Context Tutor） */
+export function requestExplanation({
+  lessonId,
+  question,
+  ...options
+}: RequestExplanationOptions): Promise<TutorResult> {
+  return postExplain({ lessonId, mode: "context_tutor", question }, options)
+}
+
+interface RequestRuntimeExplanationOptions extends FetchOptions {
+  lessonId: string
+  /** Server Action が返した、署名付きの要約 */
+  ticket: RuntimeExplainTicket
+  /** ブラウザで計測した値（申告）。なければ null */
+  browserReport: BrowserReport | null
+}
+
+/**
+ * 実行の記録を AI の API に送る（AI Runtime Detective）。
+ * 送るのは、サーバーが作った要約と署名、ブラウザからの申告だけ。入力した値は送らない
+ */
+export function requestRuntimeExplanation({
+  lessonId,
+  ticket,
+  browserReport,
+  ...options
+}: RequestRuntimeExplanationOptions): Promise<TutorResult> {
+  return postExplain(
+    {
+      lessonId,
+      mode: "runtime_explain",
+      trace: ticket.summary,
+      traceToken: ticket.token,
+      browserReport,
+    },
+    options,
+  )
 }
 
 /**

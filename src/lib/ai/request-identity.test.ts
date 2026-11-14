@@ -26,9 +26,11 @@ describe("parseExplainRequest", () => {
       }),
     )
     expect(result.ok).toBe(true)
-    if (result.ok) {
+    if (result.ok && result.value.mode === "context_tutor") {
       expect(result.value.lesson.slug).toBe("server-components")
       expect(result.value.question).toBe("なぜサーバーで処理するの？")
+    } else {
+      expect.unreachable("context_tutor として受け付けるはず")
     }
   })
 
@@ -143,13 +145,13 @@ describe("送信元の識別", () => {
 
   it("Cookie ヘッダーから匿名 Cookie を読み、Set-Cookie は HttpOnly で返す", () => {
     const headers = new Headers({
-      cookie: "a=1; nextscope_ai_session=abc.def; b=2",
+      cookie: "a=1; nextscope_ai_sid=abc.def; b=2",
     })
     expect(readSessionCookie(headers)).toBe("abc.def")
     const setCookie = buildSessionSetCookie("abc.def", true)
     expect(setCookie).toContain("HttpOnly")
     expect(setCookie).toContain("Secure")
-    expect(setCookie).toContain("Path=/api/ai")
+    expect(setCookie).toContain("Path=/")
     expect(buildSessionSetCookie("abc.def", false)).not.toContain("Secure")
   })
 })
