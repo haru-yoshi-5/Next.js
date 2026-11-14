@@ -37,20 +37,25 @@ const summary = summarizeTrace(
   }),
 )
 
-function setup() {
+function setup(overrides: Partial<AiConfig> = {}) {
   const generate = vi
     .fn<AnswerGenerator["generate"]>()
     .mockResolvedValue({ ok: true, text: ANSWER })
-  const store = createMemoryStore(() => NOW.getTime())
+  // 期限切れを確かめるため、時刻を進められるようにする
+  let current = NOW
+  const store = createMemoryStore(() => current.getTime())
   const deps: ExplainDeps = {
-    config: { status: "ready", config },
+    config: { status: "ready", config: { ...config, ...overrides } },
     isProduction: false,
     getStore: () => store,
     getGenerator: () => ({ generate }),
-    now: () => NOW,
+    now: () => current,
     log: vi.fn(),
   }
-  return { deps, generate }
+  const advance = (ms: number) => {
+    current = new Date(current.getTime() + ms)
+  }
+  return { deps, generate, advance }
 }
 
 async function prepare() {
@@ -61,7 +66,11 @@ async function prepare() {
     summary,
     now: NOW,
   })
-  return { cookie: `${SESSION_COOKIE_NAME}=${session.cookieValue}`, token }
+  return {
+    cookie: `${SESSION_COOKIE_NAME}=${session.cookieValue}`,
+    token,
+    sessionId: session.id,
+  }
 }
 
 async function call(
@@ -175,6 +184,96 @@ describe("handleExplain: runtime_explain", () => {
     )
     expect(response.status).toBe(400)
     expect(generate).not.toHaveBeenCalled()
+  })
+
+  it("記録やトークンの形式が不正なら invalid_trace を返し、利用枠も消費しない", async () => {
+    const { deps, generate } = setup()
+    const { cookie, token } = await prepare()
+    const invalidBodies = [
+      runtimeBody(token, { ...summary, steps: [] }),
+      runtimeBody("x"),
+    ]
+    for (let i = 0; i < 5; i++) {
+      for (const invalid of invalidBodies) {
+        const { response, body } = await call(deps, invalid, cookie)
+        expect(response.status).toBe(400)
+        expect(body.code).toBe("invalid_trace")
+      }
+    }
+    expect(generate).not.toHaveBeenCalled()
+
+    const { response } = await call(deps, runtimeBody(token), cookie)
+    expect(response.status).toBe(200)
+  })
+
+  it("期限切れのトークンは、回答がキャッシュに残っていても拒否する", async () => {
+    const { deps, generate, advance } = setup()
+    const { cookie, token } = await prepare()
+    const first = await call(deps, runtimeBody(token), cookie)
+    expect(first.response.status).toBe(200)
+
+    // 有効期限（10 分）を過ぎる
+    advance(11 * 60 * 1000)
+    const { response, body } = await call(deps, runtimeBody(token), cookie)
+    expect(response.status).toBe(400)
+    expect(body.code).toBe("invalid_trace")
+    expect(body.cached).toBeUndefined()
+    expect(generate).toHaveBeenCalledTimes(1)
+  })
+
+  it("キャッシュは、利用者・実行記録・ブラウザの申告値ごとに分ける", async () => {
+    // テストではすべて同じ IP アドレスから送るため、送信元ごとの上限を上げておく
+    const { deps, generate } = setup({ perSourceDailyCap: 10 })
+    const a = await prepare()
+    const first = await call(deps, runtimeBody(a.token), a.cookie)
+    expect(first.response.status).toBe(200)
+    expect(generate).toHaveBeenCalledTimes(1)
+
+    // 別の利用者が同じ内容の記録を送っても、他人の回答は返さない
+    const b = await prepare()
+    const other = await call(deps, runtimeBody(b.token), b.cookie)
+    expect(other.response.status).toBe(200)
+    expect(other.body.cached).toBe(false)
+    expect(generate).toHaveBeenCalledTimes(2)
+
+    // 同じ利用者でも、別の実行の記録なら別のキャッシュ
+    const otherSummary = summarizeTrace(
+      "server-actions",
+      buildActionTrace({
+        requestId: "1c7e4b63-7b9f-4d2f-8e8b-3a5c9d0f2b41",
+        totalMs: 120,
+        outcome: { type: "saved", name: "別の名前", writeMs: 110 },
+      }),
+    )
+    const otherToken = await issueTraceToken({
+      secret: config.hashSecret,
+      sessionId: a.sessionId,
+      summary: otherSummary,
+      now: NOW,
+    })
+    const otherRun = await call(
+      deps,
+      runtimeBody(otherToken, otherSummary),
+      a.cookie,
+    )
+    expect(otherRun.response.status).toBe(200)
+    expect(otherRun.body.cached).toBe(false)
+    expect(generate).toHaveBeenCalledTimes(3)
+
+    // 同じ記録でも、ブラウザの申告値が違えば別のキャッシュ
+    const changedReport = await call(
+      deps,
+      { ...runtimeBody(a.token), browserReport: { roundTripMs: 999 } },
+      a.cookie,
+    )
+    expect(changedReport.response.status).toBe(200)
+    expect(changedReport.body.cached).toBe(false)
+    expect(generate).toHaveBeenCalledTimes(4)
+
+    // 最初と同じ内容なら、キャッシュから返す
+    const same = await call(deps, runtimeBody(a.token), a.cookie)
+    expect(same.body.cached).toBe(true)
+    expect(generate).toHaveBeenCalledTimes(4)
   })
 
   it("対応していない教材では 400", async () => {

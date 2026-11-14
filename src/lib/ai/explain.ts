@@ -299,7 +299,8 @@ export async function handleExplain(
   if (!parsed.ok) {
     return fail(
       parsed.status,
-      parsed.status === 413 ? "payload_too_large" : "invalid_request",
+      parsed.code ??
+        (parsed.status === 413 ? "payload_too_large" : "invalid_request"),
       parsed.message,
     )
   }

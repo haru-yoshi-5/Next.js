@@ -45,7 +45,13 @@ export type ExplainRequest =
 
 export type ParseResult =
   | { ok: true; value: ExplainRequest }
-  | { ok: false; status: 400 | 413; message: string }
+  | {
+      ok: false
+      status: 400 | 413
+      message: string
+      /** 実行記録やトークンの形式が不正なときだけ付ける（それ以外は status から決める） */
+      code?: "invalid_trace"
+    }
 
 /**
  * 本文をストリームで読み、上限を超えた時点で読むのをやめる。
@@ -189,7 +195,12 @@ function parseRuntimeExplain(
     traceToken.length > TRACE_TOKEN_MAX_LENGTH ||
     !JWT_SHAPE.test(traceToken)
   ) {
-    return { ok: false, status: 400, message: INVALID_TRACE_MESSAGE }
+    return {
+      ok: false,
+      status: 400,
+      message: INVALID_TRACE_MESSAGE,
+      code: "invalid_trace",
+    }
   }
   return {
     ok: true,
