@@ -25,6 +25,13 @@ export interface HighlightedSource {
   directive: Directive
 }
 
+/** 表示と AI 解説で同じソーステキストと行番号を使う。 */
+export async function readSourceCode(relativePath: string) {
+  return (await readFile(resolveSourcePath(relativePath), "utf8"))
+    .replace(/\r\n/g, "\n")
+    .trimEnd()
+}
+
 const SOURCE_PREFIX = "src/"
 
 const languageByExtension: Record<string, BundledLanguage> = {
@@ -80,9 +87,14 @@ export async function getHighlightedSource(
   "use cache"
   cacheLife("max")
 
-  const code = (await readFile(resolveSourcePath(relativePath), "utf8"))
-    .replace(/\r\n/g, "\n")
-    .trimEnd()
+  const code = await readSourceCode(relativePath)
+  return highlightSourceCode(relativePath, code)
+}
+
+export async function highlightSourceCode(
+  relativePath: string,
+  code: string,
+): Promise<HighlightedSource> {
   const lang = languageByExtension[path.extname(relativePath)] ?? "tsx"
 
   const { tokens } = await codeToTokens(code, {

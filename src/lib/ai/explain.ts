@@ -2,6 +2,8 @@ import "server-only"
 
 import { createHash } from "node:crypto"
 
+import { readMappedCode } from "@/lib/learning/code-map"
+
 import type { AiConfigResult } from "./config"
 import {
   buildLessonContext,
@@ -21,6 +23,8 @@ import { findSensitiveContent } from "./inspect"
 import {
   buildContextTutorPrompt,
   buildRuntimeExplainPrompt,
+  CODE_PROMPT_VERSION,
+  CODE_SYSTEM_INSTRUCTION,
   formatTraceForPrompt,
   PROMPT_VERSION,
   RUNTIME_PROMPT_VERSION,
@@ -341,6 +345,51 @@ export async function handleExplain(
     })
     systemInstruction = SYSTEM_INSTRUCTION
     prompt = buildContextTutorPrompt(buildLessonContext(lesson), question)
+  } else if (parsed.value.mode === "code_explain") {
+    const { entry } = parsed.value
+    try {
+      const { code, start, end } = await readMappedCode(entry)
+      const lessonContext = buildLessonContext(lesson)
+      if (
+        findSensitiveContent(code).length ||
+        findSensitiveContent(lessonContext).length
+      ) {
+        return fail(
+          400,
+          "sensitive_content",
+          "秘密情報らしい内容が含まれているため、この実装を AI に送信できません。",
+        )
+      }
+      prompt = JSON.stringify({
+        lessonContext,
+        selectedElement: entry.label,
+        component: entry.component,
+        path: entry.path,
+        firstLine: start + 1,
+        lastLine: end + 1,
+        code,
+      })
+      const digest = createHash("sha256")
+        .update(
+          JSON.stringify([
+            CODE_PROMPT_VERSION,
+            config.model,
+            parsed.value.mode,
+            lesson.slug,
+            entry.id,
+            prompt,
+          ]),
+        )
+        .digest("base64url")
+      cacheKey = `${KEY_PREFIX}:cache:${digest}`
+      systemInstruction = CODE_SYSTEM_INSTRUCTION
+    } catch {
+      return fail(
+        503,
+        "upstream_error",
+        "解説に使う公開コードを読み込めませんでした。",
+      )
+    }
   } else {
     const { summary, token, browserReport } = parsed.value
     // 4. 実行記録の検証。匿名 Cookie と署名で、この利用者の実行で改ざんがないことを確かめる
