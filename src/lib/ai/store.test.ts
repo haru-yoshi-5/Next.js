@@ -6,6 +6,7 @@ import {
   createRedisStore,
   parseCachedAnswer,
   parseQuotaResult,
+  RELEASE_GENERATION_LOCK_SCRIPT,
   type RedisLike,
 } from "./store"
 
@@ -59,6 +60,24 @@ describe("メモリの保存先（開発用）", () => {
     now = 61_000
     expect(await store.getCachedAnswer("k")).toBeNull()
   })
+
+  it("期限切れ後に取得したロックは、新しい所有者だけが解放できる", async () => {
+    let now = 0
+    const store = createMemoryStore(() => now)
+    const first = await store.acquireGenerationLock("k", 10)
+    expect(first).toBeTypeOf("string")
+    expect(await store.acquireGenerationLock("k", 10)).toBeNull()
+
+    now = 10_000
+    const second = await store.acquireGenerationLock("k", 10)
+    expect(second).toBeTypeOf("string")
+    expect(second).not.toBe(first)
+    await store.releaseGenerationLock("k", first!)
+    expect(await store.acquireGenerationLock("k", 10)).toBeNull()
+
+    await store.releaseGenerationLock("k", second!)
+    expect(await store.acquireGenerationLock("k", 10)).toBeTypeOf("string")
+  })
 })
 
 describe("Redis の保存先", () => {
@@ -103,6 +122,32 @@ describe("Redis の保存先", () => {
     await expect(
       createRedisStore(client).consumeQuota(entries, 1),
     ).rejects.toThrow()
+  })
+
+  it("期限と NX を指定して取得し、解放は所有トークンの照合と削除を同じ操作で行う", async () => {
+    const client = fakeClient(1)
+    vi.mocked(client.set)
+      .mockResolvedValueOnce("OK")
+      .mockResolvedValueOnce(null)
+    const store = createRedisStore(client)
+
+    const token = await store.acquireGenerationLock("k", 40)
+    expect(token).toBeTypeOf("string")
+    expect(client.set).toHaveBeenCalledWith("k:generation-lock", token, {
+      ex: 40,
+      nx: true,
+    })
+    expect(await store.acquireGenerationLock("k", 40)).toBeNull()
+
+    await store.releaseGenerationLock("k", token!)
+    expect(client.eval).toHaveBeenCalledWith(
+      RELEASE_GENERATION_LOCK_SCRIPT,
+      ["k:generation-lock"],
+      [token],
+    )
+    expect(RELEASE_GENERATION_LOCK_SCRIPT).toMatch(
+      /if redis\.call\('GET', KEYS\[1\]\) == ARGV\[1\] then\s+return redis\.call\('DEL', KEYS\[1\]\)/,
+    )
   })
 
   it.each([null, "OK", [1], [1, 1], [0, 0], [0, 3], ["1", "0"]])(

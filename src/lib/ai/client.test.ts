@@ -128,6 +128,18 @@ describe("validateQuestion", () => {
 })
 
 describe("parseExplainResponse", () => {
+  it("生成中のメッセージを表示し、同じ質問を再送できる", () => {
+    const response = {
+      status: "error",
+      code: "generation_in_progress",
+      message: "同じ内容の解説を生成中です。",
+    }
+    expect(parseExplainResponse(response)).toEqual({
+      ...response,
+      retryable: true,
+    })
+  })
+
   it("成功の応答を読み、教材ページ以外のリンクを捨てる", () => {
     const result = parseExplainResponse({
       status: "ok",

@@ -9,7 +9,7 @@ import type { RuntimeSections } from "./prompts"
 export const EXPLAIN_ENDPOINT = "/api/ai/explain"
 /** 質問の最大文字数（サーバーの検証と同じ値を使う） */
 export const QUESTION_MAX_LENGTH = 300
-/** ブラウザで応答を待つ上限（ミリ秒）。サーバーの上限（30 秒）より少し長くする */
+/** ブラウザで応答を待つ上限（ミリ秒）。外部通信の待ち時間の合計（最大 38 秒）に余裕を持たせる */
 export const CLIENT_TIMEOUT_MS = 40_000
 
 /** 文字数を数える（絵文字などのサロゲートペアも 1 文字として数える） */
@@ -50,6 +50,7 @@ export type TutorResult =
 
 /** 時間をおけば同じ質問で成功する見込みがある失敗 */
 const RETRYABLE_CODES: ReadonlySet<TutorErrorCode> = new Set([
+  "generation_in_progress",
   "timeout",
   "upstream_rate_limited",
   "upstream_error",
@@ -85,6 +86,7 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ExplainErrorCode>([
   "sensitive_content",
   "invalid_trace",
   "rate_limited",
+  "generation_in_progress",
   "store_unavailable",
   "timeout",
   "upstream_rate_limited",

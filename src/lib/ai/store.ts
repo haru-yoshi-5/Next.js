@@ -1,5 +1,7 @@
 import "server-only"
 
+import { randomUUID } from "node:crypto"
+
 import { Redis } from "@upstash/redis"
 
 export interface QuotaEntry {
@@ -36,6 +38,8 @@ export interface AiStore {
     value: CachedAnswer,
     ttlSeconds: number,
   ): Promise<void>
+  acquireGenerationLock(key: string, ttlSeconds: number): Promise<string | null>
+  releaseGenerationLock(key: string, token: string): Promise<void>
 }
 
 /** キャッシュとして読んだ値の形を確かめる（壊れた値は使わない） */
@@ -81,6 +85,13 @@ end
 return {1, 0}
 `
 
+export const RELEASE_GENERATION_LOCK_SCRIPT = `
+if redis.call('GET', KEYS[1]) == ARGV[1] then
+  return redis.call('DEL', KEYS[1])
+end
+return 0
+`
+
 /** Lua スクリプトの戻り値を確かめる。想定外の形なら例外にする（許可しない） */
 export function parseQuotaResult(
   raw: unknown,
@@ -104,7 +115,11 @@ export function parseQuotaResult(
 export interface RedisLike {
   eval(script: string, keys: string[], args: unknown[]): Promise<unknown>
   get(key: string): Promise<unknown>
-  set(key: string, value: string, options: { ex: number }): Promise<unknown>
+  set(
+    key: string,
+    value: string,
+    options: { ex: number } & ({ nx?: never } | { nx: true }),
+  ): Promise<unknown>
 }
 
 /** 保存先へのリクエストを待つ最大の時間（ミリ秒） */
@@ -138,6 +153,23 @@ export function createRedisStore(client: RedisLike): AiStore {
     async setCachedAnswer(key, value, ttlSeconds) {
       await client.set(key, JSON.stringify(value), { ex: ttlSeconds })
     },
+    async acquireGenerationLock(key, ttlSeconds) {
+      const token = randomUUID()
+      const result = await client.set(`${key}:generation-lock`, token, {
+        ex: ttlSeconds,
+        nx: true,
+      })
+      if (result === "OK") return token
+      if (result === null) return null
+      throw new Error("生成ロックの取得結果を読み取れませんでした")
+    },
+    async releaseGenerationLock(key, token) {
+      await client.eval(
+        RELEASE_GENERATION_LOCK_SCRIPT,
+        [`${key}:generation-lock`],
+        [token],
+      )
+    },
   }
 }
 
@@ -148,6 +180,7 @@ export function createRedisStore(client: RedisLike): AiStore {
 export function createMemoryStore(now: () => number = Date.now): AiStore {
   const counters = new Map<string, { count: number; expireAtMs: number }>()
   const cache = new Map<string, { value: string; expireAtMs: number }>()
+  const locks = new Map<string, { token: string; expireAtMs: number }>()
 
   function readCounter(key: string) {
     const entry = counters.get(key)
@@ -179,6 +212,17 @@ export function createMemoryStore(now: () => number = Date.now): AiStore {
         value: JSON.stringify(value),
         expireAtMs: now() + ttlSeconds * 1000,
       })
+    },
+    async acquireGenerationLock(key, ttlSeconds) {
+      const currentTime = now()
+      const lock = locks.get(key)
+      if (lock && lock.expireAtMs > currentTime) return null
+      const token = randomUUID()
+      locks.set(key, { token, expireAtMs: currentTime + ttlSeconds * 1000 })
+      return token
+    },
+    async releaseGenerationLock(key, token) {
+      if (locks.get(key)?.token === token) locks.delete(key)
     },
   }
 }

@@ -45,6 +45,8 @@ import {
 
 /** キャッシュの保存期間（秒） */
 const CACHE_TTL_SECONDS = 60 * 60
+/** Gemini のタイムアウト（20 秒）と、前後の Redis 操作（各最大 3 秒）を含む猶予 */
+const GENERATION_LOCK_TTL_SECONDS = 40
 /** 利用制限のキーを、日付が変わってから消すまでの猶予（秒） */
 const QUOTA_EXPIRE_GRACE_SECONDS = 60 * 60
 /** 回答として返す最大文字数 */
@@ -62,6 +64,7 @@ export type ExplainErrorCode =
   | "sensitive_content"
   | "invalid_trace"
   | "rate_limited"
+  | "generation_in_progress"
   | "store_unavailable"
   | "timeout"
   | "upstream_rate_limited"
@@ -391,6 +394,7 @@ export async function handleExplain(
   })
 
   let store: AiStore
+  let lockToken: string | null
 
   // 6. キャッシュ（保存先が使えなければ AI を止める）
   try {
@@ -399,84 +403,114 @@ export async function handleExplain(
     if (cached) {
       return finish(200, okBody(cached.answer, true), { cached: true })
     }
+    lockToken = await store.acquireGenerationLock(
+      cacheKey,
+      GENERATION_LOCK_TTL_SECONDS,
+    )
   } catch {
     return fail(503, "store_unavailable", UNAVAILABLE_MESSAGE)
   }
 
-  // 7. 利用制限（サイト全体・IP アドレス・匿名 Cookie を別々に数える）
-  const dateKey = jstDateKey(now)
-  // context_tutor は Cookie がなくても使える。なければここで発行する
-  if (!sessionId) {
-    const session = createSession(config.hashSecret)
-    sessionId = session.id
-    headers.append(
-      "Set-Cookie",
-      buildSessionSetCookie(session.cookieValue, deps.isProduction),
+  if (lockToken === null) {
+    return fail(
+      409,
+      "generation_in_progress",
+      "同じ内容の解説を生成中です。少し時間をおいて、もう一度お試しください。",
     )
   }
-  const ip = readClientIp(request.headers, deps.isProduction)
-  const entries: QuotaEntry[] = [
-    { key: `${KEY_PREFIX}:quota:${dateKey}:global`, limit: config.dailyCap },
-    {
-      key: `${KEY_PREFIX}:quota:${dateKey}:ip:${hashIdentifier(config.hashSecret, dateKey, "ip", ip)}`,
-      limit: config.perSourceDailyCap,
-    },
-    {
-      key: `${KEY_PREFIX}:quota:${dateKey}:session:${hashIdentifier(config.hashSecret, dateKey, "session", sessionId)}`,
-      limit: config.perSourceDailyCap,
-    },
-  ]
+
   try {
-    const quota = await store.consumeQuota(
-      entries,
-      nextJstMidnightSeconds(now) + QUOTA_EXPIRE_GRACE_SECONDS,
-    )
-    if (!quota.allowed) {
-      const message =
-        quota.index === 0
-          ? "本日の AI の利用回数が、サイト全体の上限に達しました。明日（日本時間 0 時以降）にお試しください。"
-          : "本日の AI の利用回数の上限に達しました。明日（日本時間 0 時以降）にお試しください。"
-      return fail(
-        429,
-        "rate_limited",
-        message,
-        secondsUntilNextJstMidnight(now),
+    try {
+      // 最初のキャッシュ確認からロック取得までの間に、別の要求が保存した可能性がある
+      const cached = await store.getCachedAnswer(cacheKey)
+      if (cached) {
+        return finish(200, okBody(cached.answer, true), { cached: true })
+      }
+    } catch {
+      return fail(503, "store_unavailable", UNAVAILABLE_MESSAGE)
+    }
+
+    // 7. 利用制限（サイト全体・IP アドレス・匿名 Cookie を別々に数える）
+    const dateKey = jstDateKey(now)
+    // context_tutor は Cookie がなくても使える。なければここで発行する
+    if (!sessionId) {
+      const session = createSession(config.hashSecret)
+      sessionId = session.id
+      headers.append(
+        "Set-Cookie",
+        buildSessionSetCookie(session.cookieValue, deps.isProduction),
       )
     }
-  } catch {
-    return fail(503, "store_unavailable", UNAVAILABLE_MESSAGE)
-  }
+    const ip = readClientIp(request.headers, deps.isProduction)
+    const entries: QuotaEntry[] = [
+      { key: `${KEY_PREFIX}:quota:${dateKey}:global`, limit: config.dailyCap },
+      {
+        key: `${KEY_PREFIX}:quota:${dateKey}:ip:${hashIdentifier(config.hashSecret, dateKey, "ip", ip)}`,
+        limit: config.perSourceDailyCap,
+      },
+      {
+        key: `${KEY_PREFIX}:quota:${dateKey}:session:${hashIdentifier(config.hashSecret, dateKey, "session", sessionId)}`,
+        limit: config.perSourceDailyCap,
+      },
+    ]
+    try {
+      const quota = await store.consumeQuota(
+        entries,
+        nextJstMidnightSeconds(now) + QUOTA_EXPIRE_GRACE_SECONDS,
+      )
+      if (!quota.allowed) {
+        const message =
+          quota.index === 0
+            ? "本日の AI の利用回数が、サイト全体の上限に達しました。明日（日本時間 0 時以降）にお試しください。"
+            : "本日の AI の利用回数の上限に達しました。明日（日本時間 0 時以降）にお試しください。"
+        return fail(
+          429,
+          "rate_limited",
+          message,
+          secondsUntilNextJstMidnight(now),
+        )
+      }
+    } catch {
+      return fail(503, "store_unavailable", UNAVAILABLE_MESSAGE)
+    }
 
-  // 8. Gemini を 1 回だけ呼ぶ（自動の再試行はしない。消費した枠は戻さない）
-  let generator: AnswerGenerator
-  try {
-    generator = deps.getGenerator()
-  } catch {
-    return fail(503, "model_unavailable", UNAVAILABLE_MESSAGE)
-  }
-  const result = await generator.generate({ systemInstruction, prompt })
-  if (!result.ok) {
-    const error = GENERATE_ERRORS[result.reason]
-    return fail(
-      error.status,
-      error.code,
-      error.message,
-      undefined,
-      result.upstreamStatus,
-    )
-  }
+    // 8. Gemini を 1 回だけ呼ぶ（自動の再試行はしない。消費した枠は戻さない）
+    let generator: AnswerGenerator
+    try {
+      generator = deps.getGenerator()
+    } catch {
+      return fail(503, "model_unavailable", UNAVAILABLE_MESSAGE)
+    }
+    const result = await generator.generate({ systemInstruction, prompt })
+    if (!result.ok) {
+      const error = GENERATE_ERRORS[result.reason]
+      return fail(
+        error.status,
+        error.code,
+        error.message,
+        undefined,
+        result.upstreamStatus,
+      )
+    }
 
-  const answer = result.text.slice(0, ANSWER_MAX_LENGTH)
-  try {
-    await store.setCachedAnswer(
-      cacheKey,
-      { answer, references },
-      CACHE_TTL_SECONDS,
-    )
-  } catch {
-    // 回答はできているため、キャッシュに保存できなくても返す
-  }
+    const answer = result.text.slice(0, ANSWER_MAX_LENGTH)
+    try {
+      await store.setCachedAnswer(
+        cacheKey,
+        { answer, references },
+        CACHE_TTL_SECONDS,
+      )
+    } catch {
+      // 回答はできているため、キャッシュに保存できなくても返す
+    }
 
-  // 9. 回答と、サーバーで決めた参照先だけを返す
-  return finish(200, okBody(answer, false))
+    // 9. 回答と、サーバーで決めた参照先だけを返す
+    return finish(200, okBody(answer, false))
+  } finally {
+    try {
+      await store.releaseGenerationLock(cacheKey, lockToken)
+    } catch {
+      // 解放できなくても、ロックは有効期限に達すると消える
+    }
+  }
 }
