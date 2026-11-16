@@ -12,6 +12,7 @@ interface CodeBlockProps {
   runtime: ResolvedRuntime
   role: string
   description: string
+  firstLine?: number
 }
 
 /** ライトテーマの色は color、ダークテーマの色は CSS 変数 --shiki-dark で渡す */
@@ -29,6 +30,7 @@ export function CodeBlock({
   runtime,
   role,
   description,
+  firstLine = 1,
 }: CodeBlockProps) {
   return (
     <figure className="overflow-hidden rounded-lg border">
@@ -53,7 +55,7 @@ export function CodeBlock({
                 aria-hidden
                 className="sticky left-0 w-12 shrink-0 bg-code pr-4 text-right text-muted-foreground/50 select-none"
               >
-                {lineIndex + 1}
+                {lineIndex + firstLine}
               </span>
               <span>
                 {line.map((token, tokenIndex) => (

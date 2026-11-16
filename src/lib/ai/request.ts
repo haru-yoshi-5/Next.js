@@ -2,6 +2,7 @@ import "server-only"
 
 import { getAvailableLessons } from "@/content/curriculum"
 import { getLessonContent } from "@/content/lessons"
+import { getCodeMap, type CodeMapEntry } from "@/lib/learning/code-map"
 import {
   type BrowserReport,
   parseBrowserReport,
@@ -19,7 +20,11 @@ export const BODY_MAX_BYTES = 4096
 export { QUESTION_MAX_LENGTH }
 
 /** 許可する mode */
-const ALLOWED_MODES = ["context_tutor", "runtime_explain"] as const
+const ALLOWED_MODES = [
+  "context_tutor",
+  "runtime_explain",
+  "code_explain",
+] as const
 export type ExplainMode = (typeof ALLOWED_MODES)[number]
 
 /** 署名付きトークンとして受け付ける最大の長さ */
@@ -32,6 +37,11 @@ export type ExplainRequest =
       lesson: LessonContent
       mode: "context_tutor"
       question: string
+    }
+  | {
+      lesson: LessonContent
+      mode: "code_explain"
+      entry: CodeMapEntry
     }
   | {
       lesson: LessonContent
@@ -122,8 +132,8 @@ export function parseExplainRequest(raw: string): ParseResult {
     }
   }
 
-  const { lessonId, mode, question, trace, traceToken, browserReport } =
-    payload as Record<string, unknown>
+  const fields = payload as Record<string, unknown>
+  const { lessonId, mode, question, trace, traceToken, browserReport } = fields
 
   if (!isAllowedMode(mode)) {
     return {
@@ -143,6 +153,26 @@ export function parseExplainRequest(raw: string): ParseResult {
 
   if (mode === "runtime_explain") {
     return parseRuntimeExplain(lesson, trace, traceToken, browserReport)
+  }
+
+  if (mode === "code_explain") {
+    const entry = getCodeMap(lesson.slug).find(
+      (entry) => entry.id === fields.selectedComponentId,
+    )
+    if (
+      !entry ||
+      !lesson.sourceFiles.some((file) => file.path === entry.path) ||
+      Object.keys(fields).some(
+        (key) => !["lessonId", "mode", "selectedComponentId"].includes(key),
+      )
+    ) {
+      return {
+        ok: false,
+        status: 400,
+        message: "解説できる登録済みの実装が見つかりませんでした。",
+      }
+    }
+    return { ok: true, value: { lesson, mode, entry } }
   }
 
   if (typeof question !== "string") {

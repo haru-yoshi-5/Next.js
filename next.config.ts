@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   // Source Code / Inside This Page は実ファイルを読み込んで表示するため、
   // デプロイ先のサーバーバンドルにもソースファイルを含める。
   outputFileTracingIncludes: {
+    "/api/ai/explain": [
+      "./src/app/learn/server-actions/actions.ts",
+      "./src/app/learn/server-actions/guestbook-list.tsx",
+      "./src/app/learn/server-actions/name-form.tsx",
+    ],
     "/learn/**": [
       // Root Layout など src/app 直下のファイル（Inside This Page と「Next.jsとは」のデモで読む）
       "./src/app/*.tsx",

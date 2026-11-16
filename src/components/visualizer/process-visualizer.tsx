@@ -29,6 +29,8 @@ interface ProcessVisualizerProps {
   /** まだ操作していないときの案内 */
   emptyMessage: string
   className?: string
+  selectedNodes?: readonly FlowNodeId[]
+  onSelectNode?: (id: FlowNodeId) => void
 }
 
 interface Playback {
@@ -48,6 +50,8 @@ export function ProcessVisualizer({
   trace,
   emptyMessage,
   className,
+  selectedNodes,
+  onSelectNode,
 }: ProcessVisualizerProps) {
   const reducedMotion = usePrefersReducedMotion()
   const [playback, setPlayback] = useState<Playback>({
@@ -111,6 +115,20 @@ export function ProcessVisualizer({
   const showTotal =
     !trace?.hideTotal && steps.some((step) => step.durationMs !== undefined)
 
+  function renderNode(id: FlowNodeId) {
+    return (
+      <ProcessNode
+        key={id}
+        id={id}
+        state={nodeState(id)}
+        current={id === currentNode}
+        finished={isComplete}
+        selected={selectedNodes?.includes(id)}
+        onSelect={onSelectNode ? () => onSelectNode(id) : undefined}
+      />
+    )
+  }
+
   return (
     <section
       aria-label="Process Visualizer"
@@ -160,26 +178,10 @@ export function ProcessVisualizer({
 
       <div className="grid gap-3 border-b p-4 sm:grid-cols-2">
         <NodeZone runtime="client" title="ブラウザ側">
-          {clientNodes.map((id) => (
-            <ProcessNode
-              key={id}
-              id={id}
-              state={nodeState(id)}
-              current={id === currentNode}
-              finished={isComplete}
-            />
-          ))}
+          {clientNodes.map(renderNode)}
         </NodeZone>
         <NodeZone runtime="server" title="サーバー側">
-          {serverNodes.map((id) => (
-            <ProcessNode
-              key={id}
-              id={id}
-              state={nodeState(id)}
-              current={id === currentNode}
-              finished={isComplete}
-            />
-          ))}
+          {serverNodes.map(renderNode)}
         </NodeZone>
       </div>
 

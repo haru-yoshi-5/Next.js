@@ -230,6 +230,17 @@ interface RequestRuntimeExplanationOptions extends FetchOptions {
   browserReport: BrowserReport | null
 }
 
+export function requestCodeExplanation({
+  lessonId,
+  selectedComponentId,
+  ...options
+}: FetchOptions & { lessonId: string; selectedComponentId: string }) {
+  return postExplain(
+    { lessonId, mode: "code_explain", selectedComponentId },
+    options,
+  )
+}
+
 /**
  * 実行の記録を AI の API に送る（AI Runtime Detective）。
  * 送るのは、サーバーが作った要約と署名、ブラウザからの申告だけ。入力した値は送らない
