@@ -8,8 +8,8 @@ import {
   createUpstashClient,
 } from "@/lib/ai/store"
 
-/** Gemini の待ち時間（20 秒）に余裕を持たせた、処理全体の上限（秒） */
-export const maxDuration = 30
+/** Gemini（20 秒）と最大 6 回の Redis 操作（各 3 秒）に余裕を持たせた上限（秒） */
+export const maxDuration = 45
 
 let store: { key: string; value: AiStore } | null = null
 let generator: { key: string; value: AnswerGenerator } | null = null

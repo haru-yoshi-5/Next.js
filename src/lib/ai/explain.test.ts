@@ -101,6 +101,45 @@ describe("handleExplain: 成功", () => {
     expect(generate).toHaveBeenCalledTimes(1)
   })
 
+  it("同じ質問を生成中の要求は、利用枠と Gemini を消費せずに 409 を返す", async () => {
+    const { deps, generate, store } = setup()
+    const consumeQuota = vi.spyOn(store, "consumeQuota")
+    const started = Promise.withResolvers<void>()
+    const answer = Promise.withResolvers<Awaited<ReturnType<typeof generate>>>()
+    generate.mockImplementationOnce(() => {
+      started.resolve()
+      return answer.promise
+    })
+
+    const first = call(deps)
+    await started.promise
+    const duplicate = await call(deps)
+    answer.resolve({ ok: true, text: "回答" })
+
+    expect(duplicate.response.status).toBe(409)
+    expect(duplicate.body.code).toBe("generation_in_progress")
+    expect((await first).response.status).toBe(200)
+    expect((await call(deps)).body.cached).toBe(true)
+    expect(consumeQuota).toHaveBeenCalledTimes(1)
+    expect(generate).toHaveBeenCalledTimes(1)
+  })
+
+  it("ロック取得後にキャッシュが見つかれば、利用枠を消費せずに返す", async () => {
+    const { deps, generate, store } = setup()
+    const consumeQuota = vi.spyOn(store, "consumeQuota")
+    const releaseLock = vi.spyOn(store, "releaseGenerationLock")
+    vi.spyOn(store, "getCachedAnswer")
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ answer: "先に保存された回答", references: [] })
+
+    const { response, body } = await call(deps)
+    expect(response.status).toBe(200)
+    expect(body).toMatchObject({ cached: true, answer: "先に保存された回答" })
+    expect(consumeQuota).not.toHaveBeenCalled()
+    expect(generate).not.toHaveBeenCalled()
+    expect(releaseLock).toHaveBeenCalledTimes(1)
+  })
+
   it("教材・質問・モデルが違えば、キャッシュのキーも違う", () => {
     const base = {
       model: "m",
@@ -296,6 +335,7 @@ describe("handleExplain: 利用制限", () => {
 
   it.each([
     ["キャッシュの読み込み", "getCachedAnswer"],
+    ["生成ロックの取得", "acquireGenerationLock"],
     ["利用制限の確認", "consumeQuota"],
   ] as const)(
     "保存先の障害（%s）では 503 で止め、Gemini を呼ばない",
@@ -317,9 +357,26 @@ describe("handleExplain: 利用制限", () => {
     const { response } = await call(deps)
     expect(response.status).toBe(200)
   })
+
+  it("ロックを解放できなくても、生成した回答は返す", async () => {
+    const { deps, store } = setup()
+    vi.spyOn(store, "releaseGenerationLock").mockRejectedValue(
+      new Error("down"),
+    )
+    const { response } = await call(deps)
+    expect(response.status).toBe(200)
+  })
 })
 
 describe("handleExplain: Gemini の失敗", () => {
+  it("生成に失敗してもロックを解放し、同じ質問を再送できる", async () => {
+    const { deps, generate } = setup()
+    generate.mockResolvedValueOnce({ ok: false, reason: "timeout" })
+    expect((await call(deps)).response.status).toBe(504)
+    expect((await call(deps)).response.status).toBe(200)
+    expect(generate).toHaveBeenCalledTimes(2)
+  })
+
   it.each([
     ["timeout", 504, "timeout"],
     ["rate_limited", 429, "upstream_rate_limited"],

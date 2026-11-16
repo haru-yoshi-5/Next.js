@@ -50,6 +50,7 @@ export type TutorResult =
 
 /** 時間をおけば同じ質問で成功する見込みがある失敗 */
 const RETRYABLE_CODES: ReadonlySet<TutorErrorCode> = new Set([
+  "generation_in_progress",
   "timeout",
   "upstream_rate_limited",
   "upstream_error",
@@ -85,6 +86,7 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ExplainErrorCode>([
   "sensitive_content",
   "invalid_trace",
   "rate_limited",
+  "generation_in_progress",
   "store_unavailable",
   "timeout",
   "upstream_rate_limited",

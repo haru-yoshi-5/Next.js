@@ -55,7 +55,7 @@ function setup(overrides: Partial<AiConfig> = {}) {
   const advance = (ms: number) => {
     current = new Date(current.getTime() + ms)
   }
-  return { deps, generate, advance }
+  return { deps, generate, advance, store }
 }
 
 async function prepare() {
@@ -136,6 +136,32 @@ describe("handleExplain: runtime_explain", () => {
     const { body } = await call(deps, runtimeBody(token), cookie)
     expect(body.cached).toBe(true)
     expect(body.sections).not.toBeNull()
+    expect(generate).toHaveBeenCalledTimes(1)
+  })
+
+  it("同じ実行記録を生成中の要求は、利用枠と Gemini を消費せずに 409 を返す", async () => {
+    const { deps, generate, store } = setup()
+    const consumeQuota = vi.spyOn(store, "consumeQuota")
+    const { cookie, token } = await prepare()
+    const started = Promise.withResolvers<void>()
+    const answer = Promise.withResolvers<Awaited<ReturnType<typeof generate>>>()
+    generate.mockImplementationOnce(() => {
+      started.resolve()
+      return answer.promise
+    })
+
+    const first = call(deps, runtimeBody(token), cookie)
+    await started.promise
+    const duplicate = await call(deps, runtimeBody(token), cookie)
+    answer.resolve({ ok: true, text: ANSWER })
+
+    expect(duplicate.response.status).toBe(409)
+    expect(duplicate.body.code).toBe("generation_in_progress")
+    expect((await first).response.status).toBe(200)
+    expect((await call(deps, runtimeBody(token), cookie)).body.cached).toBe(
+      true,
+    )
+    expect(consumeQuota).toHaveBeenCalledTimes(1)
     expect(generate).toHaveBeenCalledTimes(1)
   })
 
