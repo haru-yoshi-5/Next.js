@@ -16,13 +16,14 @@ interface LessonPageProps {
   lesson: LessonContent
   /** 教材ごとの Live Demo（Process Visualizer を含む） */
   demo: ReactNode
+  short?: ReactNode
 }
 
 /**
  * すべての教材ページで共通の構成。
  * タイトル → AI に質問する → 説明 → 詳細解説 → Live Demo / Process Visualizer → Source Code → Inside This Page → 関連教材
  */
-export function LessonPage({ lesson, demo }: LessonPageProps) {
+export function LessonPage({ lesson, demo, short }: LessonPageProps) {
   const { current } = getLessonNeighbors(lesson.slug)
   // 教材ページはプリレンダーされるため、AI の設定はビルド時の環境変数で決まる。
   // クライアントへ渡すのは「使えるかどうか」だけで、キーなどの値は渡さない。
@@ -53,6 +54,7 @@ export function LessonPage({ lesson, demo }: LessonPageProps) {
           )}
         </aside>
       </div>
+      {short}
       <Explanation sections={lesson.sections} />
       <LiveDemo description={lesson.demo.description} steps={lesson.demo.steps}>
         {demo}
