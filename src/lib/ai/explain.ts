@@ -345,6 +345,25 @@ export async function handleExplain(
     })
     systemInstruction = SYSTEM_INSTRUCTION
     prompt = buildContextTutorPrompt(buildLessonContext(lesson), question)
+  } else if (parsed.value.mode === "what_if_compare") {
+    const facts =
+      "独立した2つの固定データ取得を、逐次 await と Promise.all で比較する。取得には待ち時間を模した処理を使う。"
+    systemInstruction =
+      "あなたはデータ取得の学習を支援します。日本語で一般論を説明してください。独立した取得では並列実行によって待ち時間が重なることと、逐次実行との違いを主題にしてください。依存関係がある場合、同時実行数の制限がある場合、Promise.all の一つが失敗した場合を条件付きで説明してください。今回の実測値、倍率、結果を推測しないでください。回答は画面にそのまま文字として表示されるため、Markdown の記号（見出しの #、強調の **、区切り線の ---、コードのバッククォート）を使わず、字下げのない短い段落で、全体で600字程度にまとめてください。"
+    prompt = facts
+    const digest = createHash("sha256")
+      .update(
+        JSON.stringify([
+          "what-if-v2",
+          config.model,
+          parsed.value.mode,
+          lesson.slug,
+          facts,
+          systemInstruction,
+        ]),
+      )
+      .digest("base64url")
+    cacheKey = `${KEY_PREFIX}:cache:${digest}`
   } else if (parsed.value.mode === "code_explain") {
     const { entry } = parsed.value
     try {
