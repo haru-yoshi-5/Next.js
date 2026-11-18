@@ -1,11 +1,5 @@
 // @vitest-environment jsdom
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { animate } from "motion/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ShortPlayer, type ShortScene } from "./short-player"
