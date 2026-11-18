@@ -1,5 +1,9 @@
 import { io } from "next/cache"
 
+import { AiUnavailableNotice } from "@/components/ai/ai-unavailable-notice"
+import { readAiConfig } from "@/lib/ai/config"
+import { WhatIfCompare } from "./what-if-compare"
+
 import { FetchPanel } from "./fetch-panel"
 import { fetchInParallel, fetchSequentially } from "./fetch-strategies"
 import { FetchTimeline } from "./fetch-timeline"
@@ -13,6 +17,7 @@ export async function FetchDemo() {
   // ここから先はリクエストのたびに実行する（ビルド時のプリレンダーには含めない）
   await io()
 
+  const ai = readAiConfig()
   const requestId = crypto.randomUUID()
   // 計測が重ならないように、比較する2つの取得方法は順番に実行する
   const sequential = await fetchSequentially()
@@ -26,6 +31,10 @@ export async function FetchDemo() {
     // 下の結果はサーバーで描画済みの children として渡され、取得処理はブラウザへ送られない。
     <FetchPanel trace={buildFetchTrace({ requestId, sequential, parallel })}>
       <div className="flex flex-col gap-3">
+        <p className="text-sm font-medium">実測（今回のサーバー上のデモ）</p>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          待ち時間を模した取得処理を計測しています。本番の通信やページ全体の描画時間を計測したものではありません。
+        </p>
         <FetchTimeline
           title="直列"
           description="await を順番に書くと、前の取得が終わるまで次の取得が始まりません。"
@@ -48,6 +57,11 @@ export async function FetchDemo() {
           取得結果はどちらも同じです（{parallel.author.name} /{" "}
           {parallel.posts.length} 件の記事）。
         </p>
+        {ai.status === "ready" ? (
+          <WhatIfCompare />
+        ) : (
+          <AiUnavailableNotice reason={ai.status} />
+        )}
       </div>
     </FetchPanel>
   )

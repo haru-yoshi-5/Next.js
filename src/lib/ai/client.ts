@@ -213,6 +213,15 @@ async function postExplain(
   return parseExplainResponse(body)
 }
 
+export function requestWhatIfCompare(
+  options: FetchOptions = {},
+): Promise<TutorResult> {
+  return postExplain(
+    { lessonId: "data-fetching", mode: "what_if_compare" },
+    options,
+  )
+}
+
 /** AI の API に質問を送る（AI Context Tutor） */
 export function requestExplanation({
   lessonId,

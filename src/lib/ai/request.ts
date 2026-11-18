@@ -24,6 +24,7 @@ const ALLOWED_MODES = [
   "context_tutor",
   "runtime_explain",
   "code_explain",
+  "what_if_compare",
 ] as const
 export type ExplainMode = (typeof ALLOWED_MODES)[number]
 
@@ -33,6 +34,7 @@ const TRACE_TOKEN_MAX_LENGTH = 1024
 const JWT_SHAPE = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
 
 export type ExplainRequest =
+  | { lesson: LessonContent; mode: "what_if_compare" }
   | {
       lesson: LessonContent
       mode: "context_tutor"
@@ -149,6 +151,21 @@ export function parseExplainRequest(raw: string): ParseResult {
       : undefined
   if (!lesson) {
     return { ok: false, status: 400, message: "教材が見つかりませんでした。" }
+  }
+
+  if (mode === "what_if_compare") {
+    if (
+      lesson.slug !== "data-fetching" ||
+      Object.keys(fields).length !== 2 ||
+      !Object.keys(fields).every((key) => ["lessonId", "mode"].includes(key))
+    ) {
+      return {
+        ok: false,
+        status: 400,
+        message: "この比較には対応していません。",
+      }
+    }
+    return { ok: true, value: { lesson, mode } }
   }
 
   if (mode === "runtime_explain") {
