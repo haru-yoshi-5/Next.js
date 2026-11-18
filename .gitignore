@@ -42,3 +42,6 @@ yarn-error.log*
 next-env.d.ts
 
 docx
+
+# ブラウザ確認ツールの作業ファイル
+/.playwright-cli/
