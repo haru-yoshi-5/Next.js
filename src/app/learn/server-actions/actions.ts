@@ -2,13 +2,21 @@
 
 import { updateTag } from "next/cache"
 
+import { issueRuntimeExplainTicket } from "@/lib/ai/runtime-ticket"
 import { measure } from "@/lib/measure"
+import type { FlowTrace } from "@/types/flow"
 
 import type { SaveNameState } from "./action-state"
 import { buildActionTrace } from "./action-trace"
 import { addEntry } from "./guestbook-store"
 
 const NAME_MAX_LENGTH = 20
+const LESSON_ID = "server-actions"
+
+/** 記録と、「この実行を AI で解説」に使う署名付きの要約をまとめて返す */
+async function withTicket(trace: FlowTrace) {
+  return { trace, explain: await issueRuntimeExplainTicket(LESSON_ID, trace) }
+}
 
 /** クライアントの入力は信頼せず、必ずサーバー側で検証する */
 function validateName(name: string): string | null {
@@ -45,11 +53,13 @@ export async function saveName(
       status: "error",
       message: validationError,
       submittedName,
-      trace: buildActionTrace({
-        requestId,
-        totalMs: elapsed(),
-        outcome: { type: "invalid", message: validationError },
-      }),
+      ...(await withTicket(
+        buildActionTrace({
+          requestId,
+          totalMs: elapsed(),
+          outcome: { type: "invalid", message: validationError },
+        }),
+      )),
     }
   }
 
@@ -64,13 +74,15 @@ export async function saveName(
 
     return {
       status: "success",
-      message: `「${entry.name}」を保存しました。`,
+      message: `「${entry.name}」を一時保存しました。`,
       submittedName: "",
-      trace: buildActionTrace({
-        requestId,
-        totalMs: elapsed(),
-        outcome: { type: "saved", name: entry.name, writeMs },
-      }),
+      ...(await withTicket(
+        buildActionTrace({
+          requestId,
+          totalMs: elapsed(),
+          outcome: { type: "saved", name: entry.name, writeMs },
+        }),
+      )),
     }
   } catch (error) {
     // 詳細はサーバーのログにだけ残し、ブラウザには一般的なメッセージを返す
@@ -79,11 +91,13 @@ export async function saveName(
       status: "error",
       message: "保存中にエラーが発生しました。時間をおいて再度お試しください。",
       submittedName,
-      trace: buildActionTrace({
-        requestId,
-        totalMs: elapsed(),
-        outcome: { type: "failed" },
-      }),
+      ...(await withTicket(
+        buildActionTrace({
+          requestId,
+          totalMs: elapsed(),
+          outcome: { type: "failed" },
+        }),
+      )),
     }
   }
 }

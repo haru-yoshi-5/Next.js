@@ -12,6 +12,8 @@ interface CodeBlockProps {
   runtime: ResolvedRuntime
   role: string
   description: string
+  firstLine?: number
+  highlightedLines?: number[]
 }
 
 /** ライトテーマの色は color、ダークテーマの色は CSS 変数 --shiki-dark で渡す */
@@ -29,6 +31,8 @@ export function CodeBlock({
   runtime,
   role,
   description,
+  firstLine = 1,
+  highlightedLines = [],
 }: CodeBlockProps) {
   return (
     <figure className="overflow-hidden rounded-lg border">
@@ -48,12 +52,22 @@ export function CodeBlock({
       >
         <code className="grid min-w-max">
           {source.lines.map((line, lineIndex) => (
-            <span key={lineIndex} className="flex pr-6">
+            <span
+              key={lineIndex}
+              className={
+                highlightedLines.includes(lineIndex + firstLine)
+                  ? "flex bg-primary/15 pr-6"
+                  : "flex pr-6"
+              }
+              data-highlighted={
+                highlightedLines.includes(lineIndex + firstLine) || undefined
+              }
+            >
               <span
                 aria-hidden
                 className="sticky left-0 w-12 shrink-0 bg-code pr-4 text-right text-muted-foreground/50 select-none"
               >
-                {lineIndex + 1}
+                {lineIndex + firstLine}
               </span>
               <span>
                 {line.map((token, tokenIndex) => (

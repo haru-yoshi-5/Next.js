@@ -17,6 +17,8 @@ interface ProcessNodeProps {
    * 処理はもう終わっているため、スクリーンリーダー向けの「処理中」は出さない
    */
   finished?: boolean
+  selected?: boolean
+  onSelect?: () => void
 }
 
 /** Process Visualizer 上のノード（Browser / Next.js Server など） */
@@ -25,21 +27,20 @@ export function ProcessNode({
   state,
   current = false,
   finished = false,
+  selected = false,
+  onSelect,
 }: ProcessNodeProps) {
   const { label, description, Icon } = flowNodes[id]
 
-  return (
-    <li
-      aria-current={current ? "step" : undefined}
-      className={cn(
-        "flex min-w-0 items-center gap-2.5 rounded-lg border px-3 py-2 transition-colors duration-300",
-        state === "active" &&
-          "border-flow bg-flow-muted shadow-[0_0_0_3px] shadow-flow/15",
-        state === "visited" && "border-flow/30",
-        state === "idle" && "text-muted-foreground",
-      )}
-      title={description}
-    >
+  const className = cn(
+    "flex min-w-0 items-center gap-2.5 rounded-lg border px-3 py-2 transition-colors duration-300",
+    state === "active" &&
+      "border-flow bg-flow-muted shadow-[0_0_0_3px] shadow-flow/15",
+    state === "visited" && "border-flow/30",
+    state === "idle" && "text-muted-foreground",
+  )
+  const content = (
+    <>
       <Icon
         aria-hidden
         className={cn(
@@ -58,6 +59,32 @@ export function ProcessNode({
           {finished ? null : <span className="sr-only">処理中</span>}
         </span>
       ) : null}
+    </>
+  )
+
+  return onSelect ? (
+    <li aria-current={current ? "step" : undefined}>
+      <button
+        type="button"
+        aria-pressed={selected}
+        className={cn(
+          className,
+          "min-h-6 w-full cursor-pointer text-left hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+          selected && "underline ring-2 ring-ring ring-inset",
+        )}
+        title={description}
+        onClick={onSelect}
+      >
+        {content}
+      </button>
+    </li>
+  ) : (
+    <li
+      aria-current={current ? "step" : undefined}
+      className={className}
+      title={description}
+    >
+      {content}
     </li>
   )
 }

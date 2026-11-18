@@ -63,6 +63,9 @@ export function RequestPanel() {
             >
               GET を送る
             </Button>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              一覧はサーバーのメモリに一時保存したもので、他の人のメッセージも含まれます。本番ではサーバーが複数のインスタンスで動くため、追加したメッセージが一覧に出ないことがあります。
+            </p>
           </section>
 
           <form
@@ -91,7 +94,7 @@ export function RequestPanel() {
               className="text-xs leading-relaxed text-muted-foreground"
             >
               30文字以内。検証は Route Handler
-              で行うため、空欄のままでも送信できます。
+              で行うため、空欄のままでも送信できます。メッセージは他の人にも表示されるため、個人情報は入力しないでください。
             </p>
           </form>
 

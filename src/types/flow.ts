@@ -12,6 +12,14 @@ export type FlowNodeId =
 
 export type FlowStepStatus = "success" | "error"
 
+/**
+ * そのステップを、自分のコードで実際に観測したかどうか（ステップごとに明示する）。
+ * - observed: 自分のコードで計測・記録した（計測値や、サーバーが返した結果がある）
+ * - conceptual: フレームワーク内部の処理など、観測していない説明上のステップ
+ * 省略したステップは conceptual として扱う（推測で observed にしない）
+ */
+export type FlowStepEvidence = "observed" | "conceptual"
+
 /** ノード間の1回の処理（矢印1本分） */
 export interface FlowStep {
   id: string
@@ -22,6 +30,8 @@ export interface FlowStep {
   /** 実際に計測した所要時間（ms）。計測していない処理には付けない */
   durationMs?: number
   status?: FlowStepStatus
+  /** 観測の区分。省略時は conceptual（AI Runtime Detective で使う） */
+  evidence?: FlowStepEvidence
 }
 
 /**
