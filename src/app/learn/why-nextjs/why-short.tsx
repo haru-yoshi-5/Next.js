@@ -4,9 +4,8 @@ import {
   type ShortScene,
 } from "@/components/learning/short-player"
 import { highlightSourceCode } from "@/lib/source-code"
+import type { Runtime } from "@/types/lesson"
 import { cacheLife } from "next/cache"
-
-type Runtime = "server" | "client"
 
 function nodes(article: Runtime, highlight: Runtime) {
   return [
