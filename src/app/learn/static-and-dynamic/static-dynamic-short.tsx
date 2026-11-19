@@ -54,7 +54,7 @@ const scenes: ShortScene[] = [
     tone: "problem",
     nodes: nodes(false),
     metrics: metrics(3),
-    codeKey: "request",
+    codeKey: "legacy",
   },
   {
     id: "shell",
@@ -95,6 +95,18 @@ export async function StaticDynamicShort() {
   "use cache"
   cacheLife("max")
 
+  const legacyCode = `import { cookies } from "next/headers"
+
+// 以前のモデル（説明用）: cookies() を 1 回読むと、ルート全体が動的になる
+export default async function Page() {
+  const theme = (await cookies()).get("theme")?.value
+  return (
+    <main data-theme={theme}>
+      <ShellId />
+      <RequestId />
+    </main>
+  )
+}`
   const shellCode = `import { cacheLife } from "next/cache"
 
 export async function ShellId() {
@@ -120,12 +132,24 @@ export async function RequestId() {
 ○  (Static)             prerendered as static content
 ◐  (Partial Prerender)  prerendered as static HTML with dynamic server-streamed content`
 
-  const [shell, request, build] = await Promise.allSettled([
+  const [legacy, shell, request, build] = await Promise.allSettled([
+    highlightSourceCode("例/page.tsx", legacyCode),
     highlightSourceCode("例/shell-id.tsx", shellCode),
     highlightSourceCode("例/request-id.tsx", requestCode),
     highlightSourceCode("例/next-build.txt", buildCode),
   ])
   const code = {
+    legacy:
+      legacy.status === "fulfilled" ? (
+        <CodeBlock
+          key="legacy"
+          source={legacy.value}
+          runtime={{ runtime: "server", basis: "page" }}
+          role="以前のモデル"
+          description="cookies() を読んだだけでルート全体が動的になる"
+          highlightedLines={[3, 5]}
+        />
+      ) : null,
     shell:
       shell.status === "fulfilled" ? (
         <CodeBlock
