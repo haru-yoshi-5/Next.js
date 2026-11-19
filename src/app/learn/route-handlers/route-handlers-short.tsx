@@ -29,7 +29,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "URL で受け付ける API は？",
     caption:
-      "route.ts に GET や POST の名前で関数を export すると、その URL へのリクエストを受け取る Route Handler になります。Request を受け取り、Response を返します。",
+      "route.ts で GET や POST を export すると、その URL の Route Handler になります。",
     tone: "problem",
     nodes: nodes("GET", "200 と JSON を返す"),
     metrics: [],
@@ -62,7 +62,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "Server Actions と使い分ける",
     caption:
-      "外部に公開する API や Webhook は Route Handler、画面からの更新は Server Action が向いています。Server Component から自分の Route Handler を fetch する必要はありません。",
+      "公開する API や Webhook は Route Handler、画面からの更新は Server Action が向いています。",
     tone: "solution",
     nodes: nodes("POST", "正しい入力なら 201"),
     metrics: [],
