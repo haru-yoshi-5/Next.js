@@ -143,8 +143,8 @@ export function safeNext(value: unknown) {
         <CodeBlock
           key="next"
           source={nextSource.value}
-          runtime={{ runtime: "server", basis: "server-only" }}
-          role="サーバーの関数"
+          runtime={{ runtime: "server", basis: "ログインの処理" }}
+          role="戻り先を確かめる関数"
           description="オープンリダイレクトを防ぐ"
           highlightedLines={[8, 9, 10]}
         />

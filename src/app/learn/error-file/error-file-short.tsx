@@ -50,7 +50,7 @@ const scenes: ShortScene[] = [
     tone: "explain",
     nodes: [layout, page, boundary],
     metrics: [],
-    codeKey: "error",
+    codeKey: "boundary",
   },
   {
     id: "digest",
@@ -65,7 +65,7 @@ const scenes: ShortScene[] = [
       { ...boundary, description: "message は伏せられ digest が届く" },
     ],
     metrics: [],
-    codeKey: "error",
+    codeKey: "digest",
   },
   {
     id: "retry",
@@ -76,7 +76,7 @@ const scenes: ShortScene[] = [
     tone: "solution",
     nodes: [layout, page, { ...boundary, description: "retry() で取り直す" }],
     metrics: [],
-    codeKey: "error",
+    codeKey: "retry",
   },
 ]
 
@@ -113,6 +113,22 @@ export default function Error({
     highlightSourceCode("例/page.tsx", pageCode),
     highlightSourceCode("例/error.tsx", errorCode),
   ])
+  // 同じコードを、場面ごとに強調する行を変えて見せる
+  const errorBlock = (
+    key: string,
+    description: string,
+    highlightedLines: number[],
+  ) =>
+    errorSource.status === "fulfilled" ? (
+      <CodeBlock
+        key={key}
+        source={errorSource.value}
+        runtime={{ runtime: "client", basis: "use client" }}
+        role="エラー境界"
+        description={description}
+        highlightedLines={highlightedLines}
+      />
+    ) : null
   const code = {
     page:
       pageSource.status === "fulfilled" ? (
@@ -125,17 +141,17 @@ export default function Error({
           highlightedLines={[3]}
         />
       ) : null,
-    error:
-      errorSource.status === "fulfilled" ? (
-        <CodeBlock
-          key="error"
-          source={errorSource.value}
-          runtime={{ runtime: "client", basis: "use client" }}
-          role="エラー境界"
-          description="エラー境界は Client Component にする"
-          highlightedLines={[1, 14, 15]}
-        />
-      ) : null,
+    boundary: errorBlock(
+      "boundary",
+      "エラー境界は Client Component にする",
+      [1, 3],
+    ),
+    digest: errorBlock("digest", "digest でサーバーのログと照合する", [8, 14]),
+    retry: errorBlock(
+      "retry",
+      "retry() は取り直し、reset() は状態だけを消す",
+      [15, 16],
+    ),
   }
   return (
     <ShortPlayer label="30秒でわかる error.tsx" scenes={scenes} code={code} />

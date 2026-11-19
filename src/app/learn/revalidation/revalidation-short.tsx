@@ -47,7 +47,7 @@ const scenes: ShortScene[] = [
     tone: "explain",
     nodes,
     metrics: [],
-    codeKey: "actions",
+    codeKey: "update",
   },
   {
     id: "revalidate",
@@ -58,7 +58,7 @@ const scenes: ShortScene[] = [
     tone: "explain",
     nodes,
     metrics: [],
-    codeKey: "actions",
+    codeKey: "revalidate",
   },
   {
     id: "result",
@@ -69,7 +69,7 @@ const scenes: ShortScene[] = [
     tone: "solution",
     nodes,
     metrics: [],
-    codeKey: "actions",
+    codeKey: "path",
   },
 ]
 
@@ -99,6 +99,22 @@ export async function expire(kind: "update" | "revalidate" | "path") {
     highlightSourceCode("例/shared-data.ts", tagCode),
     highlightSourceCode("例/actions.ts", actionsCode),
   ])
+  // 同じコードを、場面ごとに強調する行を変えて見せる
+  const actionsBlock = (
+    key: string,
+    description: string,
+    highlightedLines: number[],
+  ) =>
+    actions.status === "fulfilled" ? (
+      <CodeBlock
+        key={key}
+        source={actions.value}
+        runtime={{ runtime: "server", basis: "use server" }}
+        role="Server Action"
+        description={description}
+        highlightedLines={highlightedLines}
+      />
+    ) : null
   const code = {
     tag:
       tag.status === "fulfilled" ? (
@@ -111,17 +127,9 @@ export async function expire(kind: "update" | "revalidate" | "path") {
           highlightedLines={[5, 6]}
         />
       ) : null,
-    actions:
-      actions.status === "fulfilled" ? (
-        <CodeBlock
-          key="actions"
-          source={actions.value}
-          runtime={{ runtime: "server", basis: "use server" }}
-          role="Server Action"
-          description="データを更新したときに失効させる"
-          highlightedLines={[6, 7, 8]}
-        />
-      ) : null,
+    update: actionsBlock("update", "すぐ期限切れにする", [6]),
+    revalidate: actionsBlock("revalidate", "古い値を返しつつ作り直す", [7]),
+    path: actionsBlock("path", "指定したパスだけを無効にする", [8]),
   }
   return (
     <ShortPlayer
