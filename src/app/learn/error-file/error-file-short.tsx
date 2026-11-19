@@ -57,7 +57,7 @@ const scenes: ShortScene[] = [
     duration: 8000,
     title: "本番では message が伏せられる",
     caption:
-      "Server Component のエラーは、本番では元の message が伏せられ、一般的な message と digest が届きます。digest でサーバーのログと照合します。",
+      "本番では Server Component のエラーの message が伏せられ、一般的な message と digest が届きます。digest でログと照合します。",
     tone: "explain",
     nodes: [
       layout,
