@@ -53,7 +53,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "React だけでは足りない？",
     caption:
-      "React は画面を部品に分けて作るライブラリです。URL ごとの画面の切り替えや、サーバーでの HTML の生成は、別に選んで組み合わせる必要があります。",
+      "React は画面を部品に分けて作るライブラリです。URL ごとの画面の切り替えや、サーバーでの HTML 生成は別に用意します。",
     tone: "problem",
     nodes: nodes(false),
     metrics: metrics(0),
@@ -75,7 +75,7 @@ const scenes: ShortScene[] = [
     duration: 8000,
     title: "フォルダが URL になる",
     caption:
-      "src/app/learn/what-is-nextjs/page.tsx を置くと、/learn/what-is-nextjs の URL になります。サーバーは内容の入った HTML を返します。",
+      "src/app/learn/what-is-nextjs/page.tsx が /learn/what-is-nextjs になり、内容の入った HTML が返ります。",
     tone: "explain",
     nodes: nodes(true),
     metrics: metrics(4),
