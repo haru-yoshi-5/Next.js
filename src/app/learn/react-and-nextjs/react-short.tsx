@@ -29,7 +29,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "どこまでが React？",
     caption:
-      "コンポーネント、state、ハイドレーション、Suspense は React の仕組みです。Server Components も React の機能です。",
+      "コンポーネント、state、ハイドレーション、Suspense、Server Components は、どれも React の仕組みです。",
     tone: "problem",
     nodes: [page, counter],
     metrics: [],
@@ -51,7 +51,7 @@ const scenes: ShortScene[] = [
     duration: 8000,
     title: '"use client" は境界の印',
     caption:
-      '"use client" はブラウザだけで動かす宣言ではありません。Client Component も初回の HTML はサーバーで作られ、ブラウザでハイドレーションされます。',
+      '"use client" はブラウザ専用の宣言ではありません。Client Component も初回の HTML はサーバーで作り、ブラウザでハイドレーションします。',
     tone: "explain",
     nodes: [page, hydrated],
     metrics: [],
@@ -62,7 +62,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "仕組みは React、組み込みは Next.js",
     caption:
-      "App Router は、Next.js に同梱された React を使います。package.json の react は、型やツールとの互換性のために書いておきます。",
+      "App Router は Next.js 同梱の React を使います。package.json の react は、型やツールとの互換性のためです。",
     tone: "solution",
     nodes: [page, hydrated],
     metrics: [],
