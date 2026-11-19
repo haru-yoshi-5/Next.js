@@ -106,7 +106,7 @@ export function safeNext(value: unknown) {
   // 前方一致ではなく、完全に一致する値だけを受け付ける
   return typeof value === "string" && ALLOWED_NEXT.has(value)
     ? value
-    : "/learn/protected-pages"
+    : "/learn/protected-pages/members" // 既定の戻り先
 }`
 
   const [pageSource, proxySource, nextSource] = await Promise.allSettled([
