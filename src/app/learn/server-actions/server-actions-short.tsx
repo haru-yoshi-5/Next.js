@@ -91,12 +91,14 @@ export async function ServerActionsShort() {
 
 import { updateTag } from "next/cache"
 
-export async function saveName(prevState: State, formData: FormData) {
-  const name = validateName(formData.get("name"))
-  if (!name) return { message: "名前を確認してください" }
-  await addName(name)
+export async function saveName(prevState: SaveNameState, formData: FormData) {
+  const raw = formData.get("name")
+  const name = typeof raw === "string" ? raw.trim() : ""
+  const error = validateName(name) // 問題があればエラーの文言を返す
+  if (error) return { status: "error", message: error }
+  await addEntry(name)
   updateTag("guestbook")
-  return { message: "保存しました" }
+  return { status: "success", message: "保存しました" }
 }`
   const formCode = `"use client"
 
@@ -127,7 +129,7 @@ export function NameForm() {
           runtime={{ runtime: "server", basis: "use server" }}
           role="Server Action"
           description="検証 → 保存 → キャッシュの更新"
-          highlightedLines={[1, 6, 7, 9]}
+          highlightedLines={[1, 8, 9, 11]}
         />
       ) : null,
     form:

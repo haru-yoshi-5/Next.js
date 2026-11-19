@@ -81,15 +81,15 @@ export async function AuthBasicsShort() {
 export function AdminTools({ isAdmin }: { isAdmin: boolean }) {
   // 見た目を変えているだけ。Server Action は直接呼び出せる
   if (!isAdmin) return null
-  return <button onClick={() => publishNotice()}>お知らせを公開する</button>
+  return <button onClick={() => publishAnnouncement()}>お知らせを公開する</button>
 }`
   const actionCode = `"use server"
 
-export async function publishNotice() {
+export async function publishAnnouncement() {
   const auth = await getAuthState()
-  if (auth.status !== "signed-in") return { error: "ログインしてください" } // 認証
-  if (!can(auth.user, "notice:publish")) return { error: "権限がありません" } // 認可
-  await saveNotice()
+  if (auth.status !== "authenticated") return { error: "ログインしてください" } // 認証
+  if (!can(auth.viewer, "publish-announcement")) return { error: "権限がありません" } // 認可
+  // ここで保存する（デモでは保存しない）
   return { ok: true }
 }`
   const dalCode = `import "server-only"
@@ -97,11 +97,11 @@ import { cookies } from "next/headers"
 import { cache } from "react"
 
 export const getAuthState = cache(async () => {
-  const token = (await cookies()).get("session")?.value
-  const session = token ? await verifySession(token) : null // 署名・期限を検証
-  return session
-    ? { status: "signed-in", user: session.user }
-    : { status: "signed-out" }
+  const token = (await cookies()).get(SESSION_COOKIE)?.value
+  const session = token ? await verifySessionToken(token) : null // 署名・期限を検証
+  if (session?.status !== "valid") return { status: "anonymous" }
+  const user = findDemoUser(session.userId)
+  return user ? { status: "authenticated", viewer: user } : { status: "anonymous" }
 })`
 
   const [hidden, action, dal] = await Promise.allSettled([
