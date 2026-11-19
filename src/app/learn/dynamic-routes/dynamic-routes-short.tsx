@@ -49,7 +49,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "URL の値を受け取るには？",
     caption:
-      "フォルダ名を [id] にすると、/articles/42 の 42 を params で受け取れます。値は誰でも入力できる文字列なので、サーバー側で確かめます。",
+      "フォルダ名を [id] にすると、/articles/42 の 42 を params で受け取れます。誰でも入力できる値なので、サーバーで確かめます。",
     tone: "problem",
     nodes: nodes(1),
     metrics: [],
@@ -71,7 +71,7 @@ const scenes: ShortScene[] = [
     duration: 8000,
     title: "返していない値も表示できる",
     caption:
-      "Cache Components では、返していない値も同じ URL で表示できます。loading.tsx を含む App Shell が先に届き、記事が応答の続きとして届きます。",
+      "Cache Components では、返していない値も表示できます。loading.tsx を含む App Shell が先に届き、記事は応答の続きで届きます。",
     tone: "explain",
     nodes: nodes(3),
     metrics: metrics(3),
@@ -82,7 +82,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "notFound() でもステータスは 200",
     caption:
-      "存在しない値では notFound() で not-found.tsx を表示します。App Shell を送った後なのでステータスは 200 のまま。代わりに noindex が付きます。",
+      "存在しない値は notFound() で not-found.tsx を表示します。送信後なので 200 のまま、noindex が付きます。",
     tone: "solution",
     nodes: nodes(4),
     metrics: metrics(3),
