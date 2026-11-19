@@ -20,9 +20,10 @@ function nodes(withNext: boolean) {
       id: "routing",
       label: "ルーティング",
       description: withNext
-        ? "src/app のフォルダが URL に対応"
+        ? "src/app のフォルダが URL に対応。移動はブラウザで"
         : "URL と画面の対応を自分で組む",
-      runtime: withNext ? "server" : "client",
+      // App Router でも、<Link> での移動はブラウザ側のルーターが受け持つ
+      runtime: "client",
     },
     {
       id: "html",
