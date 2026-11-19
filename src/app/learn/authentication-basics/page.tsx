@@ -6,6 +6,7 @@ import { authenticationBasicsLesson } from "@/content/lessons/authentication-bas
 import { createLessonMetadata } from "@/lib/lesson-metadata"
 
 import { AuthDemo } from "./auth-demo"
+import { AuthBasicsShort } from "./auth-basics-short"
 
 export const metadata = createLessonMetadata(authenticationBasicsLesson)
 
@@ -13,6 +14,7 @@ export default function AuthenticationBasicsPage() {
   return (
     <LessonPage
       lesson={authenticationBasicsLesson}
+      short={<AuthBasicsShort key="auth-basics-short" />}
       demo={
         // AuthDemo は cookie を読むため、リクエストのたびに描画する。
         // <Suspense> で囲み、教材の本文をビルド時の静的な部分に残す。
