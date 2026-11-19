@@ -77,8 +77,8 @@ export async function RouteHandlersShort() {
   const getCode = `import type { NextRequest } from "next/server"
 
 export async function GET(request: NextRequest) {
-  const limit = request.nextUrl.searchParams.get("limit")
-  return Response.json({ messages: listMessages(limit) })
+  const limit = parseLimit(request.nextUrl.searchParams.get("limit"))
+  return Response.json({ messages: await listMessages(limit) })
 }`
   const postCode = `export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
   if (!text) {
     return Response.json({ error: "本文が空です" }, { status: 400 })
   }
-  return Response.json(addMessage(text), { status: 201 })
+  return Response.json(await addMessage(text), { status: 201 })
 }`
   const putCode = `// route.ts に PUT 関数はない
 const res = await fetch("/learn/route-handlers/api", { method: "PUT" })
@@ -106,7 +106,7 @@ res.status // 405`
           runtime={{ runtime: "server", basis: "route.ts" }}
           role="Route Handler"
           description="メソッド名の関数を export する"
-          highlightedLines={[3, 5]}
+          highlightedLines={[3, 4, 5]}
         />
       ) : null,
     post:
