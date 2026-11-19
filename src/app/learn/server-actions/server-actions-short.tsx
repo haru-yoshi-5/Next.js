@@ -31,7 +31,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "フォームの送信先は？",
     caption:
-      '"use server" で定義した関数は、フォームにそのまま渡せる Server Action になります。ブラウザには関数の本体ではなく、呼び出すための参照だけが届きます。',
+      '"use server" の関数は、フォームに渡せる Server Action になります。ブラウザには本体ではなく参照だけが届きます。',
     tone: "problem",
     nodes: [form, action, list],
     metrics: [],
@@ -42,7 +42,7 @@ const scenes: ShortScene[] = [
     duration: 8000,
     title: "POST でサーバーの関数を呼ぶ",
     caption:
-      "送信すると、Server Action の ID とフォームデータが POST で送られ、サーバーで saveName が実行されます。useActionState で戻り値と送信中の状態を受け取れます。",
+      "送信すると、Action の ID とフォームデータが POST で届き、saveName が実行されます。結果は useActionState で受け取ります。",
     tone: "explain",
     nodes: [form, action, list],
     metrics: [],
