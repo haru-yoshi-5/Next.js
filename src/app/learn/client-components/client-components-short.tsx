@@ -32,7 +32,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: 'なぜ "use client" が必要？',
     caption:
-      'Server Component は結果だけが送られるため、クリックに反応したり値を覚えたりできません。state やイベントを使うには "use client" を書きます。',
+      'Server Component は結果だけが届くため、クリックや state を扱えません。それには "use client" が必要です。',
     tone: "problem",
     nodes: [page, counter("state とクリックを扱う")],
     metrics: [],
