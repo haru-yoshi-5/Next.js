@@ -64,7 +64,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "確認を 1 か所にまとめる",
     caption:
-      "セッションの検証は getAuthState() にまとめ、ページ・Server Action・Route Handler から使います。React の cache で、1 回の描画の中の検証は 1 回です。",
+      "検証は getAuthState() にまとめ、どの入口からも使います。React の cache で、1 回の描画では 1 回だけ検証します。",
     tone: "solution",
     nodes: [button, authn, authz],
     metrics: [],
