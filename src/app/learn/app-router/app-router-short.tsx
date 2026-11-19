@@ -31,7 +31,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "URL はどう決まる？",
     caption:
-      "app フォルダの中のフォルダ 1 つが、URL のセグメント 1 つに対応します。page.tsx を置いたフォルダだけが URL として公開されます。",
+      "app の中のフォルダ 1 つが、URL のセグメント 1 つに対応します。page.tsx を置いたフォルダだけが公開されます。",
     tone: "problem",
     nodes: [layout, page, link],
     metrics: [],
@@ -64,7 +64,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "[slug] で値を受け取る",
     caption:
-      "フォルダ名を [slug] にすると、任意の値を params で受け取れます。params は Promise なので await し、データがなければ notFound() を呼びます。",
+      "[slug] フォルダの値は params で受け取ります。await して取り出し、データがなければ notFound() を呼びます。",
     tone: "solution",
     nodes: [
       layout,
