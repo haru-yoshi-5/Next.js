@@ -3,6 +3,7 @@ import { errorFileLesson } from "@/content/lessons/error-file"
 import { createLessonMetadata } from "@/lib/lesson-metadata"
 
 import { ErrorDemoPanel } from "./error-demo-panel"
+import { ErrorFileShort } from "./error-file-short"
 
 export const metadata = createLessonMetadata(errorFileLesson)
 
@@ -17,6 +18,7 @@ export default function ErrorFileLessonLayout({
   return (
     <LessonPage
       lesson={errorFileLesson}
+      short={<ErrorFileShort key="error-file-short" />}
       demo={<ErrorDemoPanel>{children}</ErrorDemoPanel>}
     />
   )
