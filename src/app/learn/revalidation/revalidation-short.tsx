@@ -54,7 +54,7 @@ const scenes: ShortScene[] = [
     duration: 8000,
     title: "revalidateTag は裏で更新",
     caption:
-      'revalidateTag(tag, "max") は stale-while-revalidate の考え方です。古い値を返しながら裏側で作り直します。第 2 引数は必須です。',
+      'revalidateTag(tag, "max") は stale-while-revalidate です。古い値を返しながら裏で作り直します。第 2 引数は必須です。',
     tone: "explain",
     nodes,
     metrics: [],
