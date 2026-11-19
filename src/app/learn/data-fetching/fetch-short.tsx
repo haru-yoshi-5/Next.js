@@ -51,7 +51,7 @@ const scenes: ShortScene[] = [
     duration: 8000,
     title: "先に両方を開始する",
     caption:
-      "お互いの結果を使わない 2 つの取得を先に呼び出し、`Promise.all` でまとめて待ちます。",
+      "お互いの結果を使わない 2 つの取得を先に呼び出し、Promise.all でまとめて待ちます。",
     tone: "explain",
     nodes,
     metrics: metrics(600, 2),
@@ -73,7 +73,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "独立した取得だけを並列に",
     caption:
-      "前の結果を使う取得は直列のままにします。`Promise.all` は 1 つでも失敗すると全体が失敗します。",
+      "前の結果を使う取得は直列のままにします。Promise.all は 1 つでも失敗すると全体が失敗します。",
     tone: "solution",
     nodes,
     metrics: metrics(600, 2),
