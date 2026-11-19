@@ -52,7 +52,7 @@ const scenes: ShortScene[] = [
       "フォルダ名を [id] にすると、/articles/42 の 42 を params で受け取れます。値は誰でも入力できる文字列なので、サーバー側で確かめます。",
     tone: "problem",
     nodes: nodes(1),
-    metrics: metrics(0),
+    metrics: [],
     codeKey: "page",
   },
   {
