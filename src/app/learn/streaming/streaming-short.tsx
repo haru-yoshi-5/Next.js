@@ -79,7 +79,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "loading.tsx と使い分ける",
     caption:
-      "loading.tsx は、page 全体を自動で Suspense に包む手軽な方法です。すぐ出せる内容があるなら、遅い部分だけを <Suspense> で囲みます。",
+      "loading.tsx は page 全体を Suspense で包む手軽な方法です。すぐ出せる内容があれば、遅い部分だけを囲みます。",
     tone: "solution",
     nodes: nodes(true),
     metrics: metrics(0),
