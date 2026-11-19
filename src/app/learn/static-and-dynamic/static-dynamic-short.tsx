@@ -61,7 +61,7 @@ const scenes: ShortScene[] = [
     duration: 8000,
     title: "作れる部分は静的シェルへ",
     caption:
-      "Cache Components では、ビルド時に作れる部分が静的シェルになります。use cache で保存した値や、Suspense の fallback もここに入ります。",
+      "Cache Components では、ビルド時に作れる部分が静的シェルになります。use cache の値や Suspense の fallback も入ります。",
     tone: "explain",
     nodes: nodes(true),
     metrics: metrics(1),
