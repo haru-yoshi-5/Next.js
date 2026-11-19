@@ -40,7 +40,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "部品はどこで動く？",
     caption:
-      'App Router では、"use client" を書かない限り Server Component です。page.tsx も layout.tsx も、サーバーで実行されます。',
+      '"use client" を書かなければ Server Component です。page.tsx も layout.tsx もサーバーで実行されます。',
     tone: "problem",
     nodes: [page, snapshot, refresh],
     metrics,
@@ -77,7 +77,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "操作する部分だけを Client に",
     caption:
-      "useState や onClick、window が必要な部分だけを Client Component にします。この例では、再レンダリングを頼むボタンだけです。",
+      "useState・onClick・window が必要な部分だけを Client にします。この例では、再レンダリングを頼むボタンだけです。",
     tone: "solution",
     nodes: [page, snapshot, refresh],
     metrics,
