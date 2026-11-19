@@ -103,10 +103,13 @@ export default async function ItemPage({
 //     not-found.tsx       ← items/[id] はここを使う
 //   orders/[id]/
 //     page.tsx            （not-found.tsx なし）`
-  const proxyCode = `export async function proxy(request: NextRequest) {
-  const id = request.nextUrl.pathname.split("/").at(-1) ?? ""
+  const proxyCode = `// matcher で /learn/not-found-file/checked/:id だけを対象にする
+export async function proxy(request: NextRequest) {
+  const id = request.nextUrl.pathname.slice(CHECKED_PREFIX.length)
   // 描画の前に確かめ、ない場合はどのルートにも一致しない URL へ書き換える
-  const destination = findItem(id) ? \`/items/\${id}\` : "/_missing"
+  const destination = findItem(id)
+    ? \`\${BASE_PATH}/items/\${id}\`
+    : \`\${BASE_PATH}/_missing\`
   return NextResponse.rewrite(new URL(destination, request.url))
 }`
 
@@ -146,7 +149,7 @@ export default async function ItemPage({
           runtime={{ runtime: "server", basis: "proxy.ts" }}
           role="Proxy"
           description="送信を始める前に確かめる"
-          highlightedLines={[3, 4, 5]}
+          highlightedLines={[4, 5, 6, 7, 8]}
         />
       ) : null,
   }
