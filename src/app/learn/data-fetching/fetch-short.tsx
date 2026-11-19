@@ -85,12 +85,14 @@ export async function FetchShort() {
   "use cache"
   cacheLife("max")
 
-  const sequentialCode = `export default async function Page() {
+  const sequentialCode = `// page の <Suspense> の内側に置く
+async function ProfileSection() {
   const author = await getAuthor()
   const posts = await getPosts()
   return <Profile author={author} posts={posts} />
 }`
-  const parallelCode = `export default async function Page() {
+  const parallelCode = `// page の <Suspense> の内側に置く
+async function ProfileSection() {
   const [author, posts] = await Promise.all([
     getAuthor(),
     getPosts(),
@@ -108,10 +110,10 @@ export async function FetchShort() {
         <CodeBlock
           key="sequential"
           source={sequential.value}
-          runtime={{ runtime: "server", basis: "page" }}
+          runtime={{ runtime: "server", basis: "Suspense の内側" }}
           role="Server Component"
           description="1 つ目が終わるまで 2 つ目は始まらない"
-          highlightedLines={[2, 3]}
+          highlightedLines={[3, 4]}
         />
       ) : null,
     parallel:
@@ -119,10 +121,10 @@ export async function FetchShort() {
         <CodeBlock
           key="parallel"
           source={parallel.value}
-          runtime={{ runtime: "server", basis: "page" }}
+          runtime={{ runtime: "server", basis: "Suspense の内側" }}
           role="Server Component"
           description="2 つを同時に開始し、まとめて待つ"
-          highlightedLines={[2, 3, 4, 5]}
+          highlightedLines={[3, 4, 5, 6]}
         />
       ) : null,
   }

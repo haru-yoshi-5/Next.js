@@ -101,20 +101,20 @@ export async function GET() {
 
 export async function readSalesReport() {
   const auth = await getAuthState()
-  if (auth.status !== "signed-in") return { kind: "unauthenticated" } as const
-  if (!can(auth.user, "report:read")) return { kind: "forbidden" } as const
-  const figures = await loadSalesFigures()
-  return { kind: "ok", report: toReportDto(figures) } as const
+  if (auth.status !== "authenticated") return { status: "unauthenticated" }
+  if (!can(auth.viewer, "view-sales-report")) return { status: "forbidden" }
+  const rows = await loadSalesFigures()
+  return { status: "ok", report: { title: "月別の売上", rows } }
 }`
   const routeCode = `export async function GET() {
   const result = await readSalesReport()
-  if (result.kind === "unauthenticated") {
+  if (result.status === "unauthenticated") {
     return Response.json({ error: "ログインが必要です" }, { status: 401 })
   }
-  if (result.kind === "forbidden") {
+  if (result.status === "forbidden") {
     return Response.json({ error: "権限がありません" }, { status: 403 })
   }
-  return Response.json(result.report, {
+  return Response.json({ report: result.report }, {
     headers: { "Cache-Control": "private, no-store" },
   })
 }`
