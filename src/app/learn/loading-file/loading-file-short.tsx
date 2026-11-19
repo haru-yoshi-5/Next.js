@@ -42,7 +42,7 @@ const scenes: ShortScene[] = [
     duration: 8000,
     title: "page を Suspense で包む",
     caption:
-      "loading.tsx を置くと、同じフォルダの layout の内側に <Suspense> が作られ、loading.tsx がその fallback になります。layout は包まれません。",
+      "loading.tsx を置くと、同じフォルダの layout の内側に <Suspense> ができ、loading.tsx が fallback になります。",
     tone: "explain",
     nodes: [layout, loading, page],
     metrics: [],
@@ -68,7 +68,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "page 内の Suspense と使い分ける",
     caption:
-      "loading.tsx は page 全体を 1 つの待ちの表示に置き換えます。すぐ出せる見出しがあるなら、page の中で遅い部分だけを <Suspense> で囲みます。",
+      "loading.tsx は page 全体を待ちの表示に置き換えます。すぐ出せる見出しがあるなら、遅い部分だけを <Suspense> で囲みます。",
     tone: "solution",
     nodes: [layout, loading, page],
     metrics: [],
