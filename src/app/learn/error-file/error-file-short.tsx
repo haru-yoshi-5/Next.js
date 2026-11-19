@@ -33,7 +33,11 @@ const scenes: ShortScene[] = [
     caption:
       "近くにエラー境界がなければ、エラーは上へ伝わり、より広い範囲の表示が置き換わります。page 1 つのエラーで、周りの画面まで使えなくなります。",
     tone: "problem",
-    nodes: [layout, page, boundary],
+    nodes: [
+      { ...layout, description: "エラーが伝わると巻き込まれる" },
+      page,
+      { ...boundary, description: "なし" },
+    ],
     metrics: [],
     codeKey: "page",
   },
