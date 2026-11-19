@@ -47,7 +47,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "入口は 1 つではない",
     caption:
-      "ページの描画・Server Action・Route Handler は、どれも画面を経由せず直接呼び出せます。1 つでも確認を忘れると、データは守れません。",
+      "ページの描画・Server Action・Route Handler は、どれも直接呼び出せます。1 つでも確認を忘れると、データは守れません。",
     tone: "problem",
     nodes: nodes(false),
     metrics: [],
@@ -69,7 +69,7 @@ const scenes: ShortScene[] = [
     duration: 8000,
     title: "拒否の伝え方は入口ごと",
     caption:
-      "Server Component は代わりの表示、Server Action はデータを含めない戻り値、Route Handler は認証の失敗を 401、認可の失敗を 403 で伝えます。",
+      "Server Component は代わりの表示、Server Action はデータなしの戻り値、Route Handler は 401 と 403 で拒否を伝えます。",
     tone: "explain",
     nodes: nodes(true),
     metrics: [],
