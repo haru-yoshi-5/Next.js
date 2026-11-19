@@ -52,7 +52,7 @@ const scenes: ShortScene[] = [
     duration: 8000,
     title: "近い順にさかのぼる",
     caption:
-      "items/[id] は同じフォルダの not-found.tsx、orders/[id] は親フォルダのものが使われます。どのルートにも一致しない URL は app/not-found.tsx です。",
+      "items/[id] は同じフォルダ、orders/[id] は親の not-found.tsx を使い、一致しない URL は app/not-found.tsx です。",
     tone: "explain",
     nodes: nodes(false),
     metrics: [],
