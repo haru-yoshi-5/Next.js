@@ -78,16 +78,16 @@ export async function CacheShort() {
   "use cache"
   cacheLife("max")
 
-  const plainCode = `export async function getReport() {
+  const plainCode = `export async function getReport(locale: string) {
   // 時間のかかる集計（呼び出しのたびに実行される）
-  return await buildReport()
+  return await buildReport(locale)
 }`
   const cachedCode = `import { cacheLife } from "next/cache"
 
-export async function getReport() {
+export async function getReport(locale: string) {
   "use cache"
   cacheLife({ stale: 30, revalidate: 60, expire: 120 })
-  return await buildReport()
+  return await buildReport(locale)
 }`
   const argumentCode = `import { cookies } from "next/headers"
 

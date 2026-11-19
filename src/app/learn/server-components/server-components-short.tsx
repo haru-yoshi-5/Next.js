@@ -9,7 +9,7 @@ import { cacheLife } from "next/cache"
 const page = {
   id: "page",
   label: "page.tsx",
-  description: "use client がなければ Server",
+  description: "既定で Server Component",
   runtime: "server",
 } as const
 const snapshot = {
@@ -40,7 +40,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "部品はどこで動く？",
     caption:
-      '"use client" を書かなければ Server Component です。page.tsx も layout.tsx もサーバーで実行されます。',
+      'page や layout は既定で Server です。"use client" のファイルとその import 先が Client です。',
     tone: "problem",
     nodes: [page, snapshot, refresh],
     metrics,
