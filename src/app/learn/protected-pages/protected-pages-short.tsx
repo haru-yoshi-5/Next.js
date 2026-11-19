@@ -85,7 +85,8 @@ export async function ProtectedPagesShort() {
 }
 
 async function MemberNotices() {
-  const area = await readMemberArea() // 未ログインなら中で redirect()
+  // 引数はログイン後の戻り先。未ログインなら中で redirect()
+  const area = await readMemberArea("/learn/protected-pages/members")
   return <NoticeList notices={area.notices} />
 }`
   const proxyCode = `export async function proxy(request: NextRequest) {
@@ -123,7 +124,7 @@ export function safeNext(value: unknown) {
           runtime={{ runtime: "server", basis: "page" }}
           role="Server Component"
           description="確認をしてから守る内容を描画する"
-          highlightedLines={[10, 11]}
+          highlightedLines={[11, 12]}
         />
       ) : null,
     proxy:

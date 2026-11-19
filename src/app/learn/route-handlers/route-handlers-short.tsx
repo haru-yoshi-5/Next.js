@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
   if (!text) {
     return Response.json({ error: "本文が空です" }, { status: 400 })
   }
-  return Response.json(await addMessage(text), { status: 201 })
+  return Response.json({ message: await addMessage(text) }, { status: 201 })
 }`
   const putCode = `// route.ts に PUT 関数はない
 const res = await fetch("/learn/route-handlers/api", { method: "PUT" })

@@ -89,9 +89,15 @@ export async function getReport(locale: string) {
   cacheLife({ stale: 30, revalidate: 60, expire: 120 })
   return await buildReport(locale)
 }`
-  const argumentCode = `import { cookies } from "next/headers"
+  const argumentCode = `export default function Page() {
+  return (
+    <Suspense fallback={<p>読み込み中…</p>}>
+      <ReportView />
+    </Suspense>
+  )
+}
 
-export default async function Page() {
+async function ReportView() {
   const locale = (await cookies()).get("locale")?.value ?? "ja"
   const report = await getReport(locale) // 必要な値だけを引数で渡す
   return <Report report={report} />
@@ -133,7 +139,7 @@ export default async function Page() {
           runtime={{ runtime: "server", basis: "page" }}
           role="Server Component"
           description="cookies() はキャッシュの外で読む"
-          highlightedLines={[4, 5]}
+          highlightedLines={[10, 11]}
         />
       ) : null,
   }
