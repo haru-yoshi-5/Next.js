@@ -66,7 +66,7 @@ const scenes: ShortScene[] = [
     duration: 7000,
     title: "中で cookies() は読めない",
     caption:
-      "キャッシュは利用者をまたいで共有されます。use cache の中では cookies() や headers() を読まず、外で読んだ値を引数で渡します。",
+      "キャッシュは利用者をまたいで共有されます。中で cookies() や headers() は読まず、外で読んだ値を引数で渡します。",
     tone: "solution",
     nodes: nodes(true),
     metrics: metrics(1),
