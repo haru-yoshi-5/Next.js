@@ -91,8 +91,9 @@ export async function ServerComponentsShort() {
 
   const snapshotCode = `import { io } from "next/cache"
 
+// page の <Suspense> の内側に置く
 export async function ServerSnapshot() {
-  await io()
+  await io() // ここから先はリクエストのたびに実行する
   const snapshot = await getSnapshot()
   return <p>取得時刻: {snapshot.fetchedAt}</p>
 }`
@@ -128,7 +129,7 @@ export function RefreshButton() {
           runtime={{ runtime: "server", basis: "ディレクティブなし" }}
           role="Server Component"
           description="コンポーネントの中で await する"
-          highlightedLines={[3, 5]}
+          highlightedLines={[4, 6]}
         />
       ) : null,
     secret:

@@ -35,7 +35,7 @@ const scenes: ShortScene[] = [
     tone: "problem",
     nodes: [form, action, list],
     metrics: [],
-    codeKey: "action",
+    codeKey: "define",
   },
   {
     id: "post",
@@ -57,7 +57,7 @@ const scenes: ShortScene[] = [
     tone: "explain",
     nodes: [form, { ...action, description: "入力を検証してから保存" }, list],
     metrics: [],
-    codeKey: "action",
+    codeKey: "validate",
   },
   {
     id: "update",
@@ -79,7 +79,7 @@ const scenes: ShortScene[] = [
         unit: "回",
       },
     ],
-    codeKey: "action",
+    codeKey: "update",
   },
 ]
 
@@ -104,9 +104,10 @@ export async function saveName(prevState: SaveNameState, formData: FormData) {
 
 import { useActionState } from "react"
 import { saveName } from "./actions"
+import { initialSaveNameState } from "./action-state"
 
 export function NameForm() {
-  const [state, action, isPending] = useActionState(saveName, initialState)
+  const [state, action, isPending] = useActionState(saveName, initialSaveNameState)
   return (
     <form action={action}>
       <input name="name" />
@@ -120,18 +121,30 @@ export function NameForm() {
     highlightSourceCode("例/actions.ts", actionCode),
     highlightSourceCode("例/name-form.tsx", formCode),
   ])
+  // 同じコードを、場面ごとに強調する行を変えて見せる
+  const actionBlock = (
+    key: string,
+    description: string,
+    highlightedLines: number[],
+  ) =>
+    actionSource.status === "fulfilled" ? (
+      <CodeBlock
+        key={key}
+        source={actionSource.value}
+        runtime={{ runtime: "server", basis: "use server" }}
+        role="Server Action"
+        description={description}
+        highlightedLines={highlightedLines}
+      />
+    ) : null
   const code = {
-    action:
-      actionSource.status === "fulfilled" ? (
-        <CodeBlock
-          key="action"
-          source={actionSource.value}
-          runtime={{ runtime: "server", basis: "use server" }}
-          role="Server Action"
-          description="検証 → 保存 → キャッシュの更新"
-          highlightedLines={[1, 8, 9, 11]}
-        />
-      ) : null,
+    define: actionBlock("define", "use server のファイルの関数", [1, 5]),
+    validate: actionBlock("validate", "保存の前にサーバーで検証する", [8, 9]),
+    update: actionBlock(
+      "update",
+      "保存のあとでキャッシュを期限切れにする",
+      [11, 12],
+    ),
     form:
       formSource.status === "fulfilled" ? (
         <CodeBlock
@@ -140,7 +153,7 @@ export function NameForm() {
           runtime={{ runtime: "client", basis: "use client" }}
           role="Client Component"
           description="form の action に Server Action を渡す"
-          highlightedLines={[7, 9]}
+          highlightedLines={[8, 10]}
         />
       ) : null,
   }

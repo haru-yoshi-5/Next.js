@@ -102,6 +102,7 @@ export default function Layout({
 }`
   const dynamicCode = `import { notFound } from "next/navigation"
 
+// このファイルに generateStaticParams()、同じフォルダに loading.tsx を置く前提
 export default async function Page({
   params,
 }: PageProps<"/learn/app-router/[slug]">) {
@@ -147,7 +148,7 @@ export default async function Page({
           runtime={{ runtime: "server", basis: "page" }}
           role="Server Component"
           description="params を await して値を受け取る"
-          highlightedLines={[6, 8]}
+          highlightedLines={[7, 9]}
         />
       ) : null,
   }

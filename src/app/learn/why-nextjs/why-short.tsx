@@ -79,7 +79,7 @@ const scenes: ShortScene[] = [
     tone: "explain",
     nodes: nodes("server", "server"),
     metrics: metrics(1),
-    codeKey: "server",
+    codeKey: "highlight",
   },
   {
     id: "result",
@@ -90,7 +90,7 @@ const scenes: ShortScene[] = [
     tone: "solution",
     nodes: nodes("server", "server"),
     metrics: metrics(1),
-    codeKey: "server",
+    codeKey: "result",
   },
 ]
 
@@ -118,11 +118,39 @@ export default function Page() {
     </>
   )
 }`
+  const serverHighlightCode = `export default async function Page() {
+  const lesson = await getLesson()
+  const sample = await highlightCode(lesson.code) // 色付けもサーバーで
+  return (
+    <>
+      <Article lesson={lesson} />
+      <CodeSample source={sample} />
+      <DemoButton />
+    </>
+  )
+}`
 
-  const [client, server] = await Promise.allSettled([
+  const [client, server, highlighted] = await Promise.allSettled([
     highlightSourceCode("例/page.tsx", clientCode),
     highlightSourceCode("例/page.tsx", serverCode),
+    highlightSourceCode("例/page.tsx", serverHighlightCode),
   ])
+  // 同じコードを、場面ごとに強調する行を変えて見せる
+  const highlightedBlock = (
+    key: string,
+    description: string,
+    highlightedLines: number[],
+  ) =>
+    highlighted.status === "fulfilled" ? (
+      <CodeBlock
+        key={key}
+        source={highlighted.value}
+        runtime={{ runtime: "server", basis: "page" }}
+        role="Server Component"
+        description={description}
+        highlightedLines={highlightedLines}
+      />
+    ) : null
   const code = {
     client:
       client.status === "fulfilled" ? (
@@ -142,10 +170,16 @@ export default function Page() {
           source={server.value}
           runtime={{ runtime: "server", basis: "page" }}
           role="Server Component"
-          description="本文はサーバー、操作だけをブラウザへ"
-          highlightedLines={[1, 2, 5, 6]}
+          description="本文はサーバーで先に用意する"
+          highlightedLines={[1, 2, 5]}
         />
       ) : null,
+    highlight: highlightedBlock(
+      "highlight",
+      "コードの色付けもサーバーで済ませる",
+      [3, 7],
+    ),
+    result: highlightedBlock("result", "ブラウザで動かすのはデモだけ", [8]),
   }
   return (
     <ShortPlayer
