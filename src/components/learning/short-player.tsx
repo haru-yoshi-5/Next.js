@@ -213,6 +213,7 @@ export function ShortPlayer({
   const [announcement, setAnnouncement] = useState("")
   const remaining = useRef<number | null>(null)
   const discardRemaining = useRef(false)
+  const codePanel = useRef<HTMLDivElement>(null)
   const current = index < scenes.length ? index : 0
   const scene = scenes[current]
   const valid =
@@ -264,6 +265,27 @@ export function ShortPlayer({
       discardRemaining.current = false
     }
   }, [running, scene, current, scenes, code, revision])
+
+  // 場面が変わったら、コード欄の中だけを強調行が見える位置までスクロールする。
+  // 欄の高さは固定なので、下のほうの強調行は動かさないと見えない。ページ全体は動かさない。
+  useEffect(() => {
+    const panel = codePanel.current
+    if (!panel) return
+    const highlighted = panel.querySelectorAll("[data-highlighted]")
+    const first = highlighted[0]
+    const last = highlighted[highlighted.length - 1]
+    if (!first || !last) {
+      panel.scrollTop = 0
+      return
+    }
+    const panelTop = panel.getBoundingClientRect().top - panel.scrollTop
+    const firstTop = first.getBoundingClientRect().top - panelTop
+    const lastBottom = last.getBoundingClientRect().bottom - panelTop
+    const margin = 8
+    // 最後の強調行が収まる最小の位置。ただし最初の強調行は必ず見える範囲に残す
+    const needed = lastBottom + margin - panel.clientHeight
+    panel.scrollTop = Math.max(0, Math.min(needed, firstTop - margin))
+  }, [current, revision, valid])
 
   if (!scenes.length) return null
 
@@ -350,6 +372,7 @@ export function ShortPlayer({
             {caption}
           </p>
           <div
+            ref={codePanel}
             className="h-64 min-w-0 space-y-2 overflow-auto rounded-lg"
             aria-label="この場面のコード例"
             role="group"
