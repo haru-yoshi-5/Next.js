@@ -102,7 +102,7 @@ export default function Layout({
 }`
   const dynamicCode = `import { notFound } from "next/navigation"
 
-// generateStaticParams() と同じフォルダの loading.tsx も置く前提
+// このファイルに generateStaticParams()、同じフォルダに loading.tsx を置く前提
 export default async function Page({
   params,
 }: PageProps<"/learn/app-router/[slug]">) {

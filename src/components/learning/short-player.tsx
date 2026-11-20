@@ -1,6 +1,12 @@
 "use client"
 
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react"
 import {
   animate,
   motion,
@@ -268,7 +274,8 @@ export function ShortPlayer({
 
   // 場面が変わったら、コード欄の中だけを強調行が見える位置までスクロールする。
   // 欄の高さは固定なので、下のほうの強調行は動かさないと見えない。ページ全体は動かさない。
-  useEffect(() => {
+  // 描画の前に位置を決め、先頭が一瞬見えてから動くちらつきを防ぐ
+  useLayoutEffect(() => {
     const panel = codePanel.current
     if (!panel) return
     const highlighted = panel.querySelectorAll("[data-highlighted]")

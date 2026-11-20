@@ -118,7 +118,7 @@ export default function Page() {
     </>
   )
 }`
-  const highlightCode = `export default async function Page() {
+  const serverHighlightCode = `export default async function Page() {
   const lesson = await getLesson()
   const sample = await highlightCode(lesson.code) // 色付けもサーバーで
   return (
@@ -133,7 +133,7 @@ export default function Page() {
   const [client, server, highlighted] = await Promise.allSettled([
     highlightSourceCode("例/page.tsx", clientCode),
     highlightSourceCode("例/page.tsx", serverCode),
-    highlightSourceCode("例/page.tsx", highlightCode),
+    highlightSourceCode("例/page.tsx", serverHighlightCode),
   ])
   // 同じコードを、場面ごとに強調する行を変えて見せる
   const highlightedBlock = (
