@@ -384,8 +384,12 @@ export function ShortPlayer({
     )
   }
 
-  // 高さを確保する対象。壊れた場面は表示しないので含めない
-  const reserved = scenes.filter((entry) => isValidScene(entry, code))
+  // 高さを確保する対象。壊れた場面と id が重複する場面は表示しないので含めない（key の重複も防ぐ）
+  const reserved = scenes.filter(
+    (entry) =>
+      isValidScene(entry, code) &&
+      scenes.filter((other) => other?.id === entry.id).length === 1,
+  )
   const tone = valid ? tones[scene.tone] : null
   const caption =
     typeof scene?.caption === "string" && scene.caption.trim()
