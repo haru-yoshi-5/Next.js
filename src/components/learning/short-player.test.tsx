@@ -58,7 +58,6 @@ describe("図解ショート", () => {
         label={label}
         scenes={[{ ...scenes[0], title: "長い題名の場面" }, scenes[1]]}
         code={code}
-        metricNote="図の例"
       />,
     )
     const reserves = [...container.querySelectorAll("[data-reserve]")]
@@ -76,23 +75,48 @@ describe("図解ショート", () => {
     expect(screen.getAllByText("説明0")).toHaveLength(1)
     expect(screen.getAllByRole("heading")).toHaveLength(1)
   })
-  it("id が重複する場面は高さの確保に含めない", () => {
-    const error = vi.spyOn(console, "error").mockImplementation(() => {})
+  it("数値のない場面では、注記の文字を消して場所だけ残す", () => {
     const { container } = render(
       <ShortPlayer
         label={label}
-        scenes={[scenes[0], scenes[1], { ...scenes[1], caption: "重複" }]}
+        scenes={[scenes[0], { ...scenes[1], metrics: [] }]}
         code={code}
+        metricNote="図の例"
       />,
     )
-    const captions = [...container.querySelectorAll("[data-reserve]")].map(
-      (el) => el.getAttribute("data-reserve"),
-    )
-    expect(captions).toContain("説明0")
-    expect(captions).not.toContain("説明1")
-    expect(captions).not.toContain("重複")
-    expect(error).not.toHaveBeenCalled()
-    error.mockRestore()
+    const noteReserve = () => container.querySelector('[data-reserve="図の例"]')
+    // 数値のある場面は、本物の注記を表示する
+    expect(screen.getByText("図の例")).toBeTruthy()
+    expect(noteReserve()).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "次へ" }))
+    expect(screen.getByRole("heading", { name: "場面1" })).toBeTruthy()
+    // 数値のない場面は、文字を出さずに同じ場所を確保する
+    expect(screen.queryByText("図の例")).toBeNull()
+    const reserve = noteReserve()
+    expect(reserve).not.toBeNull()
+    expect(reserve?.closest('[aria-hidden="true"]')).toBeTruthy()
+  })
+  it("id が重複する場面は高さの確保に含めない", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {})
+    try {
+      const { container } = render(
+        <ShortPlayer
+          label={label}
+          scenes={[scenes[0], scenes[1], { ...scenes[1], caption: "重複" }]}
+          code={code}
+        />,
+      )
+      const captions = [...container.querySelectorAll("[data-reserve]")].map(
+        (el) => el.getAttribute("data-reserve"),
+      )
+      expect(captions).toContain("説明0")
+      expect(captions).not.toContain("説明1")
+      expect(captions).not.toContain("重複")
+      expect(error).not.toHaveBeenCalled()
+    } finally {
+      // 途中の確認で失敗しても、次のテストへ差し替えを持ち越さない
+      error.mockRestore()
+    }
   })
   it("再生、停止、残り時間からの再開とループ", () => {
     render(<ShortPlayer label={label} scenes={scenes} code={code} />)
