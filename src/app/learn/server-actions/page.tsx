@@ -7,6 +7,7 @@ import { highlightSourceCode, resolveRuntime } from "@/lib/source-code"
 
 import { GuestbookList } from "./guestbook-list"
 import { NameForm } from "./name-form"
+import { ServerActionsShort } from "./server-actions-short"
 
 export const metadata = createLessonMetadata(serverActionsLesson)
 
@@ -40,6 +41,7 @@ export default async function ServerActionsPage() {
   return (
     <LessonPage
       lesson={serverActionsLesson}
+      short={<ServerActionsShort key="server-actions-short" />}
       demo={
         // GuestbookList（Server Component）を Client Component の props として渡す。
         // Server Action の完了後は、更新された一覧が同じ応答に含まれて差し替わる。

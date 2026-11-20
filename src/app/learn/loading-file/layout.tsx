@@ -3,6 +3,7 @@ import { loadingFileLesson } from "@/content/lessons/loading-file"
 import { createLessonMetadata } from "@/lib/lesson-metadata"
 
 import { LoadingDemoPanel } from "./loading-demo-panel"
+import { LoadingFileShort } from "./loading-file-short"
 
 export const metadata = createLessonMetadata(loadingFileLesson)
 
@@ -17,6 +18,7 @@ export default function LoadingFileLessonLayout({
   return (
     <LessonPage
       lesson={loadingFileLesson}
+      short={<LoadingFileShort key="loading-file-short" />}
       demo={<LoadingDemoPanel>{children}</LoadingDemoPanel>}
     />
   )

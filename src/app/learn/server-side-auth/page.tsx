@@ -6,6 +6,7 @@ import { serverSideAuthLesson } from "@/content/lessons/server-side-auth"
 import { createLessonMetadata } from "@/lib/lesson-metadata"
 
 import { ReportDemo } from "./report-demo"
+import { ServerSideAuthShort } from "./server-side-auth-short"
 
 export const metadata = createLessonMetadata(serverSideAuthLesson)
 
@@ -13,6 +14,7 @@ export default function ServerSideAuthPage() {
   return (
     <LessonPage
       lesson={serverSideAuthLesson}
+      short={<ServerSideAuthShort key="server-side-auth-short" />}
       demo={
         // ReportDemo は cookie を読むため、リクエストのたびに描画する。
         // <Suspense> で囲み、教材の本文をビルド時の静的な部分に残す。

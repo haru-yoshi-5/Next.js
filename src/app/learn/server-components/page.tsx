@@ -6,6 +6,7 @@ import { serverComponentsLesson } from "@/content/lessons/server-components"
 import { createLessonMetadata } from "@/lib/lesson-metadata"
 
 import { ServerSnapshot } from "./server-snapshot"
+import { ServerComponentsShort } from "./server-components-short"
 
 export const metadata = createLessonMetadata(serverComponentsLesson)
 
@@ -15,6 +16,7 @@ export default function ServerComponentsPage() {
   return (
     <LessonPage
       lesson={serverComponentsLesson}
+      short={<ServerComponentsShort key="server-components-short" />}
       demo={
         // リクエストごとに実行する部分だけを Suspense で囲む。
         // fallback はプリレンダーされた静的シェルに含まれ、完成した結果が後から届く。

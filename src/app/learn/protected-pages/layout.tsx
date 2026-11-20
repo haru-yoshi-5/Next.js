@@ -3,6 +3,7 @@ import { protectedPagesLesson } from "@/content/lessons/protected-pages"
 import { createLessonMetadata } from "@/lib/lesson-metadata"
 
 import { GuardDemoPanel } from "./guard-demo-panel"
+import { ProtectedPagesShort } from "./protected-pages-short"
 
 export const metadata = createLessonMetadata(protectedPagesLesson)
 
@@ -20,6 +21,7 @@ export default function ProtectedPagesLessonLayout({
   return (
     <LessonPage
       lesson={protectedPagesLesson}
+      short={<ProtectedPagesShort key="protected-pages-short" />}
       demo={<GuardDemoPanel>{children}</GuardDemoPanel>}
     />
   )

@@ -6,6 +6,7 @@ import { appRouterLesson } from "@/content/lessons/app-router"
 import { createLessonMetadata } from "@/lib/lesson-metadata"
 
 import { RouteDemoPanel } from "./route-demo-panel"
+import { AppRouterShort } from "./app-router-short"
 
 export const metadata = createLessonMetadata(appRouterLesson)
 
@@ -20,6 +21,7 @@ export default function AppRouterLessonLayout({
   return (
     <LessonPage
       lesson={appRouterLesson}
+      short={<AppRouterShort key="app-router-short" />}
       demo={
         // RouteDemoPanel は usePathname() を使うため、generateStaticParams にない slug
         // （URL がビルド時に確定しないルート）ではリクエスト時まで fallback を表示する
