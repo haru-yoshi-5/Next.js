@@ -232,11 +232,12 @@ function ReservedMetrics({ metrics }: { metrics: readonly ShortMetric[] }) {
       {metrics.map((metric) => (
         <p
           key={metric.id}
-          className="max-w-full rounded-md px-2.5 py-1.5 text-xs sm:text-sm"
+          className="max-w-full rounded-md px-2.5 py-1.5 text-xs wrap-break-word sm:text-sm"
         >
+          {/* 空白は本物のバッジと同じ扱い（連続は 1 つに、行末は消す）にして、幅を一致させる */}
           <span
             data-reserve={`${metric.label} `}
-            className="whitespace-pre-wrap before:content-[attr(data-reserve)]"
+            className="before:content-[attr(data-reserve)]"
           />
           <strong
             data-reserve={String(metric.value)}
@@ -244,7 +245,7 @@ function ReservedMetrics({ metrics }: { metrics: readonly ShortMetric[] }) {
           />
           <span
             data-reserve={` ${metric.unit}`}
-            className="whitespace-pre-wrap before:content-[attr(data-reserve)]"
+            className="before:content-[attr(data-reserve)]"
           />
         </p>
       ))}
@@ -261,9 +262,9 @@ function MetricBadge({
 }) {
   const value = useTransitionValue(metric.value, transition)
   const integer = useTransform(value, Math.round)
-  // 欄の幅を超えないよう上限を付ける。折り返せない長い語は欄の端で折り返す（親の wrap-break-word）
+  // 欄の幅を超えないよう上限を付け、折り返せない長い語はバッジの端で折り返す
   return (
-    <p className="max-w-full rounded-md bg-muted px-2.5 py-1.5 text-xs sm:text-sm">
+    <p className="max-w-full rounded-md bg-muted px-2.5 py-1.5 text-xs wrap-break-word sm:text-sm">
       {metric.label}{" "}
       <motion.strong aria-hidden className="text-base tabular-nums">
         {integer}
@@ -421,9 +422,14 @@ export function ShortPlayer({
           metricNote &&
           reserved.some((entry) => entry.metrics.length > 0) &&
           (scene.metrics.length > 0 ? (
-            <span className="text-xs text-muted-foreground">{metricNote}</span>
+            <span className="max-w-full text-xs wrap-break-word text-muted-foreground">
+              {metricNote}
+            </span>
           ) : (
-            <Reserve text={metricNote} className="text-xs" />
+            <Reserve
+              text={metricNote}
+              className="max-w-full text-xs wrap-break-word"
+            />
           ))}
       </div>
       {valid ? (
