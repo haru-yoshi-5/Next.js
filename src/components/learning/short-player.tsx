@@ -236,7 +236,7 @@ function ReservedMetrics({ metrics }: { metrics: readonly ShortMetric[] }) {
         >
           <span
             data-reserve={`${metric.label} `}
-            className="whitespace-pre before:content-[attr(data-reserve)]"
+            className="whitespace-pre-wrap before:content-[attr(data-reserve)]"
           />
           <strong
             data-reserve={String(metric.value)}
@@ -244,7 +244,7 @@ function ReservedMetrics({ metrics }: { metrics: readonly ShortMetric[] }) {
           />
           <span
             data-reserve={` ${metric.unit}`}
-            className="whitespace-pre before:content-[attr(data-reserve)]"
+            className="whitespace-pre-wrap before:content-[attr(data-reserve)]"
           />
         </p>
       ))}
@@ -407,7 +407,7 @@ export function ShortPlayer({
             {tone ? ` · ${tone.label}` : ""}
           </p>
           {valid && (
-            <div className="mt-1 grid text-xl font-bold">
+            <div className="mt-1 grid grid-cols-[minmax(0,1fr)] text-xl font-bold wrap-break-word">
               <h2 className="col-start-1 row-start-1">{scene.title}</h2>
               {reserved.map((entry) => (
                 <Reserve key={entry.id} text={entry.title} />
@@ -427,7 +427,7 @@ export function ShortPlayer({
       </div>
       {valid ? (
         <>
-          <div className="grid min-h-10">
+          <div className="grid min-h-10 grid-cols-[minmax(0,1fr)] wrap-break-word">
             <div className="col-start-1 row-start-1 flex flex-wrap gap-2">
               {scene.metrics.map((metric) => (
                 <MetricBadge
@@ -461,7 +461,7 @@ export function ShortPlayer({
                 <RuntimeBadge runtime="client" />
               </div>
             </div>
-            <div className="grid">
+            <div className="grid grid-cols-[minmax(0,1fr)] wrap-break-word">
               <ul className="col-start-1 row-start-1 flex flex-col gap-2 pb-2">
                 {scene.nodes.map((node) => (
                   <DiagramNode
@@ -476,7 +476,7 @@ export function ShortPlayer({
               ))}
             </div>
           </div>
-          <div className="my-4 grid min-h-[4.5rem] text-sm leading-relaxed sm:min-h-10">
+          <div className="my-4 grid min-h-[4.5rem] grid-cols-[minmax(0,1fr)] text-sm leading-relaxed wrap-break-word sm:min-h-10">
             <p className="col-start-1 row-start-1">{caption}</p>
             {reserved.map((entry) => (
               <Reserve key={entry.id} text={entry.caption} />
