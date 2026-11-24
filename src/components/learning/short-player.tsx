@@ -232,7 +232,7 @@ function ReservedMetrics({ metrics }: { metrics: readonly ShortMetric[] }) {
       {metrics.map((metric) => (
         <p
           key={metric.id}
-          className="rounded-md px-2.5 py-1.5 text-xs sm:text-sm"
+          className="max-w-full rounded-md px-2.5 py-1.5 text-xs sm:text-sm"
         >
           <span
             data-reserve={`${metric.label} `}
@@ -261,8 +261,9 @@ function MetricBadge({
 }) {
   const value = useTransitionValue(metric.value, transition)
   const integer = useTransform(value, Math.round)
+  // 欄の幅を超えないよう上限を付ける。折り返せない長い語は欄の端で折り返す（親の wrap-break-word）
   return (
-    <p className="rounded-md bg-muted px-2.5 py-1.5 text-xs sm:text-sm">
+    <p className="max-w-full rounded-md bg-muted px-2.5 py-1.5 text-xs sm:text-sm">
       {metric.label}{" "}
       <motion.strong aria-hidden className="text-base tabular-nums">
         {integer}
