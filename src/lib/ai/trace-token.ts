@@ -7,7 +7,7 @@ import { errors, jwtVerify, SignJWT } from "jose"
 import { serializeTraceSummary, type TraceSummary } from "@/lib/tracing/adapter"
 
 /** 署名付きトークンの有効期間（秒） */
-export const TRACE_TOKEN_TTL_SECONDS = 10 * 60
+const TRACE_TOKEN_TTL_SECONDS = 10 * 60
 const ISSUER = "nextscope"
 const AUDIENCE = "runtime_explain"
 
@@ -24,7 +24,7 @@ function signingKey(secret: string) {
 }
 
 /** 要約のハッシュ（キャッシュのキーとトークンに入れる） */
-export function hashTraceSummary(summary: TraceSummary) {
+function hashTraceSummary(summary: TraceSummary) {
   return createHash("sha256")
     .update(serializeTraceSummary(summary))
     .digest("base64url")
