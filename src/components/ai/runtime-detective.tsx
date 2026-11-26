@@ -3,8 +3,8 @@
 import { InfoIcon, LoaderIcon, SearchCodeIcon } from "lucide-react"
 import { useId, useRef, useState } from "react"
 
-import { Badge } from "@/components/ui/badge"
 import { AiErrorNotice } from "@/components/ai/ai-error-notice"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   formatAnswer,
