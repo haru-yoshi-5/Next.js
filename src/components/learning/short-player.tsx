@@ -232,11 +232,12 @@ function ReservedMetrics({ metrics }: { metrics: readonly ShortMetric[] }) {
       {metrics.map((metric) => (
         <p
           key={metric.id}
-          className="rounded-md px-2.5 py-1.5 text-xs sm:text-sm"
+          className="max-w-full rounded-md px-2.5 py-1.5 text-xs wrap-break-word sm:text-sm"
         >
+          {/* 空白は本物のバッジと同じ扱い（連続は 1 つに、行末は消す）にして、幅を一致させる */}
           <span
             data-reserve={`${metric.label} `}
-            className="whitespace-pre before:content-[attr(data-reserve)]"
+            className="before:content-[attr(data-reserve)]"
           />
           <strong
             data-reserve={String(metric.value)}
@@ -244,7 +245,7 @@ function ReservedMetrics({ metrics }: { metrics: readonly ShortMetric[] }) {
           />
           <span
             data-reserve={` ${metric.unit}`}
-            className="whitespace-pre before:content-[attr(data-reserve)]"
+            className="before:content-[attr(data-reserve)]"
           />
         </p>
       ))}
@@ -261,8 +262,9 @@ function MetricBadge({
 }) {
   const value = useTransitionValue(metric.value, transition)
   const integer = useTransform(value, Math.round)
+  // 欄の幅を超えないよう上限を付け、折り返せない長い語はバッジの端で折り返す
   return (
-    <p className="rounded-md bg-muted px-2.5 py-1.5 text-xs sm:text-sm">
+    <p className="max-w-full rounded-md bg-muted px-2.5 py-1.5 text-xs wrap-break-word sm:text-sm">
       {metric.label}{" "}
       <motion.strong aria-hidden className="text-base tabular-nums">
         {integer}
@@ -407,7 +409,7 @@ export function ShortPlayer({
             {tone ? ` · ${tone.label}` : ""}
           </p>
           {valid && (
-            <div className="mt-1 grid text-xl font-bold">
+            <div className="mt-1 grid grid-cols-[minmax(0,1fr)] text-xl font-bold wrap-break-word">
               <h2 className="col-start-1 row-start-1">{scene.title}</h2>
               {reserved.map((entry) => (
                 <Reserve key={entry.id} text={entry.title} />
@@ -420,14 +422,19 @@ export function ShortPlayer({
           metricNote &&
           reserved.some((entry) => entry.metrics.length > 0) &&
           (scene.metrics.length > 0 ? (
-            <span className="text-xs text-muted-foreground">{metricNote}</span>
+            <span className="max-w-full text-xs wrap-break-word text-muted-foreground">
+              {metricNote}
+            </span>
           ) : (
-            <Reserve text={metricNote} className="text-xs" />
+            <Reserve
+              text={metricNote}
+              className="max-w-full text-xs wrap-break-word"
+            />
           ))}
       </div>
       {valid ? (
         <>
-          <div className="grid min-h-10">
+          <div className="grid min-h-10 grid-cols-[minmax(0,1fr)] wrap-break-word">
             <div className="col-start-1 row-start-1 flex flex-wrap gap-2">
               {scene.metrics.map((metric) => (
                 <MetricBadge
@@ -461,7 +468,7 @@ export function ShortPlayer({
                 <RuntimeBadge runtime="client" />
               </div>
             </div>
-            <div className="grid">
+            <div className="grid grid-cols-[minmax(0,1fr)] wrap-break-word">
               <ul className="col-start-1 row-start-1 flex flex-col gap-2 pb-2">
                 {scene.nodes.map((node) => (
                   <DiagramNode
@@ -476,7 +483,7 @@ export function ShortPlayer({
               ))}
             </div>
           </div>
-          <div className="my-4 grid min-h-[4.5rem] text-sm leading-relaxed sm:min-h-10">
+          <div className="my-4 grid min-h-[4.5rem] grid-cols-[minmax(0,1fr)] text-sm leading-relaxed wrap-break-word sm:min-h-10">
             <p className="col-start-1 row-start-1">{caption}</p>
             {reserved.map((entry) => (
               <Reserve key={entry.id} text={entry.caption} />
