@@ -6,7 +6,6 @@ import {
   InfoIcon,
   LoaderIcon,
   MessageCircleQuestionIcon,
-  RotateCcwIcon,
   SendIcon,
 } from "lucide-react"
 import Link from "next/link"
@@ -18,6 +17,7 @@ import {
   useState,
 } from "react"
 
+import { AiErrorNotice } from "@/components/ai/ai-error-notice"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -77,6 +77,7 @@ export function AiTutorPanel({ lessonId, lessonTitle }: AiTutorPanelProps) {
   const isLoading = state.status === "loading"
   const length = countCharacters(question.trim())
   const tooLong = length > QUESTION_MAX_LENGTH
+  const invalid = inputError !== null || tooLong
 
   async function send(text: string) {
     if (inFlight.current) return
@@ -159,11 +160,11 @@ export function AiTutorPanel({ lessonId, lessonTitle }: AiTutorPanelProps) {
               onKeyDown={handleKeyDown}
               placeholder="例: ここでなぜサーバー処理を使うのですか？"
               autoComplete="off"
-              aria-invalid={inputError !== null || tooLong}
+              aria-invalid={invalid}
               aria-describedby={`${hintId} ${errorId} ${privacyId}`}
               className={cn(
                 "min-h-24 w-full resize-y rounded-lg border bg-background px-3 py-2 text-sm leading-relaxed outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40",
-                (inputError !== null || tooLong) && "border-destructive",
+                invalid && "border-destructive",
               )}
             />
             <div className="flex items-start justify-between gap-3">
@@ -323,24 +324,10 @@ function TutorResultView({
     return (
       <>
         {askedQuestion}
-        <div className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3">
-          <p className="flex gap-2 text-sm leading-relaxed text-destructive">
-            <CircleAlertIcon aria-hidden className="mt-0.5 size-4 shrink-0" />
-            {result.message}
-          </p>
-          {result.retryable ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="self-start"
-              onClick={() => onRetry(state.question)}
-            >
-              <RotateCcwIcon aria-hidden />
-              もう一度送信する
-            </Button>
-          ) : null}
-        </div>
+        <AiErrorNotice
+          message={result.message}
+          onRetry={result.retryable ? () => onRetry(state.question) : undefined}
+        />
       </>
     )
   }

@@ -4,7 +4,7 @@ import { getAvailableLessons, lessonHref } from "@/content/curriculum"
 import type { ContentBlock, LessonContent } from "@/types/lesson-content"
 
 /** モデルに渡す教材の内容の最大文字数（無料枠の使用量を抑える） */
-export const LESSON_CONTEXT_MAX_LENGTH = 6000
+const LESSON_CONTEXT_MAX_LENGTH = 6000
 
 export interface LessonReference {
   slug: string

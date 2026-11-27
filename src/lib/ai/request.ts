@@ -11,13 +11,11 @@ import {
 } from "@/lib/tracing/adapter"
 import type { LessonContent } from "@/types/lesson-content"
 
-import { QUESTION_MAX_LENGTH } from "./client"
+import { validateQuestion } from "./client"
 import { isRuntimeExplainLesson } from "./runtime-lessons"
 
 /** 受け付ける本文の最大サイズ（バイト） */
 export const BODY_MAX_BYTES = 4096
-/** 質問の最大文字数（画面の入力チェックと同じ値を使う） */
-export { QUESTION_MAX_LENGTH }
 
 /** 許可する mode */
 const ALLOWED_MODES = [
@@ -107,6 +105,11 @@ function isAllowedMode(value: unknown): value is ExplainMode {
   )
 }
 
+/** 本文に、許可した項目以外がない */
+function hasOnlyKeys(fields: Record<string, unknown>, allowed: string[]) {
+  return Object.keys(fields).every((key) => allowed.includes(key))
+}
+
 /** 改行とタブ以外の制御文字 */
 const CONTROL_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/
 
@@ -156,8 +159,7 @@ export function parseExplainRequest(raw: string): ParseResult {
   if (mode === "what_if_compare") {
     if (
       lesson.slug !== "data-fetching" ||
-      Object.keys(fields).length !== 2 ||
-      !Object.keys(fields).every((key) => ["lessonId", "mode"].includes(key))
+      !hasOnlyKeys(fields, ["lessonId", "mode"])
     ) {
       return {
         ok: false,
@@ -179,9 +181,7 @@ export function parseExplainRequest(raw: string): ParseResult {
     if (
       !entry ||
       !lesson.sourceFiles.some((file) => file.path === entry.path) ||
-      Object.keys(fields).some(
-        (key) => !["lessonId", "mode", "selectedComponentId"].includes(key),
-      )
+      !hasOnlyKeys(fields, ["lessonId", "mode", "selectedComponentId"])
     ) {
       return {
         ok: false,
@@ -192,20 +192,11 @@ export function parseExplainRequest(raw: string): ParseResult {
     return { ok: true, value: { lesson, mode, entry } }
   }
 
-  if (typeof question !== "string") {
-    return { ok: false, status: 400, message: "質問を入力してください。" }
-  }
-  const trimmed = question.trim()
-  if (trimmed.length === 0) {
-    return { ok: false, status: 400, message: "質問を入力してください。" }
-  }
-  if ([...trimmed].length > QUESTION_MAX_LENGTH) {
-    return {
-      ok: false,
-      status: 400,
-      message: `質問は${QUESTION_MAX_LENGTH}文字以内で入力してください。`,
-    }
-  }
+  // 空・文字数の検証は画面と同じ関数を使う（文字列でない値は空として扱う）
+  const text = typeof question === "string" ? question : ""
+  const problem = validateQuestion(text)
+  if (problem) return { ok: false, status: 400, message: problem }
+  const trimmed = text.trim()
   if (CONTROL_CHARACTERS.test(trimmed)) {
     return {
       ok: false,
@@ -217,7 +208,7 @@ export function parseExplainRequest(raw: string): ParseResult {
   return { ok: true, value: { lesson, mode, question: trimmed } }
 }
 
-const INVALID_TRACE_MESSAGE =
+export const INVALID_TRACE_MESSAGE =
   "実行の記録を確認できませんでした。もう一度デモを実行してから、解説を依頼してください。"
 
 /** runtime_explain の本文を確かめる（署名の検証は explain.ts で行う） */

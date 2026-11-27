@@ -4,6 +4,7 @@ import { createHash } from "node:crypto"
 
 import { readMappedCode } from "@/lib/learning/code-map"
 
+import { AI_NOTICE } from "./client"
 import type { AiConfigResult } from "./config"
 import {
   buildLessonContext,
@@ -36,11 +37,12 @@ import {
 import { isAllowedRegion } from "./region"
 import {
   BODY_MAX_BYTES,
+  INVALID_TRACE_MESSAGE,
   parseExplainRequest,
   readBodyWithLimit,
 } from "./request"
 import type { AiStore, QuotaEntry } from "./store"
-import { verifyTraceToken } from "./trace-token"
+import { TRACE_TOKEN_TTL_MINUTES, verifyTraceToken } from "./trace-token"
 import {
   jstDateKey,
   nextJstMidnightSeconds,
@@ -56,9 +58,6 @@ const QUOTA_EXPIRE_GRACE_SECONDS = 60 * 60
 /** 回答として返す最大文字数 */
 const ANSWER_MAX_LENGTH = 4000
 const KEY_PREFIX = "nextscope:ai"
-
-export const AI_NOTICE =
-  "AI が生成した解説です。誤りを含むことがあります。教材の本文とあわせて確認してください。"
 
 export type ExplainErrorCode =
   | "disabled"
@@ -120,10 +119,7 @@ const UNAVAILABLE_MESSAGE =
 
 const SESSION_MISSING_MESSAGE =
   "実行の記録を、この利用者のものとして確認できませんでした。ページを読み込み直してから、もう一度デモを実行してください。"
-const TRACE_EXPIRED_MESSAGE =
-  "実行の記録の有効期限（10 分）が切れました。もう一度デモを実行してから、解説を依頼してください。"
-const TRACE_INVALID_MESSAGE =
-  "実行の記録を確認できませんでした。もう一度デモを実行してから、解説を依頼してください。"
+const TRACE_EXPIRED_MESSAGE = `実行の記録の有効期限（${TRACE_TOKEN_TTL_MINUTES} 分）が切れました。もう一度デモを実行してから、解説を依頼してください。`
 
 const GENERATE_ERRORS = {
   timeout: {
@@ -165,6 +161,14 @@ function normalizeQuestion(question: string) {
   return question.trim()
 }
 
+/** キャッシュのキー。parts の要素と順序がすべて同じときだけ一致する */
+function cacheKeyOf(parts: unknown[]) {
+  const digest = createHash("sha256")
+    .update(JSON.stringify(parts))
+    .digest("base64url")
+  return `${KEY_PREFIX}:cache:${digest}`
+}
+
 /** 同じ教材・同じ質問・同じ指示・同じモデルのときだけ一致するキャッシュのキー */
 export function buildCacheKey(input: {
   model: string
@@ -172,45 +176,35 @@ export function buildCacheKey(input: {
   lessonId: string
   question: string
 }) {
-  const digest = createHash("sha256")
-    .update(
-      JSON.stringify([
-        PROMPT_VERSION,
-        input.model,
-        input.mode,
-        input.lessonId,
-        normalizeQuestion(input.question),
-      ]),
-    )
-    .digest("base64url")
-  return `${KEY_PREFIX}:cache:${digest}`
+  return cacheKeyOf([
+    PROMPT_VERSION,
+    input.model,
+    input.mode,
+    input.lessonId,
+    normalizeQuestion(input.question),
+  ])
 }
 
 /**
  * 実行記録の解説のキャッシュのキー。
  * 同じ利用者（匿名のセッション ID）・同じ実行記録（要約のハッシュ）・同じ申告・同じ指示・同じモデルのときだけ一致する
  */
-export function buildRuntimeCacheKey(input: {
+function buildRuntimeCacheKey(input: {
   model: string
   lessonId: string
   sessionId: string
   summaryHash: string
   browserRoundTripMs: number | null
 }) {
-  const digest = createHash("sha256")
-    .update(
-      JSON.stringify([
-        RUNTIME_PROMPT_VERSION,
-        input.model,
-        "runtime_explain",
-        input.lessonId,
-        input.sessionId,
-        input.summaryHash,
-        input.browserRoundTripMs,
-      ]),
-    )
-    .digest("base64url")
-  return `${KEY_PREFIX}:cache:${digest}`
+  return cacheKeyOf([
+    RUNTIME_PROMPT_VERSION,
+    input.model,
+    "runtime_explain",
+    input.lessonId,
+    input.sessionId,
+    input.summaryHash,
+    input.browserRoundTripMs,
+  ])
 }
 
 /**
@@ -346,24 +340,18 @@ export async function handleExplain(
     systemInstruction = SYSTEM_INSTRUCTION
     prompt = buildContextTutorPrompt(buildLessonContext(lesson), question)
   } else if (parsed.value.mode === "what_if_compare") {
-    const facts =
+    prompt =
       "独立した2つの固定データ取得を、逐次 await と Promise.all で比較する。取得には待ち時間を模した処理を使う。"
     systemInstruction =
       "あなたはデータ取得の学習を支援します。日本語で一般論を説明してください。独立した取得では並列実行によって待ち時間が重なることと、逐次実行との違いを主題にしてください。依存関係がある場合、同時実行数の制限がある場合、Promise.all の一つが失敗した場合を条件付きで説明してください。今回の実測値、倍率、結果を推測しないでください。回答は画面にそのまま文字として表示されるため、Markdown の記号（見出しの #、強調の **、区切り線の ---、コードのバッククォート）を使わず、字下げのない短い段落で、全体で600字程度にまとめてください。"
-    prompt = facts
-    const digest = createHash("sha256")
-      .update(
-        JSON.stringify([
-          "what-if-v2",
-          config.model,
-          parsed.value.mode,
-          lesson.slug,
-          facts,
-          systemInstruction,
-        ]),
-      )
-      .digest("base64url")
-    cacheKey = `${KEY_PREFIX}:cache:${digest}`
+    cacheKey = cacheKeyOf([
+      "what-if-v2",
+      config.model,
+      parsed.value.mode,
+      lesson.slug,
+      prompt,
+      systemInstruction,
+    ])
   } else if (parsed.value.mode === "code_explain") {
     const { entry } = parsed.value
     try {
@@ -388,19 +376,14 @@ export async function handleExplain(
         lastLine: end + 1,
         code,
       })
-      const digest = createHash("sha256")
-        .update(
-          JSON.stringify([
-            CODE_PROMPT_VERSION,
-            config.model,
-            parsed.value.mode,
-            lesson.slug,
-            entry.id,
-            prompt,
-          ]),
-        )
-        .digest("base64url")
-      cacheKey = `${KEY_PREFIX}:cache:${digest}`
+      cacheKey = cacheKeyOf([
+        CODE_PROMPT_VERSION,
+        config.model,
+        parsed.value.mode,
+        lesson.slug,
+        entry.id,
+        prompt,
+      ])
       systemInstruction = CODE_SYSTEM_INSTRUCTION
     } catch {
       return fail(
@@ -429,7 +412,7 @@ export async function handleExplain(
         "invalid_trace",
         check.reason === "expired"
           ? TRACE_EXPIRED_MESSAGE
-          : TRACE_INVALID_MESSAGE,
+          : INVALID_TRACE_MESSAGE,
       )
     }
 

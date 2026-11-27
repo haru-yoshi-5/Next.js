@@ -12,6 +12,15 @@ describe("教材データの一覧", () => {
     expect(getLessonContentSlugs().sort()).toEqual(curriculumSlugs)
   })
 
+  it("curriculum.ts の題名と、教材の本文の題名が一致する", () => {
+    // 題名は 2 か所に書いてあり、サイドバーと見出し・metadata で表記が割れないようにする
+    for (const lesson of getAvailableLessons()) {
+      expect(getLessonContent(lesson.slug)?.title, lesson.slug).toBe(
+        lesson.title,
+      )
+    }
+  })
+
   it("slug から教材の本文を引ける", () => {
     expect(getLessonContent("server-components")?.title).toBe(
       "Server Components",

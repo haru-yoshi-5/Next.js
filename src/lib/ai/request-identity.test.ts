@@ -8,7 +8,8 @@ import {
   readSessionCookie,
   verifySessionCookie,
 } from "./identity"
-import { parseExplainRequest, QUESTION_MAX_LENGTH } from "./request"
+import { QUESTION_MAX_LENGTH } from "./client"
+import { parseExplainRequest } from "./request"
 
 const secret = "s".repeat(32)
 

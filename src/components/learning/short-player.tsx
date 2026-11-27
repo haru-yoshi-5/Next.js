@@ -114,6 +114,18 @@ function isValidScene(
   )
 }
 
+/** 表示できる場面。形が正しく、id がほかの場面と重ならない */
+function isRenderableScene(
+  scene: ShortScene | undefined,
+  scenes: readonly ShortScene[],
+  code: CodeSlots,
+): scene is ShortScene {
+  return (
+    isValidScene(scene, code) &&
+    scenes.filter((entry) => entry?.id === scene.id).length === 1
+  )
+}
+
 interface TransitionState {
   animated: boolean
   playing: boolean
@@ -180,6 +192,79 @@ function DiagramNode({
   )
 }
 
+/**
+ * 全場面のうち最も高いものに合わせて、場所を確保するための見えない要素。
+ * 本物の要素と同じグリッドのマスに重ねて置く。場面が変わっても高さが変わらず、下の操作ボタンが動かない。
+ * 文字は CSS の content で描き、DOM の文字にも支援技術にも出さない（本物の文言と重複させない）。
+ */
+function Reserve({
+  text,
+  className = "",
+}: {
+  text: string
+  className?: string
+}) {
+  return (
+    <span
+      aria-hidden
+      data-reserve={text}
+      className={`invisible col-start-1 row-start-1 block before:content-[attr(data-reserve)] ${className}`}
+    />
+  )
+}
+
+function ReservedNodes({ nodes }: { nodes: readonly ShortNode[] }) {
+  return (
+    <div
+      aria-hidden
+      className="invisible col-start-1 row-start-1 flex flex-col gap-2 pb-2"
+    >
+      {nodes.map((node) => (
+        <div key={node.id} className="w-1/2 px-2">
+          <div className="rounded-md border p-2 sm:px-3">
+            <Reserve
+              text={node.label}
+              className="font-mono text-xs font-semibold wrap-anywhere sm:text-sm"
+            />
+            <Reserve text={node.description} className="mt-1 text-xs" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** 数値のバッジの行。数値の桁でバッジの幅が変わり、折り返す行数が場面で変わるため場所を確保する */
+function ReservedMetrics({ metrics }: { metrics: readonly ShortMetric[] }) {
+  return (
+    <div
+      aria-hidden
+      className="invisible col-start-1 row-start-1 flex flex-wrap gap-2"
+    >
+      {metrics.map((metric) => (
+        <p
+          key={metric.id}
+          className="max-w-full rounded-md px-2.5 py-1.5 text-xs wrap-break-word sm:text-sm"
+        >
+          {/* 空白は本物のバッジと同じ扱い（連続は 1 つに、行末は消す）にして、幅を一致させる */}
+          <span
+            data-reserve={`${metric.label} `}
+            className="before:content-[attr(data-reserve)]"
+          />
+          <strong
+            data-reserve={String(metric.value)}
+            className="text-base tabular-nums before:content-[attr(data-reserve)]"
+          />
+          <span
+            data-reserve={` ${metric.unit}`}
+            className="before:content-[attr(data-reserve)]"
+          />
+        </p>
+      ))}
+    </div>
+  )
+}
+
 function MetricBadge({
   metric,
   transition,
@@ -189,8 +274,9 @@ function MetricBadge({
 }) {
   const value = useTransitionValue(metric.value, transition)
   const integer = useTransform(value, Math.round)
+  // 欄の幅を超えないよう上限を付け、折り返せない長い語はバッジの端で折り返す
   return (
-    <p className="rounded-md bg-muted px-2.5 py-1.5 text-xs sm:text-sm">
+    <p className="max-w-full rounded-md bg-muted px-2.5 py-1.5 text-xs wrap-break-word sm:text-sm">
       {metric.label}{" "}
       <motion.strong aria-hidden className="text-base tabular-nums">
         {integer}
@@ -222,9 +308,7 @@ export function ShortPlayer({
   const codePanel = useRef<HTMLDivElement>(null)
   const current = index < scenes.length ? index : 0
   const scene = scenes[current]
-  const valid =
-    isValidScene(scene, code) &&
-    scenes.filter((entry) => entry?.id === scene.id).length === 1
+  const valid = isRenderableScene(scene, scenes, code)
   const canPlay = motionAllowed && valid
   const running = playing && canPlay
   const transition = { animated: animated && motionAllowed, playing: running }
@@ -254,10 +338,7 @@ export function ShortPlayer({
       remaining.current = null
       const next = (current + 1) % scenes.length
       const nextScene = scenes[next]
-      if (
-        !isValidScene(nextScene, code) ||
-        scenes.filter((entry) => entry?.id === nextScene.id).length !== 1
-      ) {
+      if (!isRenderableScene(nextScene, scenes, code)) {
         setPlaying(false)
       }
       setAnimated(true)
@@ -312,6 +393,10 @@ export function ShortPlayer({
     )
   }
 
+  // 高さを確保する対象。壊れた場面と id が重複する場面は表示しないので含めない（key の重複も防ぐ）
+  const reserved = scenes.filter((entry) =>
+    isRenderableScene(entry, scenes, code),
+  )
   const tone = valid ? tones[scene.tone] : null
   const caption =
     typeof scene?.caption === "string" && scene.caption.trim()
@@ -328,21 +413,44 @@ export function ShortPlayer({
             図解ショート · {current + 1} / {scenes.length}
             {tone ? ` · ${tone.label}` : ""}
           </p>
-          {valid && <h2 className="mt-1 text-xl font-bold">{scene.title}</h2>}
+          {valid && (
+            <div className="mt-1 grid grid-cols-[minmax(0,1fr)] text-xl font-bold wrap-break-word">
+              <h2 className="col-start-1 row-start-1">{scene.title}</h2>
+              {reserved.map((entry) => (
+                <Reserve key={entry.id} text={entry.title} />
+              ))}
+            </div>
+          )}
         </div>
-        {valid && scene.metrics.length > 0 && metricNote && (
-          <span className="text-xs text-muted-foreground">{metricNote}</span>
-        )}
+        {/* 数値のない場面でも場所は残し、見出しの高さを場面ごとに変えない */}
+        {valid &&
+          metricNote &&
+          reserved.some((entry) => entry.metrics.length > 0) &&
+          (scene.metrics.length > 0 ? (
+            <span className="max-w-full text-xs wrap-break-word text-muted-foreground">
+              {metricNote}
+            </span>
+          ) : (
+            <Reserve
+              text={metricNote}
+              className="max-w-full text-xs wrap-break-word"
+            />
+          ))}
       </div>
       {valid ? (
         <>
-          <div className="flex min-h-10 flex-wrap gap-2">
-            {scene.metrics.map((metric) => (
-              <MetricBadge
-                key={metric.id}
-                metric={metric}
-                transition={transition}
-              />
+          <div className="grid min-h-10 grid-cols-[minmax(0,1fr)] wrap-break-word">
+            <div className="col-start-1 row-start-1 flex flex-wrap gap-2">
+              {scene.metrics.map((metric) => (
+                <MetricBadge
+                  key={metric.id}
+                  metric={metric}
+                  transition={transition}
+                />
+              ))}
+            </div>
+            {reserved.map((entry) => (
+              <ReservedMetrics key={entry.id} metrics={entry.metrics} />
             ))}
           </div>
           <div
@@ -365,22 +473,32 @@ export function ShortPlayer({
                 <RuntimeBadge runtime="client" />
               </div>
             </div>
-            <ul className="flex flex-col gap-2 pb-2">
-              {scene.nodes.map((node) => (
-                <DiagramNode
-                  key={node.id}
-                  node={node}
-                  transition={transition}
-                />
+            <div className="grid grid-cols-[minmax(0,1fr)] wrap-break-word">
+              <ul className="col-start-1 row-start-1 flex flex-col gap-2 pb-2">
+                {scene.nodes.map((node) => (
+                  <DiagramNode
+                    key={node.id}
+                    node={node}
+                    transition={transition}
+                  />
+                ))}
+              </ul>
+              {reserved.map((entry) => (
+                <ReservedNodes key={entry.id} nodes={entry.nodes} />
               ))}
-            </ul>
+            </div>
           </div>
-          <p className="my-4 min-h-[4.5rem] text-sm leading-relaxed sm:min-h-10">
-            {caption}
-          </p>
+          <div className="my-4 grid min-h-[4.5rem] grid-cols-[minmax(0,1fr)] text-sm leading-relaxed wrap-break-word sm:min-h-10">
+            <p className="col-start-1 row-start-1">{caption}</p>
+            {reserved.map((entry) => (
+              <Reserve key={entry.id} text={entry.caption} />
+            ))}
+          </div>
+          {/* 幅が狭く高さも固定なので、この欄の中だけ長い行を折り返す。
+              行番号は 1 行目に付き、続きの行は 2 文字下げて別の行と見分けられるようにする */}
           <div
             ref={codePanel}
-            className="h-64 min-w-0 space-y-2 overflow-auto rounded-lg"
+            className="h-64 min-w-0 space-y-2 overflow-auto rounded-lg [&_code]:min-w-0 [&_code>span>span:last-child]:min-w-0 [&_code>span>span:last-child]:pl-[2ch] [&_code>span>span:last-child]:-indent-[2ch] [&_code>span>span:last-child]:wrap-anywhere [&_pre]:whitespace-pre-wrap"
             aria-label="この場面のコード例"
             role="group"
             onFocusCapture={() => setPlaying(false)}

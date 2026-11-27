@@ -51,38 +51,38 @@ export function CodeBlock({
         className="max-h-[32rem] overflow-auto bg-code py-3 font-mono text-[0.8rem] leading-6 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       >
         <code className="grid min-w-max">
-          {source.lines.map((line, lineIndex) => (
-            <span
-              key={lineIndex}
-              className={
-                highlightedLines.includes(lineIndex + firstLine)
-                  ? "flex bg-primary/15 pr-6"
-                  : "flex pr-6"
-              }
-              data-highlighted={
-                highlightedLines.includes(lineIndex + firstLine) || undefined
-              }
-            >
+          {source.lines.map((line, lineIndex) => {
+            const lineNumber = lineIndex + firstLine
+            const highlighted = highlightedLines.includes(lineNumber)
+            return (
               <span
-                aria-hidden
-                className="sticky left-0 w-12 shrink-0 bg-code pr-4 text-right text-muted-foreground/50 select-none"
+                key={lineIndex}
+                className={
+                  highlighted ? "flex bg-primary/15 pr-6" : "flex pr-6"
+                }
+                data-highlighted={highlighted || undefined}
               >
-                {lineIndex + firstLine}
+                <span
+                  aria-hidden
+                  className="sticky left-0 w-12 shrink-0 bg-code pr-4 text-right text-muted-foreground/50 select-none"
+                >
+                  {lineNumber}
+                </span>
+                <span>
+                  {line.map((token, tokenIndex) => (
+                    <span
+                      key={tokenIndex}
+                      className="code-token"
+                      style={tokenStyle(token)}
+                    >
+                      {token.content}
+                    </span>
+                  ))}
+                  {"\n"}
+                </span>
               </span>
-              <span>
-                {line.map((token, tokenIndex) => (
-                  <span
-                    key={tokenIndex}
-                    className="code-token"
-                    style={tokenStyle(token)}
-                  >
-                    {token.content}
-                  </span>
-                ))}
-                {"\n"}
-              </span>
-            </span>
-          ))}
+            )
+          })}
         </code>
       </pre>
     </figure>

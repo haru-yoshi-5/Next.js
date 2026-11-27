@@ -10,7 +10,7 @@ export const EXPLAIN_ENDPOINT = "/api/ai/explain"
 /** 質問の最大文字数（サーバーの検証と同じ値を使う） */
 export const QUESTION_MAX_LENGTH = 300
 /** ブラウザで応答を待つ上限（ミリ秒）。外部通信の待ち時間の合計（最大 38 秒）に余裕を持たせる */
-export const CLIENT_TIMEOUT_MS = 40_000
+const CLIENT_TIMEOUT_MS = 40_000
 
 /** 文字数を数える（絵文字などのサロゲートペアも 1 文字として数える） */
 export function countCharacters(text: string) {
@@ -59,10 +59,11 @@ const RETRYABLE_CODES: ReadonlySet<TutorErrorCode> = new Set([
   "invalid_response",
 ])
 
-const DEFAULT_NOTICE =
+/** 回答に添える注意書き。サーバーが返す文言と、応答にないときの代わりの文言を兼ねる */
+export const AI_NOTICE =
   "AI が生成した解説です。誤りを含むことがあります。教材の本文とあわせて確認してください。"
 
-export const NETWORK_ERROR_RESULT: TutorResult = {
+const NETWORK_ERROR_RESULT: TutorResult = {
   status: "error",
   code: "network_error",
   message:
@@ -144,7 +145,7 @@ export function parseExplainResponse(body: unknown): TutorResult {
         ? body.references.filter(isLessonReference)
         : [],
       cached: body.cached === true,
-      notice: typeof body.notice === "string" ? body.notice : DEFAULT_NOTICE,
+      notice: typeof body.notice === "string" ? body.notice : AI_NOTICE,
       // 実行の解説（runtime_explain）の応答にだけ含まれる
       ...("sections" in body ? { sections: parseSections(body.sections) } : {}),
     }
