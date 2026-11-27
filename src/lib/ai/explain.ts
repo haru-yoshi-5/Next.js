@@ -42,7 +42,7 @@ import {
   readBodyWithLimit,
 } from "./request"
 import type { AiStore, QuotaEntry } from "./store"
-import { TRACE_TOKEN_TTL_SECONDS, verifyTraceToken } from "./trace-token"
+import { TRACE_TOKEN_TTL_MINUTES, verifyTraceToken } from "./trace-token"
 import {
   jstDateKey,
   nextJstMidnightSeconds,
@@ -119,7 +119,7 @@ const UNAVAILABLE_MESSAGE =
 
 const SESSION_MISSING_MESSAGE =
   "実行の記録を、この利用者のものとして確認できませんでした。ページを読み込み直してから、もう一度デモを実行してください。"
-const TRACE_EXPIRED_MESSAGE = `実行の記録の有効期限（${TRACE_TOKEN_TTL_SECONDS / 60} 分）が切れました。もう一度デモを実行してから、解説を依頼してください。`
+const TRACE_EXPIRED_MESSAGE = `実行の記録の有効期限（${TRACE_TOKEN_TTL_MINUTES} 分）が切れました。もう一度デモを実行してから、解説を依頼してください。`
 
 const GENERATE_ERRORS = {
   timeout: {
