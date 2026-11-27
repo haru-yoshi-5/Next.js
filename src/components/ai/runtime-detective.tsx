@@ -1,14 +1,9 @@
 "use client"
 
-import {
-  CircleAlertIcon,
-  InfoIcon,
-  LoaderIcon,
-  RotateCcwIcon,
-  SearchCodeIcon,
-} from "lucide-react"
+import { InfoIcon, LoaderIcon, SearchCodeIcon } from "lucide-react"
 import { useId, useRef, useState } from "react"
 
+import { AiErrorNotice } from "@/components/ai/ai-error-notice"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -218,24 +213,10 @@ function DetectiveResult({
 
   if (result.status === "error") {
     return (
-      <div className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3">
-        <p className="flex gap-2 text-sm leading-relaxed text-destructive">
-          <CircleAlertIcon aria-hidden className="mt-0.5 size-4 shrink-0" />
-          {result.message}
-        </p>
-        {result.retryable ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="self-start"
-            onClick={onRetry}
-          >
-            <RotateCcwIcon aria-hidden />
-            もう一度送信する
-          </Button>
-        ) : null}
-      </div>
+      <AiErrorNotice
+        message={result.message}
+        onRetry={result.retryable ? onRetry : undefined}
+      />
     )
   }
 

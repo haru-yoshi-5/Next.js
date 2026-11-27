@@ -114,6 +114,18 @@ function isValidScene(
   )
 }
 
+/** 表示できる場面。形が正しく、id がほかの場面と重ならない */
+function isRenderableScene(
+  scene: ShortScene | undefined,
+  scenes: readonly ShortScene[],
+  code: CodeSlots,
+): scene is ShortScene {
+  return (
+    isValidScene(scene, code) &&
+    scenes.filter((entry) => entry?.id === scene.id).length === 1
+  )
+}
+
 interface TransitionState {
   animated: boolean
   playing: boolean
@@ -296,9 +308,7 @@ export function ShortPlayer({
   const codePanel = useRef<HTMLDivElement>(null)
   const current = index < scenes.length ? index : 0
   const scene = scenes[current]
-  const valid =
-    isValidScene(scene, code) &&
-    scenes.filter((entry) => entry?.id === scene.id).length === 1
+  const valid = isRenderableScene(scene, scenes, code)
   const canPlay = motionAllowed && valid
   const running = playing && canPlay
   const transition = { animated: animated && motionAllowed, playing: running }
@@ -328,10 +338,7 @@ export function ShortPlayer({
       remaining.current = null
       const next = (current + 1) % scenes.length
       const nextScene = scenes[next]
-      if (
-        !isValidScene(nextScene, code) ||
-        scenes.filter((entry) => entry?.id === nextScene.id).length !== 1
-      ) {
+      if (!isRenderableScene(nextScene, scenes, code)) {
         setPlaying(false)
       }
       setAnimated(true)
@@ -387,10 +394,8 @@ export function ShortPlayer({
   }
 
   // 高さを確保する対象。壊れた場面と id が重複する場面は表示しないので含めない（key の重複も防ぐ）
-  const reserved = scenes.filter(
-    (entry) =>
-      isValidScene(entry, code) &&
-      scenes.filter((other) => other?.id === entry.id).length === 1,
+  const reserved = scenes.filter((entry) =>
+    isRenderableScene(entry, scenes, code),
   )
   const tone = valid ? tones[scene.tone] : null
   const caption =

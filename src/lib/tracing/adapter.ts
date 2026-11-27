@@ -8,9 +8,9 @@ import type {
 } from "@/types/flow"
 
 /** 要約の形の版。形を変えたら上げる（古い署名付きの要約を受け付けないようにする） */
-export const TRACE_SUMMARY_VERSION = 1
+const TRACE_SUMMARY_VERSION = 1
 /** 要約に入れるステップの最大数 */
-export const TRACE_SUMMARY_MAX_STEPS = 12
+const TRACE_SUMMARY_MAX_STEPS = 12
 /** ステップの表示名の最大文字数 */
 const LABEL_MAX_LENGTH = 80
 /** 所要時間として受け付ける最大値（ミリ秒） */

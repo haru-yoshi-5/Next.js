@@ -246,6 +246,9 @@ describe("handleExplain: runtime_explain", () => {
     const { response, body } = await call(deps, runtimeBody(token), cookie)
     expect(response.status).toBe(400)
     expect(body.code).toBe("invalid_trace")
+    expect(body.message).toBe(
+      "実行の記録の有効期限（10 分）が切れました。もう一度デモを実行してから、解説を依頼してください。",
+    )
     expect(body.cached).toBeUndefined()
     expect(generate).toHaveBeenCalledTimes(1)
   })
