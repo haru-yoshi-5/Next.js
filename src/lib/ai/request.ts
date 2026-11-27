@@ -105,6 +105,11 @@ function isAllowedMode(value: unknown): value is ExplainMode {
   )
 }
 
+/** 本文に、許可した項目以外がない */
+function hasOnlyKeys(fields: Record<string, unknown>, allowed: string[]) {
+  return Object.keys(fields).every((key) => allowed.includes(key))
+}
+
 /** 改行とタブ以外の制御文字 */
 const CONTROL_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/
 
@@ -154,7 +159,7 @@ export function parseExplainRequest(raw: string): ParseResult {
   if (mode === "what_if_compare") {
     if (
       lesson.slug !== "data-fetching" ||
-      Object.keys(fields).some((key) => !["lessonId", "mode"].includes(key))
+      !hasOnlyKeys(fields, ["lessonId", "mode"])
     ) {
       return {
         ok: false,
@@ -176,9 +181,7 @@ export function parseExplainRequest(raw: string): ParseResult {
     if (
       !entry ||
       !lesson.sourceFiles.some((file) => file.path === entry.path) ||
-      Object.keys(fields).some(
-        (key) => !["lessonId", "mode", "selectedComponentId"].includes(key),
-      )
+      !hasOnlyKeys(fields, ["lessonId", "mode", "selectedComponentId"])
     ) {
       return {
         ok: false,

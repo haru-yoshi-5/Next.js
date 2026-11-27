@@ -42,7 +42,7 @@ import {
   readBodyWithLimit,
 } from "./request"
 import type { AiStore, QuotaEntry } from "./store"
-import { verifyTraceToken } from "./trace-token"
+import { TRACE_TOKEN_TTL_SECONDS, verifyTraceToken } from "./trace-token"
 import {
   jstDateKey,
   nextJstMidnightSeconds,
@@ -119,8 +119,7 @@ const UNAVAILABLE_MESSAGE =
 
 const SESSION_MISSING_MESSAGE =
   "実行の記録を、この利用者のものとして確認できませんでした。ページを読み込み直してから、もう一度デモを実行してください。"
-const TRACE_EXPIRED_MESSAGE =
-  "実行の記録の有効期限（10 分）が切れました。もう一度デモを実行してから、解説を依頼してください。"
+const TRACE_EXPIRED_MESSAGE = `実行の記録の有効期限（${TRACE_TOKEN_TTL_SECONDS / 60} 分）が切れました。もう一度デモを実行してから、解説を依頼してください。`
 
 const GENERATE_ERRORS = {
   timeout: {
@@ -341,17 +340,16 @@ export async function handleExplain(
     systemInstruction = SYSTEM_INSTRUCTION
     prompt = buildContextTutorPrompt(buildLessonContext(lesson), question)
   } else if (parsed.value.mode === "what_if_compare") {
-    const facts =
+    prompt =
       "独立した2つの固定データ取得を、逐次 await と Promise.all で比較する。取得には待ち時間を模した処理を使う。"
     systemInstruction =
       "あなたはデータ取得の学習を支援します。日本語で一般論を説明してください。独立した取得では並列実行によって待ち時間が重なることと、逐次実行との違いを主題にしてください。依存関係がある場合、同時実行数の制限がある場合、Promise.all の一つが失敗した場合を条件付きで説明してください。今回の実測値、倍率、結果を推測しないでください。回答は画面にそのまま文字として表示されるため、Markdown の記号（見出しの #、強調の **、区切り線の ---、コードのバッククォート）を使わず、字下げのない短い段落で、全体で600字程度にまとめてください。"
-    prompt = facts
     cacheKey = cacheKeyOf([
       "what-if-v2",
       config.model,
       parsed.value.mode,
       lesson.slug,
-      facts,
+      prompt,
       systemInstruction,
     ])
   } else if (parsed.value.mode === "code_explain") {

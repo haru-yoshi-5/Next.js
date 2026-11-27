@@ -77,6 +77,7 @@ export function AiTutorPanel({ lessonId, lessonTitle }: AiTutorPanelProps) {
   const isLoading = state.status === "loading"
   const length = countCharacters(question.trim())
   const tooLong = length > QUESTION_MAX_LENGTH
+  const invalid = inputError !== null || tooLong
 
   async function send(text: string) {
     if (inFlight.current) return
@@ -159,11 +160,11 @@ export function AiTutorPanel({ lessonId, lessonTitle }: AiTutorPanelProps) {
               onKeyDown={handleKeyDown}
               placeholder="例: ここでなぜサーバー処理を使うのですか？"
               autoComplete="off"
-              aria-invalid={inputError !== null || tooLong}
+              aria-invalid={invalid}
               aria-describedby={`${hintId} ${errorId} ${privacyId}`}
               className={cn(
                 "min-h-24 w-full resize-y rounded-lg border bg-background px-3 py-2 text-sm leading-relaxed outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40",
-                (inputError !== null || tooLong) && "border-destructive",
+                invalid && "border-destructive",
               )}
             />
             <div className="flex items-start justify-between gap-3">

@@ -7,7 +7,7 @@ import { errors, jwtVerify, SignJWT } from "jose"
 import { serializeTraceSummary, type TraceSummary } from "@/lib/tracing/adapter"
 
 /** 署名付きトークンの有効期間（秒） */
-const TRACE_TOKEN_TTL_SECONDS = 10 * 60
+export const TRACE_TOKEN_TTL_SECONDS = 10 * 60
 const ISSUER = "nextscope"
 const AUDIENCE = "runtime_explain"
 
