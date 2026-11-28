@@ -1,4 +1,5 @@
 import { ArrowDownIcon } from "lucide-react"
+import type { CSSProperties } from "react"
 
 import { HeroFlowPauseToggle } from "@/components/home/hero-flow-pause-toggle"
 import { RuntimeBadge } from "@/components/visualizer/runtime-badge"
@@ -51,29 +52,28 @@ export function HeroFlow() {
       <ol className="flex flex-col">
         {nodes.map((node, index) => (
           <li key={`${node.label}-${index}`} className="flex flex-col">
-            <div className="relative flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5">
-              {/* 強調用の層。不透明度だけをアニメーションさせ、一時停止ボタンで止める。
-                  ずらし時間は style で指定する（クラスで指定すると animate-flow-step の
-                  animation 一括指定に上書きされ、全ノードが同時に光ってしまう） */}
+            <div className="relative isolate flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5">
+              {/* 強調用の層。不透明度だけを動かし、ずらし時間は --flow-i で渡す */}
               <span
                 aria-hidden
-                className="pointer-events-none absolute -inset-px rounded-lg border border-flow bg-flow-muted opacity-0 group-has-[[data-paused]]:[animation-play-state:paused] motion-safe:animate-flow-step"
-                style={{ animationDelay: `${index}s` }}
+                className="pointer-events-none absolute -inset-px -z-10 rounded-lg border border-flow bg-flow-muted opacity-0 group-has-[[data-paused]]:[animation-play-state:paused] motion-safe:animate-flow-step"
+                style={{ "--flow-i": index } as CSSProperties}
               />
-              <div className="relative min-w-0">
+              <div className="min-w-0">
                 <p className="text-sm font-medium" translate="no">
                   {node.label}
                 </p>
                 <p className="text-xs text-muted-foreground">{node.note}</p>
               </div>
-              <RuntimeBadge runtime={node.runtime} className="relative" />
+              <RuntimeBadge runtime={node.runtime} />
             </div>
             {node.edge ? (
-              <div className="flex items-center gap-2 py-1.5 pl-4 text-xs text-muted-foreground">
+              <div
+                className="flex items-center gap-2 py-1.5 pl-4 text-xs text-muted-foreground"
+                translate="no"
+              >
                 <ArrowDownIcon aria-hidden className="size-3.5" />
-                <span className="font-mono" translate="no">
-                  {node.edge}
-                </span>
+                <span className="font-mono">{node.edge}</span>
               </div>
             ) : null}
           </li>

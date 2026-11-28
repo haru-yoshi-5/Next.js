@@ -15,10 +15,11 @@ export function SiteHeader() {
         <MobileNav chapters={curriculum} />
         <Link
           href="/"
+          translate="no"
           className="flex items-center gap-2 rounded-md font-semibold tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <ScanSearchIcon aria-hidden className="size-5" />
-          <span translate="no">{siteConfig.name}</span>
+          {siteConfig.name}
         </Link>
         <nav
           aria-label="メイン"

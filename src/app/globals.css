@@ -57,6 +57,7 @@
 }
 
 :root {
+  /* --background を変えたら layout.tsx の viewport.themeColor（16進）も合わせる */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -139,12 +140,13 @@
   --code: oklch(0.18 0 0);
 }
 
-@theme {
-  /* トップページの簡易フロー: 4ノードを順番に強調する（1ノード = 周期の25%） */
-  --animate-flow-step: flow-step 4s ease-in-out infinite;
+/* inline: ノードごとの --flow-i（0 始まりの番号）を、使う要素の上で解決させるため */
+@theme inline {
+  /* トップページの簡易フロー: 4ノードを1秒ずつずらして順番に強調する（1ノード = 周期の25%） */
+  --animate-flow-step: flow-step 4s ease-in-out calc(var(--flow-i, 0) * 1s)
+    infinite;
 
   @keyframes flow-step {
-    /* 強調用の層の不透明度だけを変える（色を直接動かすより描き直しが少ない） */
     0%,
     26%,
     100% {

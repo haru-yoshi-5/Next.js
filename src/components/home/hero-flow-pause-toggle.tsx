@@ -12,6 +12,9 @@ import { Button } from "@/components/ui/button"
  */
 export function HeroFlowPauseToggle() {
   const [paused, setPaused] = useState(false)
+  const [Icon, label] = paused
+    ? [PlayIcon, "アニメーションを再生"]
+    : [PauseIcon, "アニメーションを一時停止"]
 
   return (
     <Button
@@ -21,8 +24,8 @@ export function HeroFlowPauseToggle() {
       onClick={() => setPaused((value) => !value)}
       className="motion-reduce:hidden"
     >
-      {paused ? <PlayIcon aria-hidden /> : <PauseIcon aria-hidden />}
-      {paused ? "アニメーションを再生" : "アニメーションを一時停止"}
+      <Icon aria-hidden />
+      {label}
     </Button>
   )
 }
