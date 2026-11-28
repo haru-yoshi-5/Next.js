@@ -31,7 +31,7 @@ export function MobileNav({ chapters }: { chapters: Chapter[] }) {
       >
         <MenuIcon aria-hidden />
       </SheetTrigger>
-      <SheetContent side="left" className="overflow-y-auto">
+      <SheetContent side="left" className="overflow-y-auto overscroll-contain">
         <SheetHeader>
           <SheetTitle>教材メニュー</SheetTitle>
         </SheetHeader>
