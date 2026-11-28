@@ -100,6 +100,7 @@
 }
 
 .dark {
+  /* --background を変えたら layout.tsx の viewport.themeColor（16進）も合わせる */
   --background: oklch(0.155 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.195 0 0);
@@ -172,7 +173,8 @@
     @apply bg-background text-foreground;
   }
   html {
-    /* 固定ヘッダー（h-14）の下に、フォーカスやページ内リンクの移動先が隠れないようにする */
+    /* sticky ヘッダー（h-14 + border-b）の下に、フォーカスやページ内リンクの移動先が隠れないようにする。
+       ヘッダーの高さ（site-header.tsx）を変えたら、この値も合わせる */
     @apply scroll-pt-16 font-sans;
   }
 }

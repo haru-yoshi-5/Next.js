@@ -79,7 +79,8 @@ export function HeroFlow() {
           </li>
         ))}
       </ol>
-      <div className="mt-3 flex justify-end">
+      {/* 動きを減らす設定ではアニメーションがないため、余白ごと隠す */}
+      <div className="mt-3 flex justify-end motion-reduce:hidden">
         <HeroFlowPauseToggle />
       </div>
     </figure>
