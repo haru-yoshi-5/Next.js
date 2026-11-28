@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Noto_Sans_JP } from "next/font/google"
 
 import { SiteHeader } from "@/components/layout/site-header"
@@ -38,6 +38,15 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
   },
+}
+
+// ブラウザのバーの色を背景色（globals.css の --background）に合わせる。
+// 端末のテーマ設定に連動し、サイト内のテーマ切り替えには追従しない
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c0c0c" },
+  ],
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

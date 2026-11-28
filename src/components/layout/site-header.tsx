@@ -18,7 +18,7 @@ export function SiteHeader() {
           className="flex items-center gap-2 rounded-md font-semibold tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <ScanSearchIcon aria-hidden className="size-5" />
-          {siteConfig.name}
+          <span translate="no">{siteConfig.name}</span>
         </Link>
         <nav
           aria-label="メイン"

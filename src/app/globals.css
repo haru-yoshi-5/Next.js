@@ -144,16 +144,15 @@
   --animate-flow-step: flow-step 4s ease-in-out infinite;
 
   @keyframes flow-step {
+    /* 強調用の層の不透明度だけを変える（色を直接動かすより描き直しが少ない） */
     0%,
     26%,
     100% {
-      border-color: var(--border);
-      background-color: transparent;
+      opacity: 0;
     }
     4%,
     22% {
-      border-color: var(--flow);
-      background-color: var(--flow-muted);
+      opacity: 1;
     }
   }
 }
@@ -171,6 +170,7 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans;
+    /* 固定ヘッダー（h-14）の下に、フォーカスやページ内リンクの移動先が隠れないようにする */
+    @apply scroll-pt-16 font-sans;
   }
 }
